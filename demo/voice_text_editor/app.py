@@ -1,17 +1,12 @@
 import os
-
+import requests
 import gradio as gr
 from dotenv import load_dotenv
 from fastrtc import AdditionalOutputs, ReplyOnPause, Stream, get_stt_model
-from openai import OpenAI
 
 load_dotenv()
 
-sambanova_client = OpenAI(
-    api_key=os.getenv("SAMBANOVA_API_KEY"), base_url="https://api.sambanova.ai/v1"
-)
 stt_model = get_stt_model()
-
 
 SYSTEM_PROMPT = """You are an intelligent voice-activated text editor assistant. Your purpose is to help users create and modify text documents through voice commands.
 
@@ -26,7 +21,6 @@ For each interaction:
 Example:
 
 CURRENT DOCUMENT:
-
 
 Meeting notes:
 - Buy GPUs
@@ -72,27 +66,43 @@ NEVER include the phrase "CURRENT DOCUMENT" in the new document state.
 NEVER reword the user's input unless you are explicitly asked to do so.
 """
 
-
 def edit(audio, current_document: str):
     prompt = stt_model.stt(audio)
     print(f"Prompt: {prompt}")
-    response = sambanova_client.chat.completions.create(
-        model="Meta-Llama-3.3-70B-Instruct",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": f"CURRENT DOCUMENT:\n\n{current_document}\n\nUSER INPUT: {prompt}",
-            },
-        ],
-        max_tokens=200,
+    
+    # Construct the prompt for ollama
+    full_prompt = (
+        f"{SYSTEM_PROMPT}\n\n"
+        f"User: CURRENT DOCUMENT:\n\n{current_document}\n\nUSER INPUT: {prompt}\n\n"
+        f"Assistant:"
     )
-    doc = response.choices[0].message.content
-    yield AdditionalOutputs(doc)
-
+    
+    try:
+        # Send request to ollama's API
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "qwen2.5",
+                "prompt": full_prompt,
+                "stream": False,
+                "max_tokens": 200
+            }
+        )
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        # Parse the response
+        doc = response.json()["response"]
+        # Clean up the response to remove "Assistant:" and any extra whitespace
+        doc = doc.strip().lstrip("Assistant:").strip()
+        yield AdditionalOutputs(doc)
+    
+    except requests.RequestException as e:
+        # Handle API errors gracefully
+        error_message = "Error: Could not connect to ollama. Please ensure it's running and qwen2.5 is loaded."
+        print(f"API Error: {e}")
+        yield AdditionalOutputs(error_message)
 
 doc = gr.Textbox(value="", label="Current Document")
-
 
 stream = Stream(
     ReplyOnPause(edit),
