@@ -28,7 +28,7 @@ pip install fastrtc
 to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), speech-to-text (see [Speech To Text](userguide/audio/#speech-to-text)), and text to speech (see [Text To Speech](userguide/audio/#text-to-speech)), install the `vad`, `stt`, and `tts` extras:
 
 ```bash
-pip install fastrtc[vad, stt, tts]
+pip install "fastrtc[vad, stt, tts]"
 ```
 
 ## Quickstart
