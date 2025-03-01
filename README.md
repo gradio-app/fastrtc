@@ -175,7 +175,7 @@ def echo(audio: tuple[int, np.ndarray]):
     yield audio
 
 stream = Stream(
-    handler=ReplyOnPause(detection),
+    handler=ReplyOnPause(echo),
     modality="audio", 
     mode="send-receive",
 )
