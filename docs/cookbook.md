@@ -144,7 +144,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-claude-gradio)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/burtenshaw/coworking_agent/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Talk to Claude__
 {: data-tags="audio,llm,voice-chat"}
@@ -159,7 +159,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/burtenshaw/coworking_agent)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/burtenshaw/coworking_agent/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
 
 -   :musical_note:{ .lg .middle } __LLM Voice Chat__
 {: data-tags="audio,llm,voice-chat,groq,elevenlabs"}
