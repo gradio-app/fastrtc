@@ -1,15 +1,15 @@
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 from dotenv import load_dotenv
 from fastrtc import (
+    ReplyOnPause,
+    Stream,
     get_stt_model,
     get_tts_model,
-    Stream,
-    ReplyOnPause,
     get_twilio_turn_credentials,
 )
-from smolagents import CodeAgent, HfApiModel, DuckDuckGoSearchTool
+from smolagents import CodeAgent, DuckDuckGoSearchTool, HfApiModel
 
 # Load environment variables
 load_dotenv()

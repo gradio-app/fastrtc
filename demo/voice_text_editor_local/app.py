@@ -1,6 +1,7 @@
 import os
-import requests
+
 import gradio as gr
+import requests
 from dotenv import load_dotenv
 from fastrtc import AdditionalOutputs, ReplyOnPause, Stream, get_stt_model
 
@@ -66,17 +67,18 @@ NEVER include the phrase "CURRENT DOCUMENT" in the new document state.
 NEVER reword the user's input unless you are explicitly asked to do so.
 """
 
+
 def edit(audio, current_document: str):
     prompt = stt_model.stt(audio)
     print(f"Prompt: {prompt}")
-    
+
     # Construct the prompt for ollama
     full_prompt = (
         f"{SYSTEM_PROMPT}\n\n"
         f"User: CURRENT DOCUMENT:\n\n{current_document}\n\nUSER INPUT: {prompt}\n\n"
         f"Assistant:"
     )
-    
+
     try:
         # Send request to ollama's API
         response = requests.post(
@@ -85,22 +87,23 @@ def edit(audio, current_document: str):
                 "model": "qwen2.5",
                 "prompt": full_prompt,
                 "stream": False,
-                "max_tokens": 200
-            }
+                "max_tokens": 200,
+            },
         )
         response.raise_for_status()  # Raise an exception for bad status codes
-        
+
         # Parse the response
         doc = response.json()["response"]
         # Clean up the response to remove "Assistant:" and any extra whitespace
         doc = doc.strip().lstrip("Assistant:").strip()
         yield AdditionalOutputs(doc)
-    
+
     except requests.RequestException as e:
         # Handle API errors gracefully
         error_message = "Error: Could not connect to ollama. Please ensure it's running and qwen2.5 is loaded."
         print(f"API Error: {e}")
         yield AdditionalOutputs(error_message)
+
 
 doc = gr.Textbox(value="", label="Current Document")
 
