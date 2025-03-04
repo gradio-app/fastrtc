@@ -29,7 +29,6 @@ def response(
     audio: tuple[int, NDArray[np.int16 | np.float32]],
     chatbot: list[dict] | None = None,
 ):
-    # sf.write("audio.wav", audio_to_float32(audio), audio[0], format="wav")
     chatbot = chatbot or []
     messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
     start = time.time()
@@ -73,7 +72,7 @@ stream = Stream(
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     concurrency_limit=5 if get_space() else None,
     time_limit=90 if get_space() else None,
-    ui_args={"title": "LLM Voice Chat (Powered by Groq, ElevenLabs, and WebRTC ⚡️"},
+    ui_args={"title": "LLM Voice Chat (Powered by Groq, ElevenLabs, and WebRTC ⚡️)"},
 )
 
 # Mount the STREAM UI to the FastAPI app
