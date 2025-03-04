@@ -7,10 +7,11 @@
     import { StreamingBar } from "@gradio/statustracker";
     import {
         Circle,
-        Square,
         Spinner,
         Music,
         DropdownArrow,
+        VolumeMuted,
+        VolumeHigh,
         Microphone,
     } from "@gradio/icons";
 
@@ -77,6 +78,7 @@
     let available_audio_devices: MediaDeviceInfo[];
     let selected_device: MediaDeviceInfo | null = null;
     let mic_accessed = false;
+    let is_muted = false;
 
     const audio_source_callback = () => {
         if (mode === "send") return stream;
@@ -261,6 +263,13 @@
         options_open = false;
     };
 
+    function toggleMute(): void {
+        if (audio_player) {
+            audio_player.muted = !audio_player.muted;
+            is_muted = audio_player.muted;
+        }
+    }
+
     $: if (stopword_recognized) {
         notification_sound.play();
     }
@@ -314,19 +323,28 @@
                     </div>
                 {:else if stream_state === "open"}
                     <div class="icon-with-text">
-                        <div
-                            class="icon"
-                            title="stop recording"
-                            style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
-                        >
-                            <PulsingIcon
-                                audio_source_callback={() => stream}
-                                stream_state={"open"}
-                                icon={Circle}
-                                {icon_button_color}
-                                {pulse_color}
-                            />
-                        </div>
+                        {#if mode === "send-receive"}
+                            <div
+                                class="icon"
+                                title="stop recording"
+                                style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
+                            >
+                                <PulsingIcon
+                                    audio_source_callback={() => stream}
+                                    stream_state={"open"}
+                                    icon={Circle}
+                                    {icon_button_color}
+                                    {pulse_color}
+                                />
+                            </div>
+                        {:else}
+                            <div
+                                class="icon color-primary"
+                                title="start recording"
+                            >
+                                <Circle />
+                            </div>
+                        {/if}
                         {button_labels.stop || i18n("audio.stop")}
                     </div>
                 {:else}
@@ -345,6 +363,24 @@
                     aria-label="select input source"
                 >
                     <DropdownArrow />
+                </button>
+            {/if}
+            {#if stream_state === "open" && mode === "send-receive"}
+                <button
+                    class="mute-button"
+                    on:click={toggleMute}
+                    aria-label={is_muted ? "unmute audio" : "mute audio"}
+                >
+                    <div
+                        class="icon"
+                        style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
+                    >
+                        {#if is_muted}
+                            <VolumeMuted />
+                        {:else}
+                            <VolumeHigh />
+                        {/if}
+                    </div>
                 </button>
             {/if}
             {#if options_open && selected_device}
@@ -510,5 +546,12 @@
 
     .select-wrap > option:last-child {
         border: none;
+    }
+
+    .mute-button {
+        background-color: var(--block-background-fill);
+        padding-right: var(--size-2);
+        display: flex;
+        color: var(--button-secondary-text-color);
     }
 </style>

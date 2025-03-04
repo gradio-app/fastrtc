@@ -15,6 +15,7 @@ from fastrtc import (
 )
 from gradio.utils import get_space
 from groq import AsyncClient
+from pydantic import BaseModel
 
 cur_dir = Path(__file__).parent
 
@@ -24,23 +25,23 @@ load_dotenv()
 groq_client = AsyncClient()
 
 
-async def transcribe(audio: tuple[int, np.ndarray]):
-    transcript = await groq_client.audio.transcriptions.create(
+async def transcribe(audio: tuple[int, np.ndarray], transcript: str):
+    response = await groq_client.audio.transcriptions.create(
         file=("audio-file.mp3", audio_to_bytes(audio)),
         model="whisper-large-v3-turbo",
         response_format="verbose_json",
     )
-    yield AdditionalOutputs(transcript.text)
+    yield AdditionalOutputs(transcript + "\n" + response.text)
 
 
+transcript = gr.Textbox(label="Transcript")
 stream = Stream(
     ReplyOnPause(transcribe),
     modality="audio",
     mode="send",
-    additional_outputs=[
-        gr.Textbox(label="Transcript"),
-    ],
-    additional_outputs_handler=lambda a, b: a + " " + b,
+    additional_inputs=[transcript],
+    additional_outputs=[transcript],
+    additional_outputs_handler=lambda a, b: b,
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     concurrency_limit=5 if get_space() else None,
     time_limit=90 if get_space() else None,
@@ -51,11 +52,21 @@ app = FastAPI()
 stream.mount(app)
 
 
+class SendInput(BaseModel):
+    webrtc_id: str
+    transcript: str
+
+
+@app.post("/send_input")
+def send_input(body: SendInput):
+    stream.set_input(body.webrtc_id, body.transcript)
+
+
 @app.get("/transcript")
 def _(webrtc_id: str):
     async def output_stream():
         async for output in stream.output_stream(webrtc_id):
-            transcript = output.args[0]
+            transcript = output.args[0].split("\n")[-1]
             yield f"event: output\ndata: {transcript}\n\n"
 
     return StreamingResponse(output_stream(), media_type="text/event-stream")
@@ -73,7 +84,7 @@ if __name__ == "__main__":
     import os
 
     if (mode := os.getenv("MODE")) == "UI":
-        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+        stream.ui.launch(server_port=7860)
     elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:

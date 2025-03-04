@@ -360,7 +360,7 @@ class Stream(WebRTCConnectionMixin):
                             image = WebRTC(
                                 label="Stream",
                                 rtc_configuration=self.rtc_configuration,
-                                mode="send-receive",
+                                mode="send",
                                 modality="audio",
                                 icon=ui_args.get("icon"),
                                 icon_button_color=ui_args.get("icon_button_color"),
@@ -505,7 +505,7 @@ class Stream(WebRTCConnectionMixin):
         return HTMLResponse(content=str(response), media_type="application/xml")
 
     async def telephone_handler(self, websocket: WebSocket):
-        handler = cast(StreamHandlerImpl, self.event_handler.copy())
+        handler = cast(StreamHandlerImpl, self.event_handler.copy())  # type: ignore
         handler.phone_mode = True
 
         async def set_handler(s: str, a: WebSocketHandler):
@@ -528,7 +528,7 @@ class Stream(WebRTCConnectionMixin):
         await ws.handle_websocket(websocket)
 
     async def websocket_offer(self, websocket: WebSocket):
-        handler = cast(StreamHandlerImpl, self.event_handler.copy())
+        handler = cast(StreamHandlerImpl, self.event_handler.copy())  # type: ignore
         handler.phone_mode = False
 
         async def set_handler(s: str, a: WebSocketHandler):

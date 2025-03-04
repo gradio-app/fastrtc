@@ -193,7 +193,8 @@
     </div>
 
     <div class="container">
-        <div class="transcript-container" id="transcript"></div>
+        <div class="transcript-container" id="transcript">
+        </div>
         <div class="controls">
             <button id="start-button">Start Recording</button>
         </div>
@@ -220,13 +221,23 @@
             }, 5000);
         }
 
-        function handleMessage(event) {
+        async function handleMessage(event) {
             // Handle any WebRTC data channel messages if needed
             const eventJson = JSON.parse(event.data);
             if (eventJson.type === "error") {
                 showError(eventJson.message);
+            } else if (eventJson.type === "send_input") {
+                const response = await fetch('/send_input', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        webrtc_id: webrtc_id,
+                        transcript: ""
+                    })
+                });
             }
             console.log('Received message:', event.data);
+
         }
 
         function updateButtonState() {

@@ -3,6 +3,7 @@ from typing import Generator, Literal
 
 import gradio as gr
 import numpy as np
+from dotenv import load_dotenv
 from fastrtc import (
     AdditionalOutputs,
     ReplyOnPause,
@@ -12,6 +13,8 @@ from fastrtc import (
 )
 from moonshine_onnx import MoonshineOnnxModel, load_tokenizer
 from numpy.typing import NDArray
+
+load_dotenv()
 
 
 @lru_cache(maxsize=None)
@@ -27,6 +30,7 @@ tokenizer = load_tokenizer()
 def stt(
     audio: tuple[int, NDArray[np.int16 | np.float32]],
     model_name: Literal["moonshine/base", "moonshine/tiny"],
+    captions: str,
 ) -> Generator[AdditionalOutputs, None, None]:
     moonshine = load_moonshine(model_name)
     sr, audio_np = audio  # type: ignore
@@ -35,9 +39,12 @@ def stt(
     if audio_np.ndim == 1:
         audio_np = audio_np.reshape(1, -1)
     tokens = moonshine.generate(audio_np)
-    yield AdditionalOutputs(tokenizer.decode_batch(tokens)[0])
+    yield AdditionalOutputs(
+        (captions + "\n" + tokenizer.decode_batch(tokens)[0]).strip()
+    )
 
 
+captions = gr.Textbox(label="Captions")
 stream = Stream(
     ReplyOnPause(stt, input_sample_rate=16000),
     modality="audio",
@@ -55,9 +62,10 @@ stream = Stream(
             choices=["moonshine/base", "moonshine/tiny"],
             value="moonshine/base",
             label="Model",
-        )
+        ),
+        captions,
     ],
-    additional_outputs=[gr.Textbox(label="Captions")],
+    additional_outputs=[captions],
     additional_outputs_handler=lambda prev, current: (prev + "\n" + current).strip(),
 )
 

@@ -29,6 +29,7 @@ def response(
     audio: tuple[int, NDArray[np.int16 | np.float32]],
     chatbot: list[dict] | None = None,
 ):
+    # sf.write("audio.wav", audio_to_float32(audio), audio[0], format="wav")
     chatbot = chatbot or []
     messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
     start = time.time()
@@ -41,7 +42,7 @@ def response(
     response_text = (
         groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            max_tokens=512,
+            max_tokens=200,
             messages=messages,  # type: ignore
         )
         .choices[0]
@@ -49,6 +50,7 @@ def response(
     )
 
     chatbot.append({"role": "assistant", "content": response_text})
+    yield AdditionalOutputs(chatbot)
 
     for chunk in tts_client.text_to_speech.convert_as_stream(
         text=response_text,  # type: ignore
@@ -58,7 +60,6 @@ def response(
     ):
         audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
         yield (24000, audio_array)
-    yield AdditionalOutputs(chatbot)
 
 
 chatbot = gr.Chatbot(type="messages")
@@ -72,7 +73,7 @@ stream = Stream(
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     concurrency_limit=5 if get_space() else None,
     time_limit=90 if get_space() else None,
-    ui_args={"title": "LLM Voice Chat (Powered by Groq, ElevenLabs, and WebRTC ⚡️)"},
+    ui_args={"title": "Interrupt Your Voice Agent"},
 )
 
 # Mount the STREAM UI to the FastAPI app

@@ -188,6 +188,11 @@ class StreamHandlerBase(ABC):
         self.args_set = asyncio.Event()
         self.channel_set = asyncio.Event()
         self._phone_mode = False
+        self._clear_queue: Callable | None = None
+
+    @property
+    def clear_queue(self) -> Callable:
+        return cast(Callable, self._clear_queue)
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -237,8 +242,11 @@ class StreamHandlerBase(ABC):
             logger.debug("Sent msg %s", msg)
 
     def send_message_sync(self, msg: str):
-        asyncio.run_coroutine_threadsafe(self.send_message(msg), self.loop).result()
-        logger.debug("Sent msg %s", msg)
+        try:
+            asyncio.run_coroutine_threadsafe(self.send_message(msg), self.loop).result()
+            logger.debug("Sent msg %s", msg)
+        except Exception as e:
+            logger.debug("Exception sending msg %s", e)
 
     def set_args(self, args: list[Any]):
         logger.debug("setting args in audio callback %s", args)
@@ -411,6 +419,7 @@ class AudioCallback(AudioStreamTrack):
         super().__init__()
         self.track = track
         self.event_handler = cast(StreamHandlerImpl, event_handler)
+        self.event_handler._clear_queue = self.clear_queue
         self.current_timestamp = 0
         self.latest_args: str | list[Any] = "not_set"
         self.queue = asyncio.Queue()
@@ -420,6 +429,12 @@ class AudioCallback(AudioStreamTrack):
         self.last_timestamp = 0
         self.channel = channel
         self.set_additional_outputs = set_additional_outputs
+
+    def clear_queue(self):
+        if self.queue:
+            while not self.queue.empty():
+                self.queue.get_nowait()
+            self._start = None
 
     def set_channel(self, channel: DataChannel):
         self.channel = channel
@@ -608,6 +623,7 @@ class ServerToClientAudio(AudioStreamTrack):
     ) -> None:
         self.generator: Generator[Any, None, Any] | None = None
         self.event_handler = event_handler
+        self.event_handler._clear_queue = self.clear_queue
         self.current_timestamp = 0
         self.latest_args: str | list[Any] = "not_set"
         self.args_set = threading.Event()
@@ -618,6 +634,11 @@ class ServerToClientAudio(AudioStreamTrack):
         self.has_started = False
         self._start: float | None = None
         super().__init__()
+
+    def clear_queue(self):
+        while not self.queue.empty():
+            self.queue.get_nowait()
+        self._start = None
 
     def set_channel(self, channel: DataChannel):
         self.channel = channel

@@ -320,7 +320,7 @@ def audio_to_int16(
     >>> audio_int16 = audio_to_int16(audio_tuple)
     """
     if audio[1].dtype == np.int16:
-        return audio[1]
+        return audio[1]  # type: ignore
     elif audio[1].dtype == np.float32:
         # Convert float32 to int16 by scaling to the int16 range
         return (audio[1] * 32767.0).astype(np.int16)

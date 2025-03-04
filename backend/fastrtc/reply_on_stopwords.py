@@ -23,6 +23,9 @@ class ReplyOnStopWordsState(AppState):
     post_stop_word_buffer: np.ndarray | None = None
     started_talking_pre_stop_word: bool = False
 
+    def new(self):
+        return ReplyOnStopWordsState()
+
 
 class ReplyOnStopWords(ReplyOnPause):
     def __init__(
@@ -31,6 +34,7 @@ class ReplyOnStopWords(ReplyOnPause):
         stop_words: list[str],
         algo_options: AlgoOptions | None = None,
         model_options: SileroVadOptions | None = None,
+        can_interrupt: bool = True,
         expected_layout: Literal["mono", "stereo"] = "mono",
         output_sample_rate: int = 24000,
         output_frame_size: int = 480,
@@ -40,6 +44,7 @@ class ReplyOnStopWords(ReplyOnPause):
             fn,
             algo_options=algo_options,
             model_options=model_options,
+            can_interrupt=can_interrupt,
             expected_layout=expected_layout,
             output_sample_rate=output_sample_rate,
             output_frame_size=output_frame_size,
@@ -144,6 +149,7 @@ class ReplyOnStopWords(ReplyOnPause):
             self.stop_words,
             self.algo_options,
             self.model_options,
+            self.can_interrupt,
             self.expected_layout,
             self.output_sample_rate,
             self.output_frame_size,

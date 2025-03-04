@@ -55,6 +55,7 @@ class WebSocketHandler:
         ],
     ):
         self.stream_handler = stream_handler
+        self.stream_handler._clear_queue = lambda: None
         self.websocket: Optional[WebSocket] = None
         self._emit_task: Optional[asyncio.Task] = None
         self.stream_id: Optional[str] = None

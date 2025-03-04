@@ -3,6 +3,8 @@
 
 Typically, you want to run a python function whenever a user has stopped speaking. This can be done by wrapping a python generator with the `ReplyOnPause` class and passing it to the `handler` argument of the `Stream` object. The `ReplyOnPause` class will handle the voice detection and turn taking logic automatically!
 
+By default, the `ReplyOnPause` handler will allow you to interrupt the response at any time by speaking again. If you do not want to allow interruption, you can set the `can_interrupt` parameter to `False`.
+
 === "Code"
     ```python
     from fastrtc import ReplyOnPause, Stream
@@ -33,13 +35,14 @@ Typically, you want to run a python function whenever a user has stopped speakin
     You can also use an async generator with `ReplyOnPause`.
 
 !!! tip "Parameters"
-    You can customize the voice detection parameters by passing in `algo_options` and `model_options` to the `ReplyOnPause` class.
+    You can customize the voice detection parameters by passing in `algo_options` and `model_options` to the `ReplyOnPause` class. Also, you can set the `can_interrupt` parameter to `False` to prevent the user from interrupting the response. By default, `can_interrupt` is `True`.
     ```python
     from fastrtc import AlgoOptions, SileroVadOptions
 
     stream = Stream(
         handler=ReplyOnPause(
             response,
+            can_interrupt=True,
             algo_options=AlgoOptions(
                 audio_chunk_duration=0.6,
                 started_talking_threshold=0.2,
