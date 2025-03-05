@@ -297,6 +297,45 @@ def emit(self):
         await self.wait_for_args()
 ```
 
+### Twilio Integration
+
+To enable telephone access via Twilio, you'll need to:
+
+1. Create a Twilio account and purchase a phone number with voice capabilities.
+2. Set up a FastAPI endpoint to handle Twilio webhook requests and connect to the FastRTC's `Stream` object via a WebSocket.
+3. Configure your Twilio phone number to point to your webhook URL.
+
+Here's a simple example of setting up a Twilio endpoint:
+
+```py
+. . . 
+stream = Stream(ReplyOnPause(echo), modality="audio", mode="send-receive")
+
+@app.api_route("/incoming-call", methods=["GET", "POST"])
+async def handle_incoming_call(request: Request):
+    """Handle incoming call and return TwiML response to connect to Media Stream."""
+    response = await stream.handle_incoming_call(request)
+    return response
+
+@app.websocket("/telephone/handler")
+async def handle_media_stream(websocket: WebSocket):
+    """Handle WebSocket connections between Twilio and LLM."""
+    await stream.telephone_handler(websocket)
+```
+
+You can check out the full demo [here]()
+
+
+Then configure your Twilio phone number's webhook URL to point to your `<https://yourdomain.com/>incoming-call` endpoint.
+
+!!! tip 
+    Ngrok for Local Development: 
+    For local development, you can use [ngrok](https://ngrok.com/) to expose your local server to the internet and configure your Twilio phone number to point to the ngrok URL - `<https://yourngroksubdomain.ngrok.io/>incoming-call`.
+
+    ```bash
+    ngrok http <port>
+    ```
+
 ### `ReplyOnPause`
 
 The generator you pass to `ReplyOnPause` must have default arguments for all arguments except audio.
