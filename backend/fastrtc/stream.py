@@ -193,11 +193,11 @@ class Stream(WebRTCConnectionMixin):
                 """
                 )
                 with gr.Row():
-                    if additional_input_components:
-                        with gr.Column():
+                    with gr.Column():
+                        if additional_input_components:
                             for component in additional_input_components:
                                 component.render()
-                            button = gr.Button("Start Stream", variant="primary")
+                        button = gr.Button("Start Stream", variant="primary")
                     with gr.Column():
                         output_video = WebRTC(
                             label="Video Stream",
