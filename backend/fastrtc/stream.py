@@ -509,7 +509,7 @@ class Stream(WebRTCConnectionMixin):
         handler.phone_mode = True
 
         async def set_handler(s: str, a: WebSocketHandler):
-            if len(self.connections) >= self.concurrency_limit:
+            if len(self.connections) >= self.concurrency_limit:  # type: ignore
                 await cast(WebSocket, a.websocket).send_json(
                     {
                         "status": "failed",
@@ -532,7 +532,7 @@ class Stream(WebRTCConnectionMixin):
         handler.phone_mode = False
 
         async def set_handler(s: str, a: WebSocketHandler):
-            if len(self.connections) >= self.concurrency_limit:
+            if len(self.connections) >= self.concurrency_limit:  # type: ignore
                 await cast(WebSocket, a.websocket).send_json(
                     {
                         "status": "failed",

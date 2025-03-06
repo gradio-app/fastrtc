@@ -10,7 +10,7 @@ import numpy as np
 from fastapi import WebSocket
 
 from .tracks import AsyncStreamHandler, StreamHandlerImpl
-from .utils import AdditionalOutputs, DataChannel, split_output, wait_for_item
+from .utils import AdditionalOutputs, DataChannel, split_output
 
 
 class WebSocketDataChannel(DataChannel):
@@ -55,7 +55,7 @@ class WebSocketHandler:
         ],
     ):
         self.stream_handler = stream_handler
-        self.stream_handler._clear_queue = self.clear_queue
+        self.stream_handler._clear_queue = self._clear_queue
         self.websocket: Optional[WebSocket] = None
         self._emit_task: Optional[asyncio.Task] = None
         self.stream_id: Optional[str] = None
@@ -66,17 +66,18 @@ class WebSocketHandler:
         self.clean_up = clean_up
         self.queue = asyncio.Queue()
 
-    def clear_queue(self):
-        # Replace the queue with a new empty queue
+    def _clear_queue(self):
         old_queue = self.queue
         self.queue = asyncio.Queue()
-
-        # Drain the old queue to ensure task_done() is called for all items
+        logger.debug("clearing queue")
+        i = 0
         while not old_queue.empty():
             try:
                 old_queue.get_nowait()
+                i += 1
             except asyncio.QueueEmpty:
                 break
+        logger.debug("popped %d items from queue", i)
 
     def set_args(self, args: list[Any]):
         self.stream_handler.set_args(args)

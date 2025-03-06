@@ -184,10 +184,11 @@ class ReplyOnPause(StreamHandler):
         self.process_audio(frame, self.state)
         if self.state.pause_detected:
             self.event.set()
-            if self.can_interrupt:
-                self.clear_queue()
+            if self.can_interrupt and self.state.responding:
                 self._close_generator()
                 self.generator = None
+            if self.can_interrupt:
+                self.clear_queue()
 
     def _close_generator(self):
         """Properly close the generator to ensure resources are released."""

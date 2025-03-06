@@ -431,10 +431,14 @@ class AudioCallback(AudioStreamTrack):
         self.set_additional_outputs = set_additional_outputs
 
     def clear_queue(self):
-        if self.queue:
-            while not self.queue.empty():
-                self.queue.get_nowait()
-            self._start = None
+        logger.debug("clearing queue")
+        logger.debug("queue size: %d", self.queue.qsize())
+        i = 0
+        while not self.queue.empty():
+            self.queue.get_nowait()
+            i += 1
+        logger.debug("popped %d items from queue", i)
+        self._start = None
 
     def set_channel(self, channel: DataChannel):
         self.channel = channel
