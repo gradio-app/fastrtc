@@ -281,7 +281,7 @@ You can do this by calling `await self.wait_for_args()` (for `AsyncStreamHandler
 
 We can access the value of this component via the `latest_args` property of the `StreamHandler`. The `latest_args` is a list storing each of the values. The 0th index is the dummy string `__webrtc_value__`.
 
-## Telephone Integration
+## Considerations for Telephone Use
 
 In order for your handler to work over the phone, you must make sure that your handler is not expecting any additional input data besides the audio.
 
@@ -297,46 +297,7 @@ def emit(self):
         await self.wait_for_args()
 ```
 
-### Twilio Integration
-
-To enable telephone access via Twilio, you'll need to:
-
-1. Create a Twilio account and purchase a phone number with voice capabilities.
-2. Set up a FastAPI endpoint to handle Twilio webhook requests and connect to the FastRTC's `Stream` object via a WebSocket.
-3. Configure your Twilio phone number to point to your webhook URL.
-
-Here's a simple example of setting up a Twilio endpoint:
-
-```py
-. . . 
-stream = Stream(ReplyOnPause(echo), modality="audio", mode="send-receive")
-
-@app.api_route("/incoming-call", methods=["GET", "POST"])
-async def handle_incoming_call(request: Request):
-    """Handle incoming call and return TwiML response to connect to Media Stream."""
-    response = await stream.handle_incoming_call(request)
-    return response
-
-@app.websocket("/telephone/handler")
-async def handle_media_stream(websocket: WebSocket):
-    """Handle WebSocket connections between Twilio and LLM."""
-    await stream.telephone_handler(websocket)
-```
-
-You can check out the full demo [here]()
-
-
-Then configure your Twilio phone number's webhook URL to point to your `<https://yourdomain.com/>incoming-call` endpoint.
-
-!!! tip 
-    Ngrok for Local Development: 
-    For local development, you can use [ngrok](https://ngrok.com/) to expose your local server to the internet and configure your Twilio phone number to point to the ngrok URL - `<https://yourngroksubdomain.ngrok.io/>incoming-call`.
-
-    ```bash
-    ngrok http <port>
-    ```
-
-### `ReplyOnPause`
+### `ReplyOnPause` and telephone use
 
 The generator you pass to `ReplyOnPause` must have default arguments for all arguments except audio.
 
@@ -344,3 +305,53 @@ If you yield `AdditionalOutputs`, they will be passed in as the input arguments 
 
 !!! tip
     See [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) for an example of a `ReplyOnPause` handler that is compatible with telephone usage. Notice how the input chatbot history is yielded as an `AdditionalOutput` on each invocation.
+
+## Telephone Integration
+
+You can integrate a `Stream` with a SIP provider like Twilio to set up your own phone number for your application.
+
+### Setup Process
+
+1. **Create a Twilio Account**: Sign up for a [Twilio](https://login.twilio.com/u/signup) account and purchase a phone number with voice capabilities. With a trial account, only the phone number you used during registration will be able to connect to your `Stream`.
+
+2. **Mount Your Stream**: Add your `Stream` to a FastAPI app using `stream.mount(app)` and run the server.
+
+3. **Configure Twilio Webhook**: Point your Twilio phone number to your webhook URL.
+
+### Configuring Twilio
+
+To configure your Twilio phone number:
+
+1. In your Twilio dashboard, navigate to `Manage` → `TwiML Apps` in the left sidebar
+2. Click `Create TwiML App`
+3. Set the `Voice URL` to your FastAPI app's URL with `/telephone/incoming` appended (e.g., `https://your-app-url.com/telephone/incoming`)
+
+![Twilio TwiML Apps Navigation](https://github.com/user-attachments/assets/9cd7b7de-d3e6-4fc8-9e50-ffe946d19c73)
+![Twilio Voice URL Configuration](https://github.com/user-attachments/assets/b8490e59-9f2c-4bb4-af59-a304100a5eaf)
+
+!!! tip "Local Development with Ngrok"
+    For local development, use [ngrok](https://ngrok.com/) to expose your local server:
+    ```bash
+    ngrok http <port>
+    ```
+    Then set your Twilio Voice URL to `https://your-ngrok-subdomain.ngrok.io/telephone/incoming-call`
+
+### Code Example
+
+Here's a simple example of setting up a Twilio endpoint:
+
+
+```py
+from fastrtc import Stream, ReplyOnPause
+from fastapi import FastAPI
+
+def echo(audio):
+    yield audio
+
+app = FastAPI()
+
+stream = Stream(ReplyOnPause(echo), modality="audio", mode="send-receive")
+stream.mount(app)
+
+# run with `uvicorn main:app`
+```
