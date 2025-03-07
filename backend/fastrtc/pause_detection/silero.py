@@ -288,8 +288,8 @@ class SileroVADModel:
                 audio_ = librosa.resample(audio_, orig_sr=sampling_rate, target_sr=sr)
 
             if not options:
-                vad_parameters = SileroVadOptions()
-            speech_chunks = self.get_speech_timestamps(audio_, vad_parameters)
+                options = SileroVadOptions()
+            speech_chunks = self.get_speech_timestamps(audio_, options)
             logger.debug("VAD speech chunks: %s", speech_chunks)
             audio_ = self.collect_chunks(audio_, speech_chunks)
             logger.debug("VAD audio shape: %s", audio_.shape)
