@@ -36,14 +36,6 @@
         stop: undefined;
     }>();
 
-    onMount(() => {
-        window.setInterval(() => {
-            if (stream_state == "open") {
-                dispatch("tick");
-            }
-        }, 1000);
-    });
-
     async function start_stream(value: string): Promise<string> {
         if (value === "start_webrtc_stream") {
             stream_state = "waiting";
@@ -55,6 +47,7 @@
                     case "connected":
                         console.info("connected");
                         stream_state = "open";
+                        dispatch("tick");
                         break;
                     case "disconnected":
                         console.info("closed");

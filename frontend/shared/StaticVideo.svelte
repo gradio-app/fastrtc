@@ -27,14 +27,6 @@
 
 	let stream_state = "closed";
 
-	onMount(() => {
-		window.setInterval(() => {
-			if (stream_state == "open") {
-				dispatch("tick");
-			}
-		}, 1000);
-	});
-
 	$: if (value === "start_webrtc_stream") {
 		_webrtc_id = Math.random().toString(36).substring(2);
 		value = _webrtc_id;
@@ -43,6 +35,7 @@
 			switch (pc.connectionState) {
 				case "connected":
 					stream_state = "open";
+					dispatch("tick");
 					break;
 				case "disconnected":
 					stop(pc);

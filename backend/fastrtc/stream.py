@@ -183,7 +183,7 @@ class Stream(WebRTCConnectionMixin):
                 if component in additional_output_components
             ]
             for component in additional_output_components:
-                if component not in same_components:
+                if component in same_components:
                     same_components.append(component)
         if self.modality == "video" and self.mode == "receive":
             with gr.Blocks() as demo:
@@ -230,6 +230,7 @@ class Stream(WebRTCConnectionMixin):
                     assert self.additional_outputs_handler
                     output_video.on_additional_outputs(
                         self.additional_outputs_handler,
+                        inputs=additional_output_components,
                         outputs=additional_output_components,
                     )
         elif self.modality == "video" and self.mode == "send":
@@ -275,6 +276,7 @@ class Stream(WebRTCConnectionMixin):
                     assert self.additional_outputs_handler
                     output_video.on_additional_outputs(
                         self.additional_outputs_handler,
+                        inputs=additional_output_components,
                         outputs=additional_output_components,
                     )
         elif self.modality == "video" and self.mode == "send-receive":
