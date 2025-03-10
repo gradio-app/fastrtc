@@ -52,6 +52,7 @@ format:
     ruff format .
     ruff check --fix .
     ruff check --select I --fix .
+    cd frontend && npx prettier --write . && cd ..
 
 docs:
     mkdocs serve -a localhost:8081
