@@ -66,7 +66,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Repository](https://github.com/Codeblockz/distil-whisper-FastRTC)
 
-    -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Your STT Model__
+-   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Your STT Model__
 {: data-tags="pytorch"}
 
     ---
