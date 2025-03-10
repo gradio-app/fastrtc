@@ -61,3 +61,23 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-arrow-right-24: Demo](Your demo here)
     
     [:octicons-code-16: Repository](Code here)
+
+-   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } distil-whisper-FastRTC
+{: data-tags="pytorch"}
+
+    ---
+
+    Description: 
+    Distil-whisper from hugging face wraped in a pypi package for plug and play!
+
+    Install Instructions
+    ```python
+    pip install distil-whisper-fastrtc
+    ```
+    Use it the same way you would the native fastRTC TTS model!
+
+    Usage
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/Codeblockz/llm-voice-chat/blob/main/app.py)
+    
+    [:octicons-code-16: Repository](https://github.com/Codeblockz/distil-whisper-FastRTC)
