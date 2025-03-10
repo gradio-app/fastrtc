@@ -389,7 +389,7 @@
           </div>
         </button>
       {/if}
-      {#if stream_state === "open" && mode === "send-receive"}
+      {#if stream_state === "open" && mode.includes("send")}
         <button
           class="mute-button"
           on:click={toggleMuteMicrophone}
