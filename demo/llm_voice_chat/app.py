@@ -64,28 +64,11 @@ def response(
         yield (24000, audio_array)
 
 
-def startup(chatbot: list[dict]):
-    for chunk in tts_client.text_to_speech.convert_as_stream(
-        text="Hello, how can I help you today?",
-        voice_id="JBFqnCBsd6RMkjVDRZzb",
-        model_id="eleven_multilingual_v2",
-        output_format="pcm_24000",
-    ):
-        audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
-        yield (24000, audio_array)
-    chatbot.append({"role": "assistant", "content": "Hello, how can I help you today?"})
-    yield AdditionalOutputs(chatbot)
-
-
 chatbot = gr.Chatbot(type="messages")
 stream = Stream(
     modality="audio",
     mode="send-receive",
-    handler=ReplyOnPause(
-        response,
-        input_sample_rate=16000,
-        startup_fn=startup,
-    ),
+    handler=ReplyOnPause(response, input_sample_rate=16000),
     additional_outputs_handler=lambda a, b: b,
     additional_inputs=[chatbot],
     additional_outputs=[chatbot],
