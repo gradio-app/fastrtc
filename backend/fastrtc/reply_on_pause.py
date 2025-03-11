@@ -68,6 +68,7 @@ class ReplyOnPause(StreamHandler):
     def __init__(
         self,
         fn: ReplyFnGenerator,
+        startup_fn: Callable | None = None,
         algo_options: AlgoOptions | None = None,
         model_options: ModelOptions | None = None,
         can_interrupt: bool = True,
@@ -97,14 +98,22 @@ class ReplyOnPause(StreamHandler):
         ) = None
         self.model_options = model_options
         self.algo_options = algo_options or AlgoOptions()
+        self.startup_fn = startup_fn
 
     @property
     def _needs_additional_inputs(self) -> bool:
         return len(inspect.signature(self.fn).parameters) > 1
 
+    def start_up(self):
+        if self.startup_fn:
+            self.wait_for_args_sync()
+            self.generator = self.startup_fn(*self.latest_args)
+            self.event.set()
+
     def copy(self):
         return ReplyOnPause(
             self.fn,
+            self.startup_fn,
             self.algo_options,
             self.model_options,
             self.can_interrupt,
