@@ -46,6 +46,7 @@ class ReplyOnStopWords(ReplyOnPause):
         super().__init__(
             fn,
             algo_options=algo_options,
+            startup_fn=startup_fn,
             model_options=model_options,
             can_interrupt=can_interrupt,
             expected_layout=expected_layout,
@@ -57,13 +58,6 @@ class ReplyOnStopWords(ReplyOnPause):
         self.stop_words = stop_words
         self.state = ReplyOnStopWordsState()
         self.stt_model = get_stt_model("moonshine/base")
-        self.startup_fn = startup_fn
-
-    def start_up(self):
-        if self.startup_fn:
-            self.wait_for_args_sync()
-            self.generator = self.startup_fn(*self.latest_args)
-            self.event.set()
 
     def stop_word_detected(self, text: str) -> bool:
         for stop_word in self.stop_words:
