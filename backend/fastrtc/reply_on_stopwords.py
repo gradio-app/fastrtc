@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import re
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 
@@ -33,6 +33,7 @@ class ReplyOnStopWords(ReplyOnPause):
         self,
         fn: ReplyFnGenerator,
         stop_words: list[str],
+        startup_fn: Callable | None = None,
         algo_options: AlgoOptions | None = None,
         model_options: ModelOptions | None = None,
         can_interrupt: bool = True,
@@ -56,6 +57,13 @@ class ReplyOnStopWords(ReplyOnPause):
         self.stop_words = stop_words
         self.state = ReplyOnStopWordsState()
         self.stt_model = get_stt_model("moonshine/base")
+        self.startup_fn = startup_fn
+
+    def start_up(self):
+        if self.startup_fn:
+            self.wait_for_args_sync()
+            self.generator = self.startup_fn(*self.latest_args)
+            self.event.set()
 
     def stop_word_detected(self, text: str) -> bool:
         for stop_word in self.stop_words:
@@ -148,6 +156,7 @@ class ReplyOnStopWords(ReplyOnPause):
     def copy(self):
         return ReplyOnStopWords(
             self.fn,
+            self.startup_fn,
             self.stop_words,
             self.algo_options,
             self.model_options,
