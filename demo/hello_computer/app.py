@@ -62,6 +62,22 @@ def response(
     yield AdditionalOutputs(gradio_chatbot, conversation_state)
 
 
+def startup(chatbot: list[dict], conversation_state: list[dict]):
+    chatbot.append(
+        {
+            "role": "assistant",
+            "content": "Say 'computer' to start the conversation to trigger the assitant to listen!",
+        }
+    )
+    conversation_state.append(
+        {
+            "role": "assistant",
+            "content": "Say 'computer' to start the conversation to trigger the assitant to listen!",
+        }
+    )
+    yield AdditionalOutputs(chatbot, conversation_state)
+
+
 chatbot = gr.Chatbot(type="messages", value=[])
 state = gr.State(value=[])
 stream = Stream(
@@ -69,6 +85,7 @@ stream = Stream(
         response,  # type: ignore
         stop_words=["computer"],
         input_sample_rate=16000,
+        startup_fn=startup,
     ),
     mode="send",
     modality="audio",

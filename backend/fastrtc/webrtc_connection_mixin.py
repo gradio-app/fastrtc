@@ -241,7 +241,7 @@ class WebRTCConnectionMixin:
                 logger.debug("Adding track to peer connection %s", cb)
                 pc.addTrack(cb)
             elif self.mode == "send":
-                cast(AudioCallback | VideoCallback, cb).start()
+                asyncio.create_task(cast(AudioCallback | VideoCallback, cb).start())
 
         if self.mode == "receive":
             if self.modality == "video":

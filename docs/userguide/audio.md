@@ -76,6 +76,37 @@ stream = Stream(
 !!! tip "Muting Response Audio"
     You can directly talk over the output audio and the interruption will still work. However, in these cases, the audio transcription may be incorrect. To prevent this, it's best practice to mute the output audio before talking over it.
 
+### Startup Function
+
+You can pass in a `startup_fn` to the `ReplyOnPause` class. This function will be called when the connection is first established. It is helpful for generating intial responses.
+
+```python
+from fastrtc import get_tts_model, Stream, ReplyOnPause
+
+tts_client = get_tts_model()
+
+
+def detection(audio: tuple[int, np.ndarray]):
+    # Implement any iterator that yields audio
+    # See "LLM Voice Chat" for a more complete example
+    yield audio
+
+
+def startup():
+    for chunk in tts_client.stream_tts_sync("Welcome to the echo audio demo!"):
+        yield chunk
+
+
+stream = Stream(
+    handler=ReplyOnPause(detection, startup_fn=startup),
+    modality="audio",
+    mode="send-receive",
+    ui_args={"title": "Echo Audio"},
+)
+```
+
+<video width=98% src="https://github.com/user-attachments/assets/c6b1cb51-5790-4522-80c3-e24e58ef9f11" controls style="text-align: center"></video>
+
 ## Reply On Stopwords
 
 You can configure your AI model to run whenever a set of "stop words" are detected, like "Hey Siri" or "computer", with the `ReplyOnStopWords` class. 

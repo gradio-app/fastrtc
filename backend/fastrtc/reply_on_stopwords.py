@@ -150,8 +150,8 @@ class ReplyOnStopWords(ReplyOnPause):
     def copy(self):
         return ReplyOnStopWords(
             self.fn,
-            self.startup_fn,
             self.stop_words,
+            self.startup_fn,
             self.algo_options,
             self.model_options,
             self.can_interrupt,

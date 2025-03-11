@@ -106,8 +106,12 @@ class ReplyOnPause(StreamHandler):
 
     def start_up(self):
         if self.startup_fn:
-            self.wait_for_args_sync()
-            self.generator = self.startup_fn(*self.latest_args)
+            if self._needs_additional_inputs:
+                self.wait_for_args_sync()
+                args = self.latest_args[1:]
+            else:
+                args = ()
+            self.generator = self.startup_fn(*args)
             self.event.set()
 
     def copy(self):

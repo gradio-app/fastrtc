@@ -156,6 +156,11 @@ async def player_worker_decode(
                     break
                 continue
 
+            if not isinstance(frame, tuple) and not isinstance(frame[1], np.ndarray):
+                raise WebRTCError(
+                    "The frame must be a tuple containing a sample rate and a numpy array."
+                )
+
             if len(frame) == 2:
                 sample_rate, audio_array = frame
                 layout = "mono"
@@ -199,7 +204,10 @@ async def player_worker_decode(
             exec = traceback.format_exc()
             print("traceback %s", exec)
             print("Error processing frame: %s", str(e))
-            continue
+            if isinstance(e, WebRTCError):
+                raise e
+            else:
+                continue
 
 
 def audio_to_bytes(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> bytes:
