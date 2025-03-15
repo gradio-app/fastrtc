@@ -322,4 +322,18 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/parler-tts-streaming-webrtc/blob/main/app.py)
 
 
+    -   :speaking_head:{ .lg .middle } __Talk to Claude - Electron App__
+{: data-tags="audio,electron"}
+
+    ---
+
+    An Electron desktop application that uses FastRTC to enable voice conversations with Claude.
+
+    <video width=98% src="https://github.com/user-attachments/assets/df4628e4-ef0f-4a78-ab9b-1ed2374b1cae" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://github.com/swairshah/voice-agent)
+    
+    [:octicons-code-16: Code](https://github.com/swairshah/voice-agent)
+
+
 </div>
