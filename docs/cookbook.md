@@ -34,6 +34,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="elevenlabs"><code>ElevenLabs</code></button>
   <button class="tag-button" data-tag="elevenlabs"><code>Kyutai</code></button>
   <button class="tag-button" data-tag="agentic"><code>Agentic</code></button>
+  <button class="tag-button" data-tag="local"><code>Local Models</code></button>
 </div>
 
 <script>
@@ -321,5 +322,13 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/parler-tts-streaming-webrtc/blob/main/app.py)
 
+-   :speaking_head:{ .lg .middle } __Real Time Transcription with On-device Whisper 🤗__
+{: data-tags="audio,transcription,local"}
+
+    ---
+
+    Transcribe speech in real time using Whisper via the Transformers library, running on your device!
+
+    [:octicons-code-16: Code](https://github.com/sofi444/realtime-transcription-fastrtc/blob/main/main.py)
 
 </div>
