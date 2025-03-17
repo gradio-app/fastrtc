@@ -21,17 +21,19 @@ from gradio.utils import get_space
 
 load_dotenv()
 cur_dir = Path(__file__).parent
-load_dotenv('key.env')
-#sd.default.device = (3, 3)  # (Input-Gerät, Output-Gerät)
+load_dotenv("key.env")
+# sd.default.device = (3, 3)  # (Input-Gerät, Output-Gerät)
 
-print(f"Used Mic: {sd.query_devices(3)['name']}")
-print(f"Used Speaker: {sd.query_devices(3)['name']}")
+# print(f"Used Mic: {sd.query_devices(3)['name']}")
+# print(f"Used Speaker: {sd.query_devices(3)['name']}")
 SAMPLE_RATE = 24000
 
 instruction = """
 <Role>
 You a helpful assistant.
 """
+
+
 class AzureAudioHandler(AsyncStreamHandler):
     def __init__(self) -> None:
         super().__init__(
@@ -54,9 +56,9 @@ class AzureAudioHandler(AsyncStreamHandler):
     async def start_up(self):
         """Connects to the Azure Real-time Audio API via WebSocket using aiohttp."""
         # Replace the following placeholders with your actual Azure values:
-        azure_api_key = "your-api-key"                # e.g., "your-api-key"
-        azure_resource_name = "your-resource-name"    # e.g., "aigdopenai"
-        deployment_id = "your-deployment-id"          # e.g., "gpt-4o-realtime-preview"
+        azure_api_key = "your-api-key"  # e.g., "your-api-key"
+        azure_resource_name = "your-resource-name"  # e.g., "aigdopenai"
+        deployment_id = "your-deployment-id"  # e.g., "gpt-4o-realtime-preview"
         api_version = "2024-10-01-preview"
         azure_endpoint = (
             f"wss://{azure_resource_name}.openai.azure.com/openai/realtime"
@@ -72,10 +74,9 @@ class AzureAudioHandler(AsyncStreamHandler):
             "session": {
                 "turn_detection": {"type": "server_vad"},
                 "instructions": instruction,
-                "voice":"ballad" # Possible voices see  https://platform.openai.com/docs/guides/realtime-model-capabilities#voice-options
-            }
+                "voice": "ballad",  # Possible voices see  https://platform.openai.com/docs/guides/realtime-model-capabilities#voice-options
+            },
         }
-
 
         await self.ws.send_str(json.dumps(session_update_message))
         # Start receiving messages asynchronously
@@ -90,9 +91,11 @@ class AzureAudioHandler(AsyncStreamHandler):
                 event_type = event.get("type")
                 if event_type in ["final", "response.audio_transcript.done"]:
                     transcript = event.get("transcript", "")
+
                     # Wrap the transcript in an object with a .transcript attribute
                     class TranscriptEvent:
                         pass
+
                     te = TranscriptEvent()
                     te.transcript = transcript
                     await self.output_queue.put(AdditionalOutputs(te))
@@ -108,7 +111,9 @@ class AzureAudioHandler(AsyncStreamHandler):
                             # Interpret as mono audio:
                             audio_array = audio_array.reshape(1, -1)
                             # Instead of playing the audio, add the chunk to the output queue
-                            await self.output_queue.put((self.output_sample_rate, audio_array))
+                            await self.output_queue.put(
+                                (self.output_sample_rate, audio_array)
+                            )
                         except Exception as e:
                             print("Error processing audio data:", e)
                 else:
@@ -170,10 +175,12 @@ class AzureAudioHandler(AsyncStreamHandler):
             await self.session.close()
             self.session = None
 
+
 def update_chatbot(chatbot: list[dict], response) -> list[dict]:
     """Appends the AI assistant's transcript response to the chatbot messages."""
     chatbot.append({"role": "assistant", "content": response.transcript})
     return chatbot
+
 
 chatbot = gr.Chatbot(type="messages")
 latest_message = gr.Textbox(type="text", visible=False)
@@ -192,6 +199,7 @@ stream = Stream(
 app = FastAPI()
 stream.mount(app)
 
+
 @app.get("/")
 async def _():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
@@ -199,21 +207,27 @@ async def _():
     html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
     return HTMLResponse(content=html_content)
 
+
 @app.get("/outputs")
 def _(webrtc_id: str):
     async def output_stream():
         import json
+
         async for output in stream.output_stream(webrtc_id):
             s = json.dumps({"role": "assistant", "content": output.args[0].transcript})
             yield f"event: output\ndata: {s}\n\n"
+
     return StreamingResponse(output_stream(), media_type="text/event-stream")
+
 
 if __name__ == "__main__":
     import os
+
     if (mode := os.getenv("MODE")) == "UI":
         stream.ui.launch(server_port=7860)
     elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:
         import uvicorn
+
         uvicorn.run(app, host="0.0.0.0", port=7860)

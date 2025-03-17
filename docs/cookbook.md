@@ -35,6 +35,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="kyutai"><code>Kyutai</code></button>
   <button class="tag-button" data-tag="agentic"><code>Agentic</code></button>
   <button class="tag-button" data-tag="local"><code>Local Models</code></button>
+  <button class="tag-button" data-tag="electron"><code>Electron</code></button>
 </div>
 
 <script>
@@ -331,7 +332,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-code-16: Code](https://github.com/sofi444/realtime-transcription-fastrtc/blob/main/main.py)
 
-    -   :speaking_head:{ .lg .middle } __Talk to Claude - Electron App__
+-   :speaking_head:{ .lg .middle } __Talk to Claude - Electron App__
 {: data-tags="audio,electron"}
 
     ---
@@ -341,8 +342,16 @@ document.querySelectorAll('.tag-button').forEach(button => {
     <video width=98% src="https://github.com/user-attachments/assets/df4628e4-ef0f-4a78-ab9b-1ed2374b1cae" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://github.com/swairshah/voice-agent)
-    
+
     [:octicons-code-16: Code](https://github.com/swairshah/voice-agent)
 
+-   :speaking_head:{ .lg .middle } __Azure Realtime API__
+{: data-tags="audio,real-time-api"}
+
+    ---
+
+    Use the Azure Realtime API to create a real-time voice chat with GPT-4o.
+
+    [:octicons-code-16: Code](https://github.com/freddyaboulton/fastrtc/tree/main/demo/talk_to_azure_openai)
 
 </div>
