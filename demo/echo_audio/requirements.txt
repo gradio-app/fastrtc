@@ -1,3 +1,0 @@
-fastrtc[vad]
-twilio
-python-dotenv

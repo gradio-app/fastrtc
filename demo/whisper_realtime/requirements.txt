@@ -1,4 +1,0 @@
-fastrtc[vad]
-groq
-python-dotenv
-twilio

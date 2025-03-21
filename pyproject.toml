@@ -7,13 +7,16 @@ requires = [
 build-backend = "hatchling.build"
 
 [project]
-name = "fastrtc"
-version = "0.0.14"
-description = "The realtime communication library for Python"
+name = "fastrtc_canary"
+version = "0.0.1"
+description = "The realtime communication library for Python - fastrtc with Nvidia's Canary STT"
 readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.10"
-authors = [{ name = "Freddy Boulton", email = "YOUREMAIL@domain.com" }]
+authors = [ 
+            { name = "Freddy Boulton", email = "YOUREMAIL@domain.com" },
+            { name = "Mahimai Raja", email = "YOUREMAIL@domain.com"}
+          ]
 keywords = [
   "streaming",
   "webrtc",
@@ -29,14 +32,14 @@ keywords = [
 ]
 # Add dependencies here
 dependencies = [
-  "gradio>=4.0,<6.0",
   "aiortc",
   "audioop-lts;python_version>='3.13'",
   "librosa",
-  "numpy>=2.0.2",                          # because of librosa
+  "numpy>=2.0.2", # because of librosa
   "numba>=0.60.0",
   "standard-aifc;python_version>='3.13'",
   "standard-sunau;python_version>='3.13'",
+  "nemo_toolkit[asr]",
 ]
 classifiers = [
   'Development Status :: 3 - Alpha',
@@ -70,18 +73,7 @@ Documentation = "https://freddyaboulton.github.io/gradio-webrtc/cookbook/"
 
 [project.optional-dependencies]
 dev = ["build", "twine"]
-vad = ["onnxruntime>=1.20.1"]
-tts = ["kokoro-onnx"]
-stopword = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
-stt = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
-stt-canary = ["nemo_toolkit[asr]"]
-
-[tool.hatch.build]
-artifacts = ["/backend/fastrtc/templates", "*.pyi"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["/backend/fastrtc"]
+packages = ["fastrtc_canary"]
 
-[tool.ruff]
-target-version = "py310"
-extend-exclude = ["demo/phonic_chat", "demo/nextjs_voice_chat"]

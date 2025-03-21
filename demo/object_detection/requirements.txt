@@ -1,4 +1,0 @@
-fastrtc
-opencv-python
-twilio
-onnxruntime-gpu
