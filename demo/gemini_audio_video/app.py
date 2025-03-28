@@ -49,7 +49,6 @@ class GeminiHandler(AsyncAudioVideoStreamHandler):
         )
         self.audio_queue = asyncio.Queue()
         self.video_queue = asyncio.Queue()
-        self.quit = asyncio.Event()
         self.session = None
         self.last_frame_time = 0
         self.quit = asyncio.Event()
