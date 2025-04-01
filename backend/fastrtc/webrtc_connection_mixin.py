@@ -326,7 +326,11 @@ class WebRTCConnectionMixin:
                     context=context,
                 )
             else:
-                raise ValueError("Modality must be either video, audio, or audio-video")
+                if self.modality not in ["video", "audio", "audio-video"]:
+                    msg = "Modality must be either video, audio, or audio-video"
+                else:
+                    msg = f"Unsupported track kind '{track.kind}' for modality '{self.modality}'"
+                raise ValueError(msg)
             if body["webrtc_id"] not in self.connections:
                 self.connections[body["webrtc_id"]] = []
 
