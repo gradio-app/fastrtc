@@ -1,43 +1,48 @@
-When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic.
+When deploying in cloud environments with firewalls (like Hugging Face Spaces, RunPod), your WebRTC connections may be blocked from making direct connections. In these cases, you need a TURN server to relay the audio/video traffic between users. This guide covers different options for setting up FastRTC to connect to a TURN server.
+
+!!! tip
+    The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](../userguide/gradio) component directly if you're building a standalone gradio app.
 
 ## Community Server
 
 Hugging Face graciously provides a TURN server for the community.
-In order to use it, you need to first create a Hugging Face account by going to the [huggingface.co](https://huggingface.co/).
+In order to use it, you need to first create a Hugging Face account by going to [huggingface.co](https://huggingface.co/).
 
-Then navigate to this [space](https://huggingface.co/spaces/freddyaboulton/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
+Then navigate to this [space](https://huggingface.co/spaces/fastrtc/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
 
-![turn_login](https://github.com/user-attachments/assets/d077c3a3-7059-45d6-8e50-eb3d8a4aa43f)
+![turn_login](https://github.com/user-attachments/assets/cefa8dec-487e-47d8-bb96-1a14a701f6e5)
 
 Then you can use the `get_hf_turn_credentials` helper to get your credentials:
 
 ```python
-from gradio_webrtc import get_hf_turn_credentials, WebRTC
+from fastrtc import get_hf_turn_credentials, Stream
 
 # Pass a valid access token for your Hugging Face account
 # or set the HF_TOKEN environment variable 
 credentials = get_hf_turn_credentials(token=None)
 
-with gr.Blcocks() as demo:
-    webrtc = WebRTC(rtc_configuration=credentials)
-    ...
-
-demo.launch()
+Stream(
+    handler=...,
+    rtc_configuration=credentials,
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
 !!! warning
 
     This is a shared resource so we make no latency/availability guarantees.
-    For more robust options, see the Twilio and self-hosting options below.
+    For more robust options, see the Twilio, Cloudflare and self-hosting options below.
 
 
 ## Twilio API
 
-The easiest way to do this is to use a service like Twilio.
+An easy way to do this is to use a service like Twilio.
 
 Create a **free** [account](https://login.twilio.com/u/signup) and the install the `twilio` package with pip (`pip install twilio`). You can then connect from the WebRTC component like so:
 
 ```python
+from fastrtc import Stream
 from twilio.rest import Client
 import os
 
@@ -53,13 +58,15 @@ rtc_configuration = {
     "iceTransportPolicy": "relay",
 }
 
-with gr.Blocks() as demo:
-    ...
-    rtc = WebRTC(rtc_configuration=rtc_configuration, ...)
-    ...
+Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
-!!! tip "Automatic Login"
+!!! tip "Automatic login"
 
     You can log in automatically with the `get_twilio_turn_credentials` helper
 
@@ -70,6 +77,50 @@ with gr.Blocks() as demo:
     # env variables but you can also pass in the tokens as parameters
     rtc_configuration = get_twilio_turn_credentials()
     ```
+
+## Cloudflare Calls API
+
+Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www.cloudflare.com/en-au/developer-platform/products/cloudflare-calls/).
+
+Create a **free** [account](https://developers.cloudflare.com/fundamentals/setup/account/create-account/) and head to the [Calls section in your dashboard](https://dash.cloudflare.com/?to=/:account/calls).
+
+Choose `Create -> TURN App`, give it a name (like `fastrtc-demo`), and then hit the Create button.
+
+Take note of the Turn Token ID (often exported as `TURN_KEY_ID`) and API Token (exported as `TURN_KEY_API_TOKEN`).
+
+You can then connect from the WebRTC component like so:
+
+```python
+from fastrtc import Stream
+import requests
+import os
+
+turn_key_id = os.environ.get("TURN_KEY_ID")
+turn_key_api_token = os.environ.get("TURN_KEY_API_TOKEN")
+ttl = 86400 # Can modify TTL, here it's set to 24 hours
+
+response = requests.post(
+    f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate-ice-servers",
+    headers={
+        "Authorization": f"Bearer {turn_key_api_token}",
+        "Content-Type": "application/json",
+    },
+    json={"ttl": ttl},  
+)
+if response.ok:
+    rtc_configuration = response.json()
+else:
+    raise Exception(
+        f"Failed to get TURN credentials: {response.status_code} {response.text}"
+    )
+
+stream = Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive",
+)
+```
 
 ## Self Hosting
 
@@ -148,8 +199,7 @@ The `server-info.json` file will have the server's public IP and public DNS:
 Finally, you can connect to your EC2 server from the gradio WebRTC component via the `rtc_configuration` argument:
 
 ```python
-import gradio as gr
-from gradio_webrtc import WebRTC
+from fastrtc import Stream
 rtc_configuration = {
     "iceServers": [
         {
@@ -159,7 +209,10 @@ rtc_configuration = {
         },
     ]
 }
-
-with gr.Blocks() as demo:
-    webrtc = WebRTC(rtc_configuration=rtc_configuration)
+Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive"
+)
 ```

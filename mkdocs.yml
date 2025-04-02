@@ -1,26 +1,42 @@
-site_name: Gradio WebRTC
-site_url: https://sitename.example
-repo_name: gradio-webrtc
-repo_url: https://github.com/freddyaboulton/gradio-webrtc
+site_name: FastRTC
+site_url: https://fastrtc.org
+repo_name: fastrtc
+repo_url: https://github.com/freddyaboulton/fastrtc
 theme:
   name: material
+  custom_dir: overrides
   palette:
-    scheme: slate
-    primary: black
-    accent: yellow
+    scheme: fastrtc-dark
   features:
     - content.code.copy
     - content.code.annotate
-  logo: bolt.svg
-  favicon: bolt.svg
+    - navigation.indexes
+  logo: fastrtc_logo.png
+  favicon: fastrtc_logo.png
+extra_css:
+    - stylesheets/extra.css
+    - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css
 nav:
   - Home: index.md
-  - User Guide: user-guide.md
+  - User Guide:
+    - Core Concepts: userguide/streams.md
+    - Audio Streaming: userguide/audio.md
+    - Video Streaming: userguide/video.md
+    - Audio-Video Streaming: userguide/audio-video.md
+    - Gradio: userguide/gradio.md
+    - API: userguide/api.md
   - Cookbook: cookbook.md
   - Deployment: deployment.md
   - Advanced Configuration: advanced-configuration.md
+  - Plugin Ecosystem:
+    - Text-to-Speech Gallery: text_to_speech_gallery.md
+    - Speech-to-Text Gallery: speech_to_text_gallery.md
+    - Turn-taking Gallery: turn_taking_gallery.md
   - Utils: utils.md
   - Frequently Asked Questions: faq.md
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/marked/marked.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true

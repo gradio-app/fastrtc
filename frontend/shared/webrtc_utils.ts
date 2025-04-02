@@ -53,6 +53,8 @@ export async function start(
   modality: "video" | "audio" = "video",
   on_change_cb: (msg: "change" | "tick") => void = () => {},
   rtp_params = {},
+  additional_message_cb: (msg: object) => void = () => {},
+  reject_cb: (msg: object) => void = () => {},
 ) {
   pc = createPeerConnection(pc, node);
   const data_channel = pc.createDataChannel("text");
@@ -70,17 +72,20 @@ export async function start(
     } catch (e) {
       console.debug("Error parsing JSON");
     }
-    console.log("event_json", event_json);
     if (
       event.data === "change" ||
       event.data === "tick" ||
       event.data === "stopword" ||
       event_json?.type === "warning" ||
-      event_json?.type === "error"
+      event_json?.type === "error" ||
+      event_json?.type === "send_input" ||
+      event_json?.type === "fetch_output" ||
+      event_json?.type === "stopword" ||
+      event_json?.type === "end_stream"
     ) {
-      console.debug(`${event.data} event received`);
       on_change_cb(event_json ?? event.data);
     }
+    additional_message_cb(event_json ?? event.data);
   };
 
   if (stream) {
@@ -97,15 +102,20 @@ export async function start(
     pc.addTransceiver(modality, { direction: "recvonly" });
   }
 
-  await negotiate(pc, server_fn, webrtc_id);
+  await negotiate(pc, server_fn, webrtc_id, reject_cb);
   return pc;
 }
 
-function make_offer(server_fn: any, body): Promise<object> {
+function make_offer(
+  server_fn: any,
+  body,
+  reject_cb: (msg: object) => void = () => {},
+): Promise<object> {
   return new Promise((resolve, reject) => {
     server_fn(body).then((data) => {
       console.debug("data", data);
       if (data?.status === "failed") {
+        reject_cb(data);
         console.debug("rejecting");
         reject("error");
       }
@@ -118,37 +128,35 @@ async function negotiate(
   pc: RTCPeerConnection,
   server_fn: any,
   webrtc_id: string,
+  reject_cb: (msg: object) => void = () => {},
 ): Promise<void> {
+  pc.onicecandidate = ({ candidate }) => {
+    if (candidate) {
+      console.debug("Sending ICE candidate", candidate);
+      server_fn({
+        candidate: candidate.toJSON(),
+        webrtc_id: webrtc_id,
+        type: "ice-candidate",
+      }).catch((err) => console.error("Error sending ICE candidate:", err));
+    }
+  };
+
   return pc
     .createOffer()
     .then((offer) => {
       return pc.setLocalDescription(offer);
     })
     .then(() => {
-      // wait for ICE gathering to complete
-      return new Promise<void>((resolve) => {
-        console.debug("ice gathering state", pc.iceGatheringState);
-        if (pc.iceGatheringState === "complete") {
-          resolve();
-        } else {
-          const checkState = () => {
-            if (pc.iceGatheringState === "complete") {
-              console.debug("ice complete");
-              pc.removeEventListener("icegatheringstatechange", checkState);
-              resolve();
-            }
-          };
-          pc.addEventListener("icegatheringstatechange", checkState);
-        }
-      });
-    })
-    .then(() => {
       var offer = pc.localDescription;
-      return make_offer(server_fn, {
-        sdp: offer.sdp,
-        type: offer.type,
-        webrtc_id: webrtc_id,
-      });
+      return make_offer(
+        server_fn,
+        {
+          sdp: offer.sdp,
+          type: offer.type,
+          webrtc_id: webrtc_id,
+        },
+        reject_cb,
+      );
     })
     .then((response) => {
       return response;

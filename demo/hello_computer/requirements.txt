@@ -1,0 +1,4 @@
+fastrtc[stopword]
+python-dotenv
+huggingface_hub>=0.29.0
+twilio
