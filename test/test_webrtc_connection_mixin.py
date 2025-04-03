@@ -13,14 +13,8 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from fastrtc.tracks import HandlerType
+from fastrtc.stream import Body
 from fastrtc.webrtc_connection_mixin import WebRTCConnectionMixin
-
-
-class TestBody(BaseModel):
-    sdp: Optional[str] = None
-    candidate: Optional[dict[str, Any]] = None
-    type: str
-    webrtc_id: str
 
 
 class MinimalTestStream(WebRTCConnectionMixin):
@@ -50,7 +44,7 @@ class MinimalTestStream(WebRTCConnectionMixin):
         router.post("/webrtc/offer")(self.offer)
         app.include_router(router)
 
-    async def offer(self, body: TestBody):
+    async def offer(self, body: Body):
         return await self.handle_offer(
             body.model_dump(), set_outputs=self.set_additional_outputs(body.webrtc_id)
         )
