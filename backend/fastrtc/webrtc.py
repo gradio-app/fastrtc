@@ -82,6 +82,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         rtc_configuration: dict[str, Any] | None = None,
         track_constraints: dict[str, Any] | None = None,
         time_limit: float | None = None,
+        allow_extra_tracks: bool = False,
         mode: Literal["send-receive", "receive", "send"] = "send-receive",
         modality: Literal["video", "audio", "audio-video"] = "video",
         rtp_params: dict[str, Any] | None = None,
@@ -114,6 +115,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             rtc_configuration: WebRTC configuration options. See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection . If running the demo on a remote server, you will need to specify a rtc_configuration. See https://freddyaboulton.github.io/gradio-webrtc/deployment/
             track_constraints: Media track constraints for WebRTC. For example, to set video height, width use {"width": {"exact": 800}, "height": {"exact": 600}, "aspectRatio": {"exact": 1.33333}}
             time_limit: Maximum duration in seconds for recording.
+            allow_extra_tracks: Allow tracks not supported by the modality. For example, a peer connection with an audio track would be allowed even if modality is 'video', which normally throws a ``ValueError`` exception.
             mode: WebRTC mode - "send-receive", "receive", or "send".
             modality: Type of media - "video" or "audio".
             rtp_params: See https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpSender/setParameters. If you are changing the video resolution, you can set this to {"degradationPreference": "maintain-framerate"} to keep the frame rate consistent.
@@ -130,6 +132,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         self.mirror_webcam = mirror_webcam
         self.concurrency_limit = 1
         self.rtc_configuration = rtc_configuration
+        self.allow_extra_tracks = allow_extra_tracks
         self.mode = mode
         self.modality = modality
         self.icon_button_color = icon_button_color
