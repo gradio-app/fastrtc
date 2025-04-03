@@ -81,6 +81,7 @@ class WebRTCConnectionMixin:
         self.time_limit: float | None
         self.modality: Literal["video", "audio", "audio-video"]
         self.mode: Literal["send", "receive", "send-receive"]
+        self.allow_extra_tracks: bool
 
     @staticmethod
     async def wait_for_time_limit(pc: RTCPeerConnection, time_limit: float):
@@ -329,6 +330,8 @@ class WebRTCConnectionMixin:
                 if self.modality not in ["video", "audio", "audio-video"]:
                     msg = "Modality must be either video, audio, or audio-video"
                 else:
+                    if self.allow_extra_tracks:
+                        return
                     msg = f"Unsupported track kind '{track.kind}' for modality '{self.modality}'"
                 raise ValueError(msg)
             if body["webrtc_id"] not in self.connections:

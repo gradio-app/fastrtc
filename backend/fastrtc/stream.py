@@ -65,6 +65,7 @@ class Stream(WebRTCConnectionMixin):
         modality: Literal["video", "audio", "audio-video"] = "video",
         concurrency_limit: int | None | Literal["default"] = "default",
         time_limit: float | None = None,
+        allow_extra_tracks: bool = False,
         rtp_params: dict[str, Any] | None = None,
         rtc_configuration: dict[str, Any] | None = None,
         track_constraints: dict[str, Any] | None = None,
@@ -85,6 +86,7 @@ class Stream(WebRTCConnectionMixin):
             int | Literal["default"] | None, concurrency_limit
         )
         self.time_limit = time_limit
+        self.allow_extra_tracks = allow_extra_tracks
         self.additional_output_components = additional_outputs
         self.additional_input_components = additional_inputs
         self.additional_outputs_handler = additional_outputs_handler
