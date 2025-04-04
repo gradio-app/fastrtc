@@ -196,6 +196,8 @@ async def player_worker_decode(
                 layout = "mono"
             elif len(frame) == 3:
                 sample_rate, audio_array, layout = frame
+            else:
+                raise ValueError(f"frame must be of length 2 or 3, got: {len(frame)}")
 
             logger.debug(
                 "received array with shape %s sample rate %s layout %s",
