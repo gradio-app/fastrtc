@@ -118,3 +118,16 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]
 "demo/talk_to_smolagents/app.py" = ["W291"]
+
+[tool.pyright]
+include = ["backend/fastrtc"]
+exclude = [
+  "**/__pycache__",
+  "**/*.pyi",
+]
+
+reportMissingImports = false
+reportMissingTypeStubs = false
+
+pythonVersion = "3.10"
+pythonPlatform = "Linux"
