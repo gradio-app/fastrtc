@@ -20,7 +20,7 @@ from fastrtc.webrtc_connection_mixin import WebRTCConnectionMixin
 class MinimalTestStream(WebRTCConnectionMixin):
     def __init__(
         self,
-        handler: HandlerType,
+        handler: HandlerType = lambda x: x,
         *,
         mode: Literal["send-receive", "receive", "send"] = "send-receive",
         modality: Literal["video", "audio", "audio-video"] = "video",
@@ -52,23 +52,10 @@ class MinimalTestStream(WebRTCConnectionMixin):
         )
 
 @pytest.fixture()
-def test_client_and_stream(
-    handler,
-    mode,
-    modality,
-    concurrency_limit,
-    time_limit,
-    allow_extra_tracks,
-):
+def test_client_and_stream(request):
     app = FastAPI()
-    stream = MinimalTestStream(
-        handler,
-        mode=mode,
-        modality=modality,
-        concurrency_limit=concurrency_limit,
-        time_limit=time_limit,
-        allow_extra_tracks=allow_extra_tracks,
-    )
+    params = request.param if hasattr(request, "param") else {}
+    stream = MinimalTestStream(**params)
     stream.mount(app)
     test_client = TestClient(app)
     yield test_client, stream
@@ -77,7 +64,7 @@ def test_client_and_stream(
 class TestWebRTCConnectionMixin:
 
     @staticmethod
-    async def setup_peer_connection(audio, video):
+    async def setup_peer_connection(audio=False, video=False):
         pc = RTCPeerConnection()
         channel = pc.createDataChannel('test-data-channel')
         if audio:
@@ -94,8 +81,8 @@ class TestWebRTCConnectionMixin:
     async def send_offer(
         pc,
         client,
-        audio,
-        video,
+        audio=False,
+        video=False,
         webrtc_id='test_id',
         response_code=200,
         return_status_and_metadata=False,
@@ -118,6 +105,7 @@ class TestWebRTCConnectionMixin:
             return
         out = response.json()
         if return_status_and_metadata:
+            assert 'status' in out and 'meta' in out
             return out['status'], out['meta']
         assert 'type' in out and out['type'] == 'answer'
         assert 'webrtc-datachannel' in out['sdp']
@@ -139,100 +127,78 @@ class TestWebRTCConnectionMixin:
         assert pc.signalingState == "closed"
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('handler', [lambda x: x])
-    @pytest.mark.parametrize('mode', ["send-receive"])
-    @pytest.mark.parametrize('concurrency_limit', [1])
-    @pytest.mark.parametrize('time_limit', [None])
-    @pytest.mark.parametrize('allow_extra_tracks', [False])
-    @pytest.mark.parametrize("modality, audio, video", [
-        ("audio", False, False),  # This case is valid...
-        ("audio", True, False),
-        ("video", False, False),  # This case is valid...
-        ("video", False, True),
-    ])
-    async def test_successful_connection(self, test_client_and_stream, audio, video):
+    @pytest.mark.parametrize("test_client_and_stream", [{"modality": "audio"}], indirect=True)
+    @pytest.mark.parametrize("audio", [True, False])
+    async def test_successful_connection_audio(self, test_client_and_stream, audio):
         test_client, stream = test_client_and_stream
-        pc, channel = await self.setup_peer_connection(audio, video)
-        await self.send_offer(pc, test_client, audio, video)
-        # TODO: Test stream? E.g., when no audio/video is
+        pc, channel = await self.setup_peer_connection(audio)
+        await self.send_offer(pc, test_client, audio)
+        # TODO: Test stream? E.g., when no audio is not part of the offer...
         await self.close_peer_connection(pc)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('handler', [lambda x: x])
-    @pytest.mark.parametrize('mode', ["send-receive"])
-    @pytest.mark.parametrize('concurrency_limit', [1])
-    @pytest.mark.parametrize('time_limit', [None])
-    @pytest.mark.parametrize('allow_extra_tracks', [False])
-    @pytest.mark.parametrize("modality, audio, video", [
-        ("audio", True, True),
-        ("audio", False, True),
-        ("video", True, True),
-        ("video", True, False),
-    ])
-    async def test_unsuccessful_connection(self, test_client_and_stream, audio, video):
+    @pytest.mark.parametrize("test_client_and_stream", [{"modality": "video"}], indirect=True)
+    @pytest.mark.parametrize("video",  [True, False])
+    async def test_successful_connection_video(self, test_client_and_stream, video):
         test_client, stream = test_client_and_stream
-        pc, channel = await self.setup_peer_connection(audio, video)
+        pc, channel = await self.setup_peer_connection(video=video)
+        await self.send_offer(pc, test_client, video=video)
+        # TODO: Test stream? E.g., when no video is not part of the offer...
+        await self.close_peer_connection(pc)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("test_client_and_stream", [{"modality": "audio"}],  indirect=True)
+    @pytest.mark.parametrize("audio", [True, False])
+    async def test_unsuccessful_connection_audio(self, test_client_and_stream, audio):
+        test_client, stream = test_client_and_stream
+        pc, channel = await self.setup_peer_connection(audio=audio, video=True)
         with pytest.raises(ValueError, match=r"Unsupported track kind .*"):
-            await self.send_offer(pc, test_client, audio, video)
+            await self.send_offer(pc, test_client, audio=audio, video=True)
         await self.close_peer_connection(pc)
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("test_client_and_stream", [{"modality": "video"}],  indirect=True)
+    @pytest.mark.parametrize("video", [True, False])
+    async def test_unsuccessful_connection_video(self, test_client_and_stream, video):
+        test_client, stream = test_client_and_stream
+        pc, channel = await self.setup_peer_connection(audio=True, video=video)
+        with pytest.raises(ValueError, match=r"Unsupported track kind .*"):
+            await self.send_offer(pc, test_client, audio=True, video=video)
+        await self.close_peer_connection(pc)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('handler', [lambda x: x])
-    @pytest.mark.parametrize('mode', ["send-receive"])
-    @pytest.mark.parametrize('modality', ["audio"])
-    @pytest.mark.parametrize('concurrency_limit', [1])
-    @pytest.mark.parametrize('time_limit', [None])
-    @pytest.mark.parametrize('allow_extra_tracks', [False])
     async def test_unsuccessful_webrtc_offer_no_webrtc_id(self, test_client_and_stream):
-        audio = False
-        video = False
         test_client, stream = test_client_and_stream
-        pc, channel = await self.setup_peer_connection(audio, video)
+        pc, channel = await self.setup_peer_connection()
         await self.send_offer(
             pc,
             test_client,
-            audio,
-            video,
             webrtc_id=None,
             response_code=422,
         )
-        await self.send_offer(pc, test_client, audio, video)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('handler', [lambda x: x])
-    @pytest.mark.parametrize('mode', ["send-receive"])
-    @pytest.mark.parametrize('concurrency_limit', [1])
-    @pytest.mark.parametrize('time_limit', [None])
-    @pytest.mark.parametrize('allow_extra_tracks', [False])
-    @pytest.mark.parametrize("modality, audio, video", [
-        ("dummy", True, False),
-        ("dummy", False, True),
-        ("dummy", True, True),
+    @pytest.mark.parametrize("test_client_and_stream", [{"modality": "dummy"}],  indirect=True)
+    @pytest.mark.parametrize("audio, video", [
+        (True, False),
+        (False, True),
+        (True, True),
     ])
     async def test_incorrect_modality(self, test_client_and_stream, audio, video):
         test_client, stream = test_client_and_stream
-        pc, channel = await self.setup_peer_connection(audio, video)
+        pc, channel = await self.setup_peer_connection(audio=audio, video=video)
         with pytest.raises(ValueError, match=r"Modality must be .*"):
-            await self.send_offer(pc, test_client, audio, video)
+            await self.send_offer(pc, test_client, audio=audio, video=video)
         await self.close_peer_connection(pc)
 
-
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('handler', [lambda x: x])
-    @pytest.mark.parametrize('mode', ["send-receive"])
-    @pytest.mark.parametrize('concurrency_limit', [1])
-    @pytest.mark.parametrize('time_limit', [None])
-    @pytest.mark.parametrize('allow_extra_tracks', [False])
-    @pytest.mark.parametrize("modality, audio, video", [
-        ("audio", True, False),
-    ])
-    async def test_concurrency_limit_reached(self, test_client_and_stream, audio, video):
+    @pytest.mark.parametrize("test_client_and_stream", [{"concurrency_limit": 1}], indirect=True)
+    async def test_concurrency_limit_reached_two_peers(self, test_client_and_stream):
         test_client, stream = test_client_and_stream
-        pc1, channel = await self.setup_peer_connection(audio, video)
-        pc2, channel = await self.setup_peer_connection(audio, video)
-        await self.send_offer(pc1, test_client, audio, video)
-        status, metadata = await self.send_offer(pc2, test_client, audio, video, return_status_and_metadata=True)
+        pc1, channel = await self.setup_peer_connection(video=True)
+        pc2, channel = await self.setup_peer_connection(video=True)
+        await self.send_offer(pc1, test_client)
+        status, metadata = await self.send_offer(pc2, test_client, return_status_and_metadata=True)
 
         assert status == 'failed'
         assert metadata == {'error': 'concurrency_limit_reached', 'limit': 1}
@@ -240,18 +206,67 @@ class TestWebRTCConnectionMixin:
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("test_client_and_stream", [{"concurrency_limit": 2}], indirect=True)
+    @pytest.mark.xfail(reason="It is the same webrtc_id so pc1 and pc2 are seen as ONE connection")
+    async def test_concurrency_limit_reached_three_peers_same_id(self, test_client_and_stream):
+        test_client, stream = test_client_and_stream
+        pc1, channel = await self.setup_peer_connection(video=True)
+        pc2, channel = await self.setup_peer_connection(video=True)
+        pc3, channel = await self.setup_peer_connection(video=True)
+        await self.send_offer(pc1, test_client)
+        await self.send_offer(pc2, test_client)
+        status, metadata = await self.send_offer(pc3, test_client, return_status_and_metadata=True)
+
+        assert status == 'failed'
+        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 1}
+
+        await self.close_peer_connection(pc1)
+        await self.close_peer_connection(pc2)
+        await self.close_peer_connection(pc3)
+
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize('handler', [lambda x: x])
-    @pytest.mark.parametrize('mode', ["send-receive"])
-    @pytest.mark.parametrize('concurrency_limit', [1])
-    @pytest.mark.parametrize('time_limit', [None])
-    @pytest.mark.parametrize('allow_extra_tracks', [True])
-    @pytest.mark.parametrize("modality, audio, video", [
-        ("video", True, True),
-    ])
-    async def test_successful_connection_allow_extra_tracks(self, test_client_and_stream, audio, video):
+    @pytest.mark.parametrize("test_client_and_stream", [{"concurrency_limit": 2}], indirect=True)
+    async def test_concurrency_limit_reached_three_peers(self, test_client_and_stream):
         test_client, stream = test_client_and_stream
-        pc, channel = await self.setup_peer_connection(audio, video)
-        await self.send_offer(pc, test_client, audio, video)
+        pc1, channel = await self.setup_peer_connection(video=True)
+        pc2, channel = await self.setup_peer_connection(video=True)
+        pc3, channel = await self.setup_peer_connection(video=True)
+        await self.send_offer(pc1, test_client, webrtc_id='foo')
+        await self.send_offer(pc2, test_client, webrtc_id='bar')
+        status, metadata = await self.send_offer(pc3, test_client, webrtc_id='baz', return_status_and_metadata=True)
+
+        assert status == 'failed'
+        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 2}
+
+        await self.close_peer_connection(pc1)
+        await self.close_peer_connection(pc2)
+        await self.close_peer_connection(pc3)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("test_client_and_stream", [{"concurrency_limit": 1}], indirect=True)
+    @pytest.mark.xfail(reason="No audio or video tracks in peer connections added only datachannels")
+    async def test_concurrency_limit_reached_peers_with_no_mediastreams(self, test_client_and_stream):
+        test_client, stream = test_client_and_stream
+        pc1, channel = await self.setup_peer_connection()
+        pc2, channel = await self.setup_peer_connection()
+        await self.send_offer(pc1, test_client, webrtc_id='foo')
+        status, metadata = await self.send_offer(pc2, test_client, webrtc_id='bar', return_status_and_metadata=True)
+
+        assert status == 'failed'
+        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 1}
+
+        await self.close_peer_connection(pc1)
+        await self.close_peer_connection(pc2)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("test_client_and_stream", [
+        {"allow_extra_tracks": True, "modality": "audio"},
+        {"allow_extra_tracks": True, "modality": "video"},
+    ],  indirect=True)
+    async def test_successful_connection_allow_extra_tracks(self, test_client_and_stream):
+        test_client, stream = test_client_and_stream
+        pc, channel = await self.setup_peer_connection(audio=True, video=True)
+        await self.send_offer(pc, test_client, audio=True, video=True)
         await self.close_peer_connection(pc)
