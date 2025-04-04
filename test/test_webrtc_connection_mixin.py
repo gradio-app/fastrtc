@@ -1,19 +1,20 @@
 import asyncio
 from typing import (
-    Any,
     Literal,
-    Optional,
     cast,
 )
-import pytest
 
-from aiortc import AudioStreamTrack, RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
+import pytest
+from aiortc import (
+    AudioStreamTrack,
+    RTCPeerConnection,
+    RTCSessionDescription,
+    VideoStreamTrack,
+)
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from pydantic import BaseModel
-
-from fastrtc.tracks import HandlerType
 from fastrtc.stream import Body
+from fastrtc.tracks import HandlerType
 from fastrtc.webrtc_connection_mixin import WebRTCConnectionMixin
 
 
@@ -66,7 +67,7 @@ class TestWebRTCConnectionMixin:
     @staticmethod
     async def setup_peer_connection(audio=False, video=False):
         pc = RTCPeerConnection()
-        channel = pc.createDataChannel('test-data-channel')
+        channel = pc.createDataChannel("test-data-channel")
         if audio:
             audio_track = AudioStreamTrack()
             pc.addTrack(audio_track)
@@ -83,20 +84,20 @@ class TestWebRTCConnectionMixin:
         client,
         audio=False,
         video=False,
-        webrtc_id='test_id',
+        webrtc_id="test_id",
         response_code=200,
         return_status_and_metadata=False,
     ):
         body = {
-            'sdp': pc.localDescription.sdp,
-            'type': pc.localDescription.type,
+            "sdp": pc.localDescription.sdp,
+            "type": pc.localDescription.type,
         }
         if webrtc_id is not None:
-            body['webrtc_id'] = webrtc_id
+            body["webrtc_id"] = webrtc_id
         response = client.post(
             "/webrtc/offer",
             headers={
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json"
             },
             json=body,
         )
@@ -105,16 +106,16 @@ class TestWebRTCConnectionMixin:
             return
         out = response.json()
         if return_status_and_metadata:
-            assert 'status' in out and 'meta' in out
-            return out['status'], out['meta']
-        assert 'type' in out and out['type'] == 'answer'
-        assert 'webrtc-datachannel' in out['sdp']
+            assert "status" in out and "meta" in out
+            return out["status"], out["meta"]
+        assert "type" in out and out["type"] == "answer"
+        assert "webrtc-datachannel" in out["sdp"]
         if audio:
-            assert 'm=audio' in out['sdp']
+            assert "m=audio" in out["sdp"]
         if video:
-            assert 'm=video' in out['sdp']
+            assert "m=video" in out["sdp"]
 
-        await pc.setRemoteDescription(RTCSessionDescription(out['sdp'], out['type']))
+        await pc.setRemoteDescription(RTCSessionDescription(out["sdp"], out["type"]))
 
         # Allow data to stream
         await asyncio.sleep(0.5)
@@ -200,8 +201,8 @@ class TestWebRTCConnectionMixin:
         await self.send_offer(pc1, test_client)
         status, metadata = await self.send_offer(pc2, test_client, return_status_and_metadata=True)
 
-        assert status == 'failed'
-        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 1}
+        assert status == "failed"
+        assert metadata == {"error": "concurrency_limit_reached", "limit": 1}
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
@@ -218,8 +219,8 @@ class TestWebRTCConnectionMixin:
         await self.send_offer(pc2, test_client)
         status, metadata = await self.send_offer(pc3, test_client, return_status_and_metadata=True)
 
-        assert status == 'failed'
-        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 1}
+        assert status == "failed"
+        assert metadata == {"error": "concurrency_limit_reached", "limit": 1}
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
@@ -233,12 +234,12 @@ class TestWebRTCConnectionMixin:
         pc1, channel = await self.setup_peer_connection(video=True)
         pc2, channel = await self.setup_peer_connection(video=True)
         pc3, channel = await self.setup_peer_connection(video=True)
-        await self.send_offer(pc1, test_client, webrtc_id='foo')
-        await self.send_offer(pc2, test_client, webrtc_id='bar')
-        status, metadata = await self.send_offer(pc3, test_client, webrtc_id='baz', return_status_and_metadata=True)
+        await self.send_offer(pc1, test_client, webrtc_id="foo")
+        await self.send_offer(pc2, test_client, webrtc_id="bar")
+        status, metadata = await self.send_offer(pc3, test_client, webrtc_id="baz", return_status_and_metadata=True)
 
-        assert status == 'failed'
-        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 2}
+        assert status == "failed"
+        assert metadata == {"error": "concurrency_limit_reached", "limit": 2}
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
@@ -251,11 +252,11 @@ class TestWebRTCConnectionMixin:
         test_client, stream = test_client_and_stream
         pc1, channel = await self.setup_peer_connection()
         pc2, channel = await self.setup_peer_connection()
-        await self.send_offer(pc1, test_client, webrtc_id='foo')
-        status, metadata = await self.send_offer(pc2, test_client, webrtc_id='bar', return_status_and_metadata=True)
+        await self.send_offer(pc1, test_client, webrtc_id="foo")
+        status, metadata = await self.send_offer(pc2, test_client, webrtc_id="bar", return_status_and_metadata=True)
 
-        assert status == 'failed'
-        assert metadata == {'error': 'concurrency_limit_reached', 'limit': 1}
+        assert status == "failed"
+        assert metadata == {"error": "concurrency_limit_reached", "limit": 1}
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
