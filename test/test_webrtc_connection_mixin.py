@@ -26,6 +26,7 @@ class MinimalTestStream(WebRTCConnectionMixin):
         modality: Literal["video", "audio", "audio-video"] = "video",
         concurrency_limit: int | None | Literal["default"] = "default",
         time_limit: float | None = None,
+        allow_extra_tracks: bool = False,
     ):
         WebRTCConnectionMixin.__init__(self)
         self.mode = mode
@@ -36,6 +37,7 @@ class MinimalTestStream(WebRTCConnectionMixin):
             1 if concurrency_limit in ["default", None] else concurrency_limit,
         )
         self.time_limit = time_limit
+        self.allow_extra_tracks = allow_extra_tracks
 
     def mount(self, app: FastAPI, path: str = ""):
         from fastapi import APIRouter
@@ -55,7 +57,8 @@ def test_client_and_stream(
     mode,
     modality,
     concurrency_limit,
-    time_limit
+    time_limit,
+    allow_extra_tracks,
 ):
     app = FastAPI()
     stream = MinimalTestStream(
@@ -63,7 +66,8 @@ def test_client_and_stream(
         mode=mode,
         modality=modality,
         concurrency_limit=concurrency_limit,
-        time_limit=time_limit
+        time_limit=time_limit,
+        allow_extra_tracks=allow_extra_tracks,
     )
     stream.mount(app)
     test_client = TestClient(app)
@@ -139,6 +143,7 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.parametrize('mode', ["send-receive"])
     @pytest.mark.parametrize('concurrency_limit', [1])
     @pytest.mark.parametrize('time_limit', [None])
+    @pytest.mark.parametrize('allow_extra_tracks', [False])
     @pytest.mark.parametrize("modality, audio, video", [
         ("audio", False, False),  # This case is valid...
         ("audio", True, False),
@@ -157,6 +162,7 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.parametrize('mode', ["send-receive"])
     @pytest.mark.parametrize('concurrency_limit', [1])
     @pytest.mark.parametrize('time_limit', [None])
+    @pytest.mark.parametrize('allow_extra_tracks', [False])
     @pytest.mark.parametrize("modality, audio, video", [
         ("audio", True, True),
         ("audio", False, True),
@@ -177,6 +183,7 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.parametrize('modality', ["audio"])
     @pytest.mark.parametrize('concurrency_limit', [1])
     @pytest.mark.parametrize('time_limit', [None])
+    @pytest.mark.parametrize('allow_extra_tracks', [False])
     async def test_unsuccessful_webrtc_offer_no_webrtc_id(self, test_client_and_stream):
         audio = False
         video = False
@@ -197,6 +204,7 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.parametrize('mode', ["send-receive"])
     @pytest.mark.parametrize('concurrency_limit', [1])
     @pytest.mark.parametrize('time_limit', [None])
+    @pytest.mark.parametrize('allow_extra_tracks', [False])
     @pytest.mark.parametrize("modality, audio, video", [
         ("dummy", True, False),
         ("dummy", False, True),
@@ -215,6 +223,7 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.parametrize('mode', ["send-receive"])
     @pytest.mark.parametrize('concurrency_limit', [1])
     @pytest.mark.parametrize('time_limit', [None])
+    @pytest.mark.parametrize('allow_extra_tracks', [False])
     @pytest.mark.parametrize("modality, audio, video", [
         ("audio", True, False),
     ])
@@ -230,3 +239,19 @@ class TestWebRTCConnectionMixin:
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize('handler', [lambda x: x])
+    @pytest.mark.parametrize('mode', ["send-receive"])
+    @pytest.mark.parametrize('concurrency_limit', [1])
+    @pytest.mark.parametrize('time_limit', [None])
+    @pytest.mark.parametrize('allow_extra_tracks', [True])
+    @pytest.mark.parametrize("modality, audio, video", [
+        ("video", True, True),
+    ])
+    async def test_successful_connection_allow_extra_tracks(self, test_client_and_stream, audio, video):
+        test_client, stream = test_client_and_stream
+        pc, channel = await self.setup_peer_connection(audio, video)
+        await self.send_offer(pc, test_client, audio, video)
+        await self.close_peer_connection(pc)
