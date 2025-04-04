@@ -26,7 +26,7 @@ conversation_state: List[Dict[str, str]] = []
 
 # System prompt for agent
 system_prompt = """You are a helpful assistant that can helps with finding places to 
-workremotely from. You should specifically check against reviews and ratings of the 
+work remotely from. You should specifically check against reviews and ratings of the 
 place. You should use this criteria to find the best place to work from:
 - Price
 - Reviews

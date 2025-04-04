@@ -190,13 +190,13 @@ if __name__ == "__main__":
             gr.HTML(
                 """
                 <div style="display: flex; justify-content: center; align-items: center;">
-                <h1>Gemini Conversation</h1>                
+                <h1>Gemini Conversation</h1>
                 </div>
                 """
             )
             gr.Markdown(
                 """# How to run this demo
-                
+
                 - Clone the repo - top right of the page click the vertical three dots and select "Clone repository"
                 - Open the repo in a terminal and install the dependencies
                 - Get a gemini API key [here](https://ai.google.dev/gemini-api/docs/api-key)
