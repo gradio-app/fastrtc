@@ -101,12 +101,12 @@ select = [
   "W",
   "Q",
   "I",
+  "UP",
 ]
 
 # These can be turned on when the framework is more mature (Too many errors right now)
 exclude = [
   "D",
-  "UP"
 ]
 
 # Avoid enforcing line-length violations (`E501`)
