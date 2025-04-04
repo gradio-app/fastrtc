@@ -15,4 +15,4 @@ jobs:
           pip install ruff pyright
           ruff check .
           ruff format --check --diff .
-          pyright .
+          pyright
