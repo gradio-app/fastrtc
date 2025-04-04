@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 class TTSOptions:
     pass
 
+
 T = TypeVar("T", bound=TTSOptions, contravariant=True)
 
 
