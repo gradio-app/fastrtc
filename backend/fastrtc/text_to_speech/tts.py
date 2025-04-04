@@ -2,7 +2,7 @@ import asyncio
 import re
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import AsyncGenerator, Generator, Literal, Protocol
+from typing import AsyncGenerator, Generator, Literal, Protocol, TypeVar
 
 import numpy as np
 from huggingface_hub import hf_hub_download
@@ -12,18 +12,20 @@ from numpy.typing import NDArray
 class TTSOptions:
     pass
 
+T = TypeVar("T", bound=TTSOptions, contravariant=True)
 
-class TTSModel(Protocol):
+
+class TTSModel(Protocol[T]):
     def tts(
-        self, text: str, options: TTSOptions | None = None
+        self, text: str, options: T | None = None
     ) -> tuple[int, NDArray[np.float32]]: ...
 
-    async def stream_tts(
-        self, text: str, options: TTSOptions | None = None
+    def stream_tts(
+        self, text: str, options: T | None = None
     ) -> AsyncGenerator[tuple[int, NDArray[np.float32]], None]: ...
 
     def stream_tts_sync(
-        self, text: str, options: TTSOptions | None = None
+        self, text: str, options: T | None = None
     ) -> Generator[tuple[int, NDArray[np.float32]], None, None]: ...
 
 
