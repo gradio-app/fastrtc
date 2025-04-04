@@ -779,7 +779,7 @@ class ServerToClientAudio(AudioStreamTrack):
     ) -> None:
         self.generator: Generator[Any, None, Any] | None = None
         self.event_handler = event_handler
-        self.event_handler._clear_queue = self.clear_queue
+        self.event_handler._clear_queue = self.clear_queue  # pyright: ignore
         self.current_timestamp = 0
         self.latest_args: str | list[Any] = "not_set"
         self.args_set = threading.Event()

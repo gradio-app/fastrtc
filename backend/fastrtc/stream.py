@@ -381,23 +381,22 @@ class Stream(WebRTCConnectionMixin):
                         for component in additional_input_components:
                             component.render()
                         button = gr.Button("Start Stream", variant="primary")
-                    if additional_output_components:
-                        with gr.Column():
-                            output_video = WebRTC(
-                                label="Audio Stream",
-                                rtc_configuration=self.rtc_configuration,
-                                track_constraints=self.track_constraints,
-                                mode="receive",
-                                modality="audio",
-                                icon=ui_args.get("icon"),
-                                icon_button_color=ui_args.get("icon_button_color"),
-                                pulse_color=ui_args.get("pulse_color"),
-                                icon_radius=ui_args.get("icon_radius"),
-                            )
-                            self.webrtc_component = output_video
-                            for component in additional_output_components:
-                                if component not in same_components:
-                                    component.render()
+                    with gr.Column():
+                        output_video = WebRTC(
+                            label="Audio Stream",
+                            rtc_configuration=self.rtc_configuration,
+                            track_constraints=self.track_constraints,
+                            mode="receive",
+                            modality="audio",
+                            icon=ui_args.get("icon"),
+                            icon_button_color=ui_args.get("icon_button_color"),
+                            pulse_color=ui_args.get("pulse_color"),
+                            icon_radius=ui_args.get("icon_radius"),
+                        )
+                        self.webrtc_component = output_video
+                        for component in additional_output_components:
+                            if component not in same_components:
+                                component.render()
                 output_video.stream(
                     fn=self.event_handler,
                     inputs=self.additional_input_components,
