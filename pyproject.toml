@@ -83,5 +83,39 @@ artifacts = ["/backend/fastrtc/templates", "*.pyi"]
 packages = ["/backend/fastrtc"]
 
 [tool.ruff]
+src = ["demo", "backend/fastrtc"]
 target-version = "py310"
 extend-exclude = ["demo/phonic_chat", "demo/nextjs_voice_chat"]
+
+[tool.ruff.format]
+exclude = ["*.pyi"]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "W",
+  "Q",
+  "I",
+]
+
+# Avoid enforcing line-length violations (`E501`)
+ignore = ["E501"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Ignore `E402` (import violations) in all `__init__.py` files, and in selected subdirectories.
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
