@@ -94,13 +94,6 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-# Set the line length limit used when formatting code snippets in
-# docstrings.
-#
-# This only has an effect when the `docstring-code-format` setting is
-# enabled.
-docstring-code-line-length = "dynamic"
-
 [tool.ruff.lint]
 select = [
   "E",
@@ -108,6 +101,12 @@ select = [
   "W",
   "Q",
   "I",
+]
+
+# These can be turned on when the framework is more mature (Too many errors right now)
+exclude = [
+  "D",
+  "UP"
 ]
 
 # Avoid enforcing line-length violations (`E501`)
