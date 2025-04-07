@@ -209,6 +209,7 @@ class ReplyOnPause(StreamHandler):
             ):
                 state.started_talking = True
                 logger.debug("Started talking")
+                self.send_message_sync(create_message("log", "started_talking"))
             if state.started_talking:
                 if state.stream is None:
                     state.stream = audio

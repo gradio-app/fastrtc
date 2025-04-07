@@ -55,7 +55,7 @@ The `ReplyOnPause` handler can also send the following `log` messages.
 ```json
 {
     "type": "log",
-    "data": "pause_detected" | "response_starting"
+    "data": "pause_detected" | "response_starting" | "started_talking"
 }
 ```
 
