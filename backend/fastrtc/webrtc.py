@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
     Concatenate,
-    Iterable,
     Literal,
     ParamSpec,
-    Sequence,
     TypeVar,
     cast,
 )

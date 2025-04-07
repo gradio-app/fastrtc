@@ -1,8 +1,9 @@
 import asyncio
 import re
+from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import AsyncGenerator, Generator, Literal, Protocol, TypeVar
+from typing import Literal, Protocol, TypeVar
 
 import numpy as np
 from huggingface_hub import hf_hub_download

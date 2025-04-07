@@ -2,7 +2,8 @@ import asyncio
 import audioop
 import base64
 import logging
-from typing import Any, Awaitable, Callable, Optional, cast
+from collections.abc import Awaitable, Callable
+from typing import Any, cast
 
 import anyio
 import librosa
@@ -57,9 +58,9 @@ class WebSocketHandler:
     ):
         self.stream_handler = stream_handler
         self.stream_handler._clear_queue = self._clear_queue
-        self.websocket: Optional[WebSocket] = None
-        self._emit_task: Optional[asyncio.Task] = None
-        self.stream_id: Optional[str] = None
+        self.websocket: WebSocket | None = None
+        self._emit_task: asyncio.Task | None = None
+        self.stream_id: str | None = None
         self.set_additional_outputs_factory = additional_outputs_factory
         self.set_additional_outputs: Callable[[AdditionalOutputs], None]
         self.set_handler = set_handler
@@ -67,8 +68,8 @@ class WebSocketHandler:
         self.clean_up = clean_up
         self.queue = asyncio.Queue()
         self.playing_durations = []  # Track durations of frames being played
-        self._frame_cleanup_task: Optional[asyncio.Task] = None
-        self._graceful_shutdown_task: Optional[asyncio.Task] = None
+        self._frame_cleanup_task: asyncio.Task | None = None
+        self._graceful_shutdown_task: asyncio.Task | None = None
 
     def _clear_queue(self):
         old_queue = self.queue

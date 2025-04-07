@@ -1,5 +1,6 @@
-from functools import lru_cache
-from typing import Generator, Literal
+from collections.abc import Generator
+from functools import cache
+from typing import Literal
 
 import gradio as gr
 import numpy as np
@@ -17,7 +18,7 @@ from numpy.typing import NDArray
 load_dotenv()
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_moonshine(
     model_name: Literal["moonshine/base", "moonshine/tiny"],
 ) -> MoonshineOnnxModel:

@@ -7,9 +7,10 @@ import json
 import logging
 import tempfile
 import traceback
+from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Protocol, TypedDict, cast
+from typing import Any, Literal, Protocol, TypedDict, cast
 
 import av
 import librosa
@@ -136,7 +137,7 @@ def split_output(
             raise ValueError(
                 "The tuple must have exactly two elements: the data and an instance of AdditionalOutputs."
             )
-        if not isinstance(data[-1], (AdditionalOutputs, CloseStream)):
+        if not isinstance(data[-1], AdditionalOutputs | CloseStream):
             raise ValueError(
                 "The last element of the tuple must be an instance of AdditionalOutputs."
             )

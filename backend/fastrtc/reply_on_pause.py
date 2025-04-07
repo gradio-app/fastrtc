@@ -1,9 +1,10 @@
 import asyncio
 import inspect
+from collections.abc import AsyncGenerator, Callable, Generator
 from dataclasses import dataclass, field
 from logging import getLogger
 from threading import Event
-from typing import Any, AsyncGenerator, Callable, Generator, Literal, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray

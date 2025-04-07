@@ -6,10 +6,9 @@ import asyncio
 import inspect
 import logging
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, field
 from typing import (
-    AsyncGenerator,
     Literal,
     ParamSpec,
     TypeVar,

@@ -3,7 +3,8 @@ import base64
 import json
 import os
 import pathlib
-from typing import AsyncGenerator, Literal
+from collections.abc import AsyncGenerator
+from typing import Literal
 
 import gradio as gr
 import numpy as np

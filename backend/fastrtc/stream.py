@@ -1,11 +1,10 @@
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import (
     Any,
     AsyncContextManager,
-    Callable,
     Literal,
-    Optional,
     TypedDict,
     cast,
 )
@@ -29,8 +28,8 @@ curr_dir = Path(__file__).parent
 
 
 class Body(BaseModel):
-    sdp: Optional[str] = None
-    candidate: Optional[dict[str, Any]] = None
+    sdp: str | None = None
+    candidate: dict[str, Any] | None = None
     type: str
     webrtc_id: str
 

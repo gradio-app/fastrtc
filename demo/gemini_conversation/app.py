@@ -1,8 +1,8 @@
 import asyncio
 import base64
 import os
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 
 import librosa
 import numpy as np
