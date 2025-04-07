@@ -215,9 +215,8 @@ class TestWebRTCConnectionMixin:
         status, metadata = await self.send_offer(
             pc2, test_client, return_status_and_metadata=True
         )
-
         assert status == "failed"
-        assert metadata == {"error": "concurrency_limit_reached", "limit": 1}
+        assert metadata == {"error": "connection_already_exists"}
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
@@ -225,9 +224,6 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "test_client_and_stream", [{"concurrency_limit": 2}], indirect=True
-    )
-    @pytest.mark.xfail(
-        reason="It is the same webrtc_id so pc1 and pc2 are seen as ONE connection"
     )
     async def test_concurrency_limit_reached_three_peers_same_id(
         self, test_client_and_stream
@@ -237,13 +233,16 @@ class TestWebRTCConnectionMixin:
         pc2, channel = await self.setup_peer_connection(video=True)
         pc3, channel = await self.setup_peer_connection(video=True)
         await self.send_offer(pc1, test_client)
-        await self.send_offer(pc2, test_client)
+        status, metadata = await self.send_offer(
+            pc2, test_client, return_status_and_metadata=True
+        )
+        assert status == "failed"
+        assert metadata == {"error": "connection_already_exists"}
         status, metadata = await self.send_offer(
             pc3, test_client, return_status_and_metadata=True
         )
-
         assert status == "failed"
-        assert metadata == {"error": "concurrency_limit_reached", "limit": 1}
+        assert metadata == {"error": "connection_already_exists"}
 
         await self.close_peer_connection(pc1)
         await self.close_peer_connection(pc2)
@@ -275,9 +274,6 @@ class TestWebRTCConnectionMixin:
     @pytest.mark.parametrize(
         "test_client_and_stream", [{"concurrency_limit": 1}], indirect=True
     )
-    @pytest.mark.xfail(
-        reason="No audio or video tracks in peer connections added only datachannels"
-    )
     async def test_concurrency_limit_reached_peers_with_no_mediastreams(
         self, test_client_and_stream
     ):
@@ -288,7 +284,6 @@ class TestWebRTCConnectionMixin:
         status, metadata = await self.send_offer(
             pc2, test_client, webrtc_id="bar", return_status_and_metadata=True
         )
-
         assert status == "failed"
         assert metadata == {"error": "concurrency_limit_reached", "limit": 1}
 
