@@ -210,7 +210,7 @@ async def player_worker_decode(
                 first_sample_rate = sample_rate
 
             if format == "s16":
-                audio_array = audio_to_float32((sample_rate, audio_array))
+                audio_array = audio_to_float32(audio_array)
 
             if first_sample_rate != sample_rate:
                 audio_array = librosa.resample(

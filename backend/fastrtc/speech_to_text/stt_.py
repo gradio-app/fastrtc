@@ -32,8 +32,7 @@ class MoonshineSTT(STTModel):
 
     def stt(self, audio: tuple[int, NDArray[np.int16 | np.float32]]) -> str:
         sr, audio_np = audio  # type: ignore
-        if audio_np.dtype == np.int16:
-            audio_np = audio_to_float32(audio)
+        audio_np = audio_to_float32(audio_np)
         if sr != 16000:
             audio_np: NDArray[np.float32] = librosa.resample(
                 audio_np, orig_sr=sr, target_sr=16000

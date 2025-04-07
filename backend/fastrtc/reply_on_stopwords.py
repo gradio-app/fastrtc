@@ -160,7 +160,7 @@ class ReplyOnStopWords(ReplyOnPause):
 
         if duration >= self.algo_options.audio_chunk_duration:
             if not state.stop_word_detected:
-                audio_f32 = audio_to_float32((sampling_rate, audio))
+                audio_f32 = audio_to_float32(audio)
                 audio_rs = librosa.resample(
                     audio_f32, orig_sr=sampling_rate, target_sr=16000
                 )
