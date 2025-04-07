@@ -1,6 +1,6 @@
 import fastapi
 from fastrtc import ReplyOnPause, Stream, AlgoOptions, SileroVadOptions
-from fastrtc.utils import audio_to_bytes
+from fastrtc.utils import audio_to_bytes, audio_to_float32
 from openai import OpenAI
 import logging
 import time
@@ -78,8 +78,8 @@ def echo(audio):
     )
 
     for audio_chunk in audio_stream:
-        audio_array = (
-            np.frombuffer(audio_chunk, dtype=np.int16).astype(np.float32) / 32768.0
+        audio_array = audio_to_float32(
+            np.frombuffer(audio_chunk, dtype=np.int16)
         )
         yield (24000, audio_array)
 

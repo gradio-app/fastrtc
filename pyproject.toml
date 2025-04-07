@@ -70,7 +70,7 @@ issues = "https://github.com/freddyaboulton/gradio-webrtc/issues"
 Documentation = "https://freddyaboulton.github.io/gradio-webrtc/cookbook/"
 
 [project.optional-dependencies]
-dev = ["build", "twine"]
+dev = ["build", "twine", "pytest"]
 vad = ["onnxruntime>=1.20.1"]
 tts = ["kokoro-onnx"]
 stopword = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]

@@ -9,7 +9,7 @@ import numpy as np
 from huggingface_hub import hf_hub_download
 from numpy.typing import NDArray
 
-from ..utils import AudioChunk
+from ..utils import AudioChunk, audio_to_float32
 from .protocol import PauseDetectionModel
 
 logger = logging.getLogger(__name__)
@@ -275,8 +275,7 @@ class SileroVADModel:
         sampling_rate, audio_ = audio
         logger.debug("VAD audio shape input: %s", audio_.shape)
         try:
-            if audio_.dtype != np.float32:
-                audio_ = audio_.astype(np.float32) / 32768.0
+            audio_ = audio_to_float32(audio_)
             sr = 16000
             if sr != sampling_rate:
                 try:

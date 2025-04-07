@@ -317,18 +317,14 @@ def audio_to_file(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> str:
     return f.name
 
 
-def audio_to_float32(
-    audio: tuple[int, NDArray[np.int16 | np.float32]],
-) -> NDArray[np.float32]:
+def audio_to_float32(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.float32]:
     """
     Convert an audio tuple containing sample rate (int16) and numpy array data to float32.
 
     Parameters
     ----------
-    audio : tuple[int, np.ndarray]
-        A tuple containing:
-            - sample_rate (int): The audio sample rate in Hz
-            - data (np.ndarray): The audio data as a numpy array
+    audio : np.ndarray
+        The audio data as a numpy array
 
     Returns
     -------
@@ -337,26 +333,27 @@ def audio_to_float32(
 
     Example
     -------
-    >>> sample_rate = 44100
     >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
-    >>> audio_tuple = (sample_rate, audio_data)
-    >>> audio_float32 = audio_to_float32(audio_tuple)
+    >>> audio_float32 = audio_to_float32(audio_data)
     """
-    return audio[1].astype(np.float32) / 32768.0
+    if audio.dtype == np.int16:
+        # Divide by 32768.0 so that the values are in the range [-1.0, 1.0).
+        # 1.0 can actually never be reached because the int16 range is [-32768, 32767].
+        return audio.astype(np.float32) / 32768.0
+    elif audio.dtype == np.float32:
+        return audio  # type: ignore
+    else:
+        raise TypeError(f"Unsupported audio data type: {audio.dtype}")
 
 
-def audio_to_int16(
-    audio: tuple[int, NDArray[np.int16 | np.float32]],
-) -> NDArray[np.int16]:
+def audio_to_int16(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.int16]:
     """
     Convert an audio tuple containing sample rate and numpy array data to int16.
 
     Parameters
     ----------
-    audio : tuple[int, np.ndarray]
-        A tuple containing:
-            - sample_rate (int): The audio sample rate in Hz
-            - data (np.ndarray): The audio data as a numpy array
+    audio : np.ndarray
+        The audio data as a numpy array
 
     Returns
     -------
@@ -365,18 +362,17 @@ def audio_to_int16(
 
     Example
     -------
-    >>> sample_rate = 44100
     >>> audio_data = np.array([0.1, -0.2, 0.3], dtype=np.float32)  # Example audio samples
-    >>> audio_tuple = (sample_rate, audio_data)
-    >>> audio_int16 = audio_to_int16(audio_tuple)
+    >>> audio_int16 = audio_to_int16(audio_data)
     """
-    if audio[1].dtype == np.int16:
-        return audio[1]  # type: ignore
-    elif audio[1].dtype == np.float32:
-        # Convert float32 to int16 by scaling to the int16 range
-        return (audio[1] * 32767.0).astype(np.int16)
+    if audio.dtype == np.int16:
+        return audio  # type: ignore
+    elif audio.dtype == np.float32:
+        # Convert float32 to int16 by scaling to the int16 range.
+        # Multiply by 32767 and not 32768 so that int16 doesn't overflow.
+        return (audio * 32767.0).astype(np.int16)
     else:
-        raise TypeError(f"Unsupported audio data type: {audio[1].dtype}")
+        raise TypeError(f"Unsupported audio data type: {audio.dtype}")
 
 
 def aggregate_bytes_to_16bit(chunks_iterator):
