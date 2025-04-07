@@ -131,3 +131,6 @@ reportMissingTypeStubs = false
 
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
