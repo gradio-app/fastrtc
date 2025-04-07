@@ -13,7 +13,10 @@ jobs:
       - name: Run linters
         run: |
           pip install ruff pyright
-          pip install -e .
+          pip install -e .[dev]
           ruff check .
           ruff format --check --diff .
           pyright
+      - name: Run Pytest
+        run: |
+          pytest
