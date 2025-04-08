@@ -77,9 +77,7 @@ def process_response(audio):
     response_content = agent.run(input_text)
 
     # Convert response to audio using TTS model
-    for audio_chunk in tts_model.stream_tts_sync(response_content or ""):
-        # Yield the audio chunk
-        yield audio_chunk
+    yield from tts_model.stream_tts_sync(response_content or "")
 
 
 stream = Stream(

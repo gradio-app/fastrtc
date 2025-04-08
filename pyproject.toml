@@ -110,7 +110,7 @@ exclude = [
 ]
 
 # Avoid enforcing line-length violations (`E501`)
-ignore = ["E501", "UP028", "UP035"]
+ignore = ["E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
