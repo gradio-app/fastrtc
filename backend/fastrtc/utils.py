@@ -7,6 +7,7 @@ import json
 import logging
 import tempfile
 import traceback
+import warnings
 from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, Protocol, TypedDict, cast
@@ -317,7 +318,9 @@ def audio_to_file(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> str:
     return f.name
 
 
-def audio_to_float32(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.float32]:
+def audio_to_float32(
+    audio: NDArray[np.int16 | np.float32] | tuple[int, NDArray[np.int16 | np.float32]],
+) -> NDArray[np.float32]:
     """
     Convert an audio tuple containing sample rate (int16) and numpy array data to float32.
 
@@ -336,6 +339,16 @@ def audio_to_float32(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.float3
     >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
     >>> audio_float32 = audio_to_float32(audio_data)
     """
+    if isinstance(audio, tuple):
+        warnings.warn(
+            UserWarning(
+                "Passing a (sr, audio) tuple to audio_to_float32() is deprecated "
+                "and will be removed in a future release. Pass only the audio array."
+            ),
+            stacklevel=2,  # So that the warning points to the user's code
+        )
+        _sr, audio = audio
+
     if audio.dtype == np.int16:
         # Divide by 32768.0 so that the values are in the range [-1.0, 1.0).
         # 1.0 can actually never be reached because the int16 range is [-32768, 32767].
@@ -346,7 +359,9 @@ def audio_to_float32(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.float3
         raise TypeError(f"Unsupported audio data type: {audio.dtype}")
 
 
-def audio_to_int16(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.int16]:
+def audio_to_int16(
+    audio: NDArray[np.int16 | np.float32] | tuple[int, NDArray[np.int16 | np.float32]],
+) -> NDArray[np.int16]:
     """
     Convert an audio tuple containing sample rate and numpy array data to int16.
 
@@ -365,6 +380,16 @@ def audio_to_int16(audio: NDArray[np.int16 | np.float32]) -> NDArray[np.int16]:
     >>> audio_data = np.array([0.1, -0.2, 0.3], dtype=np.float32)  # Example audio samples
     >>> audio_int16 = audio_to_int16(audio_data)
     """
+    if isinstance(audio, tuple):
+        warnings.warn(
+            UserWarning(
+                "Passing a (sr, audio) tuple to audio_to_float32() is deprecated "
+                "and will be removed in a future release. Pass only the audio array."
+            ),
+            stacklevel=2,  # So that the warning points to the user's code
+        )
+        _sr, audio = audio
+
     if audio.dtype == np.int16:
         return audio  # type: ignore
     elif audio.dtype == np.float32:

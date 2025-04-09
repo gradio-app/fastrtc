@@ -51,3 +51,11 @@ def test_audio_to_int16_invalid_dtype():
     audio = np.array([1, 2, 3], dtype=np.int32)
     with pytest.raises(TypeError, match="Unsupported audio data type"):
         audio_to_int16(audio)  # type: ignore
+
+
+def test_legacy_arguments():
+    result = audio_to_float32((16000, np.zeros(10, dtype=np.int16)))
+    np.testing.assert_array_equal(result, np.zeros(10, dtype=np.float32))
+
+    result = audio_to_int16((16000, np.zeros(10, dtype=np.float32)))
+    np.testing.assert_array_equal(result, np.zeros(10, dtype=np.int16))
