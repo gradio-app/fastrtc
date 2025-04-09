@@ -1,4 +1,4 @@
-fastrtc[vad, stt]
+fastrtc[vad, stt]==0.0.20.rc2
 python-dotenv
 huggingface_hub>=0.29.0
 twilio

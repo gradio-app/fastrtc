@@ -9,14 +9,21 @@
         :root {
             --primary-gradient: linear-gradient(135deg, #f9a45c 0%, #e66465 100%);
             --background-cream: #faf8f5;
+            --background-cream-end: #f7f5f2;
+            /* Slightly warmer end color for body gradient */
             --text-dark: #2d2d2d;
+            --transcript-bg: #ffffff;
+            /* White background for transcript area */
+            --transcript-border: #e0e0e0;
+            /* Light border for transcript items */
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: var(--background-cream);
+            /* Apply a subtle vertical gradient to the body */
+            background: linear-gradient(to bottom, var(--background-cream), var(--background-cream-end));
             color: var(--text-dark);
             min-height: 100vh;
         }
@@ -43,18 +50,26 @@
 
         .container {
             max-width: 1000px;
-            margin: 1.5rem auto;
+            margin: 2.5rem auto;
+            /* Increased top/bottom margin */
             padding: 0 2rem;
         }
 
         .transcript-container {
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            /* Slightly larger radius */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            /* Enhanced shadow */
             padding: 1.5rem;
-            height: 300px;
+            height: 350px;
+            /* Increased height */
             overflow-y: auto;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            /* Increased margin */
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            /* Softer border */
+            background-color: var(--transcript-bg);
+            /* Use the new variable */
         }
 
         .controls {
@@ -73,6 +88,8 @@
             transition: all 0.2s ease;
             font-weight: 500;
             min-width: 180px;
+            position: relative;
+            padding-right: 50px;
         }
 
         button:hover {
@@ -86,22 +103,39 @@
 
         /* Transcript text styling */
         .transcript-container p {
-            margin: 0.4rem 0;
-            padding: 0.6rem;
+            margin: 0.6rem 0;
+            /* Increased vertical margin */
+            padding: 0.8rem 1rem;
+            /* Increased padding */
             background: var(--background-cream);
-            border-radius: 4px;
-            line-height: 1.4;
-            font-size: 0.95rem;
+            /* Use the lighter cream for contrast */
+            border-radius: 6px;
+            /* Slightly larger radius */
+            line-height: 1.5;
+            /* Improved line spacing */
+            font-size: 0.98rem;
+            /* Slightly larger font */
+            border-left: 3px solid var(--transcript-border);
+            /* Add a subtle left border */
+            transition: background-color 0.2s ease;
+            /* Smooth hover effect */
         }
 
-        /* Custom scrollbar - made thinner */
+        .transcript-container p:hover {
+            background-color: #fdfbf9;
+            /* Slightly change background on hover */
+        }
+
+        /* Custom scrollbar - update track color */
         .transcript-container::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
+            /* Slightly wider scrollbar */
         }
 
         .transcript-container::-webkit-scrollbar-track {
-            background: var(--background-cream);
-            border-radius: 3px;
+            background: var(--background-cream-end);
+            /* Match body end gradient */
+            border-radius: 4px;
         }
 
         .transcript-container::-webkit-scrollbar-thumb {
@@ -176,6 +210,40 @@
             transition: transform 0.1s ease;
         }
 
+        /* Styles for the mute button */
+        .mute-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mute-toggle svg {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+        }
+
+        /* Adjust layout for button content when mute is present */
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(100% - 40px);
+            margin-right: 40px;
+        }
+
+        .icon-with-spinner,
+        .pulse-container {
+            width: 100%;
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -206,9 +274,28 @@
         let audioContext, analyser, audioSource;
         let audioLevel = 0;
         let animationFrame;
+        let isMuted = false;
 
         const startButton = document.getElementById('start-button');
         const transcriptDiv = document.getElementById('transcript');
+
+        // SVG Icons
+        const micIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>`;
+
+        const micMutedIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>`;
 
         function showError(message) {
             const toast = document.getElementById('error-toast');
@@ -241,23 +328,61 @@
         }
 
         function updateButtonState() {
+            // Remove existing mute listener if present
+            const existingMuteButton = startButton.querySelector('.mute-toggle');
+            if (existingMuteButton) {
+                existingMuteButton.removeEventListener('click', toggleMute);
+                existingMuteButton.remove();
+            }
+
             if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
                 startButton.innerHTML = `
-                    <div class="icon-with-spinner">
-                        <div class="spinner"></div>
-                        <span>Connecting...</span>
+                    <div class="button-content">
+                        <div class="icon-with-spinner">
+                            <div class="spinner"></div>
+                            <span>Connecting...</span>
+                        </div>
                     </div>
                 `;
+                startButton.disabled = true;
             } else if (peerConnection && peerConnection.connectionState === 'connected') {
                 startButton.innerHTML = `
-                    <div class="pulse-container">
-                        <div class="pulse-circle"></div>
-                        <span>Stop Recording</span>
+                    <div class="button-content">
+                        <div class="pulse-container">
+                            <div class="pulse-circle"></div>
+                            <span>Stop Recording</span>
+                        </div>
+                    </div>
+                    <div class="mute-toggle" title="${isMuted ? 'Unmute' : 'Mute'}">
+                        ${isMuted ? micMutedIconSVG : micIconSVG}
                     </div>
                 `;
+                startButton.disabled = false;
+                const muteButton = startButton.querySelector('.mute-toggle');
+                if (muteButton) {
+                    muteButton.addEventListener('click', toggleMute);
+                }
             } else {
                 startButton.innerHTML = 'Start Recording';
+                startButton.disabled = false;
             }
+        }
+
+        function toggleMute(event) {
+            event.stopPropagation();
+            if (!peerConnection || peerConnection.connectionState !== 'connected') return;
+
+            isMuted = !isMuted;
+            console.log("Mute toggled:", isMuted);
+
+            peerConnection.getSenders().forEach(sender => {
+                if (sender.track && sender.track.kind === 'audio') {
+                    sender.track.enabled = !isMuted;
+                    console.log(`Audio track ${sender.track.id} enabled: ${!isMuted}`);
+                }
+            });
+
+            updateButtonState();
         }
 
         function setupAudioVisualization(stream) {
@@ -321,6 +446,21 @@
                     updateButtonState();
                 });
 
+                peerConnection.onicecandidate = ({ candidate }) => {
+                    if (candidate) {
+                        console.debug("Sending ICE candidate", candidate);
+                        fetch('/webrtc/offer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                candidate: candidate.toJSON(),
+                                webrtc_id: webrtc_id,
+                                type: "ice-candidate",
+                            })
+                        })
+                    }
+                };
+
                 // Create data channel for messages
                 const dataChannel = peerConnection.createDataChannel('text');
                 dataChannel.onmessage = handleMessage;
@@ -328,20 +468,6 @@
                 // Create and send offer
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
-
-                await new Promise((resolve) => {
-                    if (peerConnection.iceGatheringState === "complete") {
-                        resolve();
-                    } else {
-                        const checkState = () => {
-                            if (peerConnection.iceGatheringState === "complete") {
-                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
-                                resolve();
-                            }
-                        };
-                        peerConnection.addEventListener("icegatheringstatechange", checkState);
-                    }
-                });
 
                 webrtc_id = Math.random().toString(36).substring(7);
 
@@ -392,41 +518,45 @@
         function stop() {
             if (animationFrame) {
                 cancelAnimationFrame(animationFrame);
+                animationFrame = null;
             }
             if (audioContext) {
-                audioContext.close();
+                audioContext.close().catch(e => console.error("Error closing AudioContext:", e));
                 audioContext = null;
                 analyser = null;
                 audioSource = null;
             }
             if (peerConnection) {
-                if (peerConnection.getTransceivers) {
-                    peerConnection.getTransceivers().forEach(transceiver => {
-                        if (transceiver.stop) {
-                            transceiver.stop();
+                if (peerConnection.getSenders) {
+                    peerConnection.getSenders().forEach(sender => {
+                        if (sender.track) {
+                            sender.track.stop();
+                            console.log(`Track ${sender.track.id} stopped.`);
                         }
                     });
                 }
-
-                if (peerConnection.getSenders) {
-                    peerConnection.getSenders().forEach(sender => {
-                        if (sender.track && sender.track.stop) sender.track.stop();
-                    });
-                }
-
-                setTimeout(() => {
-                    peerConnection.close();
-                }, 500);
+                peerConnection.close();
+                peerConnection = null;
+                console.log("Peer connection closed.");
             }
             audioLevel = 0;
+            isMuted = false;
             updateButtonState();
         }
 
-        startButton.addEventListener('click', () => {
-            if (startButton.textContent === 'Start Recording') {
-                setupWebRTC();
-            } else {
+        startButton.addEventListener('click', (event) => {
+            if (event.target.closest('.mute-toggle')) {
+                return;
+            }
+
+            if (peerConnection && peerConnection.connectionState === 'connected') {
+                console.log("Stop button clicked");
                 stop();
+            } else if (!peerConnection || ['new', 'closed', 'failed', 'disconnected'].includes(peerConnection.connectionState)) {
+                console.log("Start button clicked");
+                transcriptDiv.innerHTML = '';
+                setupWebRTC();
+                updateButtonState();
             }
         });
     </script>

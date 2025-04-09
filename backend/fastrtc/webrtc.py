@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
@@ -14,6 +15,8 @@ from typing import (
     cast,
 )
 
+import anyio
+import anyio.to_thread
 from gradio import wasm_utils
 from gradio.components.base import Component, server
 from gradio_client import handle_file
@@ -26,6 +29,7 @@ from .tracks import (
     VideoEventHandler,
     VideoStreamHandler,
 )
+from .utils import RTCConfigurationCallable
 from .webrtc_connection_mixin import WebRTCConnectionMixin
 
 if TYPE_CHECKING:
@@ -77,7 +81,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         render: bool = True,
         key: int | str | None = None,
         mirror_webcam: bool = True,
-        rtc_configuration: dict[str, Any] | None = None,
+        rtc_configuration: dict[str, Any] | None | RTCConfigurationCallable = None,
         track_constraints: dict[str, Any] | None = None,
         time_limit: float | None = None,
         allow_extra_tracks: bool = False,
@@ -358,6 +362,19 @@ class WebRTC(Component, WebRTCConnectionMixin):
                 outputs=None,
                 concurrency_id=concurrency_id,
             )
+
+    @server
+    async def turn(self, _):
+        try:
+            if inspect.isfunction(self.rtc_configuration):
+                if inspect.iscoroutinefunction(self.rtc_configuration):
+                    return await self.rtc_configuration()
+                else:
+                    return await anyio.to_thread.run_sync(self.rtc_configuration)
+            else:
+                return self.rtc_configuration or {}
+        except Exception as e:
+            return {"error": str(e)}
 
     @server
     async def offer(self, body):

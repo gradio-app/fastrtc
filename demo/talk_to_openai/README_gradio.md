@@ -9,7 +9,7 @@ app_file: app.py
 pinned: false
 license: mit
 short_description: Talk to OpenAI (Gradio UI)
-tags: [webrtc, websocket, gradio, secret|TWILIO_ACCOUNT_SID, secret|TWILIO_AUTH_TOKEN, secret|OPENAI_API_KEY]
+tags: [webrtc, websocket, gradio, secret|HF_TOKEN, secret|OPENAI_API_KEY]
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference

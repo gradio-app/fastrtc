@@ -67,16 +67,21 @@
         }
 
         button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 24px;
             background-color: transparent;
             color: #ffffff;
             border: 1px solid #ffffff;
-            padding: 12px 24px;
             font-family: inherit;
             font-size: 16px;
             cursor: pointer;
             transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 1px;
+            position: relative;
         }
 
         button:hover {
@@ -116,9 +121,7 @@
         .pulse-container {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
-            min-width: 180px;
         }
 
         .pulse-circle {
@@ -128,8 +131,45 @@
             background-color: #ffffff;
             opacity: 0.2;
             flex-shrink: 0;
-            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transform: scale(var(--audio-level, 1));
             transition: transform 0.1s ease;
+        }
+
+        /* Fix button layout */
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .mute-toggle {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .mute-toggle svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #start-button {
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* Add styles for toast notifications */
@@ -177,6 +217,7 @@
     <script>
         let peerConnection;
         let webrtc_id;
+        let isMuted = false;
         const audioOutput = document.getElementById('audio-output');
         const startButton = document.getElementById('start-button');
         const chatMessages = document.getElementById('chat-messages');
@@ -185,25 +226,80 @@
         let animationFrame;
         let audioContext, analyser, audioSource;
 
+        // SVG Icons
+        const micIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>`;
+
+        const micMutedIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>`;
+
         function updateButtonState() {
             const button = document.getElementById('start-button');
+
+            // Clear previous content
+            button.innerHTML = '';
+
             if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
-                button.innerHTML = `
-                    <div class="icon-with-spinner">
-                        <div class="spinner"></div>
-                        <span>Connecting...</span>
-                    </div>
-                `;
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner';
+
+                const text = document.createElement('span');
+                text.textContent = 'Connecting...';
+
+                button.appendChild(spinner);
+                button.appendChild(text);
             } else if (peerConnection && peerConnection.connectionState === 'connected') {
-                button.innerHTML = `
-                    <div class="pulse-container">
-                        <div class="pulse-circle"></div>
-                        <span>Stop Conversation</span>
-                    </div>
-                `;
+                // Create pulse circle
+                const pulseCircle = document.createElement('div');
+                pulseCircle.className = 'pulse-circle';
+
+                // Create mic icon
+                const micIcon = document.createElement('div');
+                micIcon.className = 'mute-toggle';
+                micIcon.innerHTML = isMuted ? micMutedIconSVG : micIconSVG;
+                micIcon.addEventListener('click', toggleMute);
+
+                // Create text
+                const text = document.createElement('span');
+                text.textContent = 'Stop Conversation';
+
+                // Add elements in correct order
+                button.appendChild(pulseCircle);
+                button.appendChild(micIcon);
+                button.appendChild(text);
             } else {
-                button.innerHTML = 'Start Conversation';
+                const text = document.createElement('span');
+                text.textContent = 'Start Conversation';
+                button.appendChild(text);
             }
+        }
+
+        function toggleMute(event) {
+            event.stopPropagation();
+            if (!peerConnection || peerConnection.connectionState !== 'connected') return;
+
+            isMuted = !isMuted;
+            console.log("Mute toggled:", isMuted);
+
+            peerConnection.getSenders().forEach(sender => {
+                if (sender.track && sender.track.kind === 'audio') {
+                    sender.track.enabled = !isMuted;
+                    console.log(`Audio track ${sender.track.id} enabled: ${!isMuted}`);
+                }
+            });
+
+            updateButtonState();
         }
 
         function setupAudioVisualization(stream) {
@@ -276,6 +372,21 @@
                     }
                 });
 
+                peerConnection.onicecandidate = ({ candidate }) => {
+                    if (candidate) {
+                        console.debug("Sending ICE candidate", candidate);
+                        fetch('/webrtc/offer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                candidate: candidate.toJSON(),
+                                webrtc_id: webrtc_id,
+                                type: "ice-candidate",
+                            })
+                        })
+                    }
+                };
+
                 const dataChannel = peerConnection.createDataChannel('text');
                 dataChannel.onmessage = (event) => {
                     const eventJson = JSON.parse(event.data);
@@ -286,20 +397,6 @@
 
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
-
-                await new Promise((resolve) => {
-                    if (peerConnection.iceGatheringState === "complete") {
-                        resolve();
-                    } else {
-                        const checkState = () => {
-                            if (peerConnection.iceGatheringState === "complete") {
-                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
-                                resolve();
-                            }
-                        };
-                        peerConnection.addEventListener("icegatheringstatechange", checkState);
-                    }
-                });
 
                 peerConnection.addEventListener('connectionstatechange', () => {
                     console.log('connectionstatechange', peerConnection.connectionState);
@@ -388,7 +485,12 @@
             audioLevel = 0;
         }
 
-        startButton.addEventListener('click', () => {
+        startButton.addEventListener('click', (event) => {
+            // Skip if clicking the mute toggle
+            if (event.target.closest('.mute-toggle')) {
+                return;
+            }
+
             console.log('clicked');
             console.log(peerConnection, peerConnection?.connectionState);
             if (!peerConnection || peerConnection.connectionState !== 'connected') {

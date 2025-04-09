@@ -4,93 +4,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talk to Sambanova</title>
+    <title>Talk to Llama 4</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f8f9fa;
-            color: #1a1a1a;
-            margin: 0;
-            padding: 20px;
-            height: 100vh;
-            box-sizing: border-box;
+        :root {
+            --color-primary: #3b82f6;
+            --color-secondary: #f97316;
+            --color-background: #0f172a;
+            --color-surface: #1e293b;
+            --color-text: #f1f5f9;
+            --color-message-user: #334155;
+            --color-message-assistant: #1e40af;
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-secondary: linear-gradient(135deg, #f97316, #ec4899);
+            --boxSize: 8px;
+            --gutter: 4px;
         }
 
-        .container {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            width: 100%;
             max-width: 800px;
-            margin: 0 auto;
-            height: 80%;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .header {
+            text-align: left;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .header h2 {
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: rgba(241, 245, 249, 0.8);
+            margin-bottom: 1rem;
         }
 
         .logo {
-            text-align: center;
-            margin-bottom: 40px;
+            width: 120px;
+            height: 120px;
+            background: var(--color-surface);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: float 6s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        .logo::before {
+            content: "";
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: var(--gradient-secondary);
+            opacity: 0.2;
+            animation: rotate 10s linear infinite;
+        }
+
+        .logo img {
+            width: 75%;
+            height: 75%;
+            object-fit: contain;
+            z-index: 2;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--color-surface);
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
         }
 
         .chat-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            height: 90%;
-            box-sizing: border-box;
+            height: 400px;
+            overflow-y: auto;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            padding: 10px;
+            gap: 1rem;
+            scroll-behavior: smooth;
         }
 
         .message {
-            margin-bottom: 20px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 1rem;
             line-height: 1.5;
+            animation: fadeIn 0.3s ease-out;
         }
 
         .message.user {
-            background-color: #e9ecef;
-            margin-left: 20%;
+            background-color: var(--color-message-user);
+            color: var(--color-text);
+            align-self: flex-end;
+            border-bottom-right-radius: 0.25rem;
         }
 
         .message.assistant {
-            background-color: #f1f3f5;
-            margin-right: 20%;
+            background-color: var(--color-message-assistant);
+            color: var(--color-text);
+            align-self: flex-start;
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .wave-visualizer {
+            height: 100px;
+            padding: 1rem;
+            background-color: rgba(30, 41, 59, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .box-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 64px;
+            padding: 0 1rem;
+        }
+
+        .box {
+            height: 100%;
+            width: var(--boxSize);
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transform: scaleY(0.1);
+            transition: transform 0.05s ease;
         }
 
         .controls {
-            text-align: center;
-            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            gap: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        button {
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            font-family: inherit;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-radius: 4px;
-            font-weight: 500;
-            display: inline-flex;
+        #start-button {
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
         }
 
-        button:hover {
-            background-color: #0052a3;
+        #start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
         }
 
-        #audio-output {
-            display: none;
+        #start-button:active {
+            transform: translateY(1px);
         }
 
         .icon-with-spinner {
@@ -98,22 +213,17 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
+            min-width: 180px;
         }
 
         .spinner {
             width: 20px;
             height: 20px;
-            border: 2px solid #ffffff;
+            border: 2px solid white;
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             flex-shrink: 0;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
         }
 
         .pulse-container {
@@ -127,20 +237,38 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background-color: #ffffff;
-            opacity: 0.2;
+            background: var(--color-secondary);
+            opacity: 0.85;
             flex-shrink: 0;
-            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transform: scale(var(--audio-level, 1));
             transition: transform 0.1s ease;
         }
 
-        /* Add styles for typing indicator */
+        .mute-toggle {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            margin-left: 12px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        .mute-toggle svg {
+            width: 100%;
+            height: 100%;
+            stroke: white;
+        }
+
         .typing-indicator {
-            padding: 8px;
-            background-color: #f1f3f5;
-            border-radius: 8px;
-            margin-bottom: 10px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--color-message-assistant);
+            border-radius: 1rem;
+            align-self: flex-start;
+            margin-bottom: 0.5rem;
             display: none;
+            animation: fadeIn 0.3s ease-out;
         }
 
         .dots {
@@ -151,100 +279,162 @@
         .dot {
             width: 8px;
             height: 8px;
-            background-color: #0066cc;
+            background-color: white;
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
-            opacity: 0.5;
+            animation: bounce 1.5s infinite;
+            opacity: 0.7;
         }
 
         .dot:nth-child(2) {
-            animation-delay: 0.5s;
+            animation-delay: 0.15s;
         }
 
         .dot:nth-child(3) {
-            animation-delay: 1s;
+            animation-delay: 0.3s;
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 0.5;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 1;
-                transform: scale(1.2);
-            }
-        }
-
-        /* Add styles for toast notifications */
         .toast {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 16px 24px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
             z-index: 1000;
             display: none;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease-out;
         }
 
         .toast.error {
-            background-color: #f44336;
+            background-color: #ef4444;
             color: white;
         }
 
         .toast.warning {
-            background-color: #ffd700;
+            background-color: #f59e0b;
             color: black;
         }
 
-        /* Styles for the mute toggle icon */
-        .mute-toggle {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        #audio-output {
+            display: none;
         }
 
-        .mute-toggle svg {
-            width: 100%;
-            height: 100%;
-            stroke: white;
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Add toast element after body opening tag -->
     <div id="error-toast" class="toast"></div>
-    <div class="container">
+
+    <div class="header-container">
         <div class="logo">
-            <h1>Talk to Sambanova 🗣️</h1>
-            <h2 style="font-size: 1.2em; color: #666; margin-top: 10px;">Speak to Llama 3.2 powered by Sambanova API
-            </h2>
+            <img src="https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/Video%26Audio%20huggy.png"
+                alt="LLaMA Logo">
         </div>
-        <div class="chat-container">
-            <div class="chat-messages" id="chat-messages"></div>
-            <div class="typing-indicator" id="typing-indicator">
-                <div class="dots">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                </div>
+        <div class="header">
+            <h1>Talk to LLaMA 4</h1>
+            <h2>Experience seamless real-time conversation thanks to Cloudflare and Hugging Face's FastRTC.</h2>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="chat-container" id="chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
             </div>
         </div>
+
+        <div class="wave-visualizer">
+            <div class="box-container" id="box-container">
+                <!-- Boxes will be dynamically added here -->
+            </div>
+        </div>
+
         <div class="controls">
             <button id="start-button">Start Conversation</button>
         </div>
     </div>
+
     <audio id="audio-output"></audio>
 
     <script>
@@ -252,13 +442,27 @@
         let webrtc_id;
         const startButton = document.getElementById('start-button');
         const chatMessages = document.getElementById('chat-messages');
+        const boxContainer = document.getElementById('box-container');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const audioOutput = document.getElementById('audio-output');
 
         let audioLevel = 0;
-        let animationFrame;
-        let audioContext, analyser, audioSource;
+        let animationFrame_input, animationFrame_output;
+        let audioContext_input, audioContext_output;
+        let analyser_input, dataArray_input;
+        let analyser_output, dataArray_output;
+        let audioSource_input, audioSource_output;
         let messages = [];
         let eventSource;
         let isMuted = false;
+
+        // Create wave visualizer boxes
+        const numBars = 32;
+        for (let i = 0; i < numBars; i++) {
+            const box = document.createElement('div');
+            box.className = 'box';
+            boxContainer.appendChild(box);
+        }
 
         // SVG Icons
         const micIconSVG = `
@@ -335,16 +539,18 @@
         }
 
         function setupAudioVisualization(stream) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            audioSource = audioContext.createMediaStreamSource(stream);
-            audioSource.connect(analyser);
-            analyser.fftSize = 64;
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            // Input audio context for pulse circle
+            audioContext_input = new (window.AudioContext || window.webkitAudioContext)();
+            analyser_input = audioContext_input.createAnalyser();
+            audioSource_input = audioContext_input.createMediaStreamSource(stream);
+            audioSource_input.connect(analyser_input);
+            analyser_input.fftSize = 64;
+            dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
 
             function updateAudioLevel() {
-                analyser.getByteFrequencyData(dataArray);
-                const average = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
+                // Update input audio visualization (pulse circle)
+                analyser_input.getByteFrequencyData(dataArray_input);
+                const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
                 audioLevel = average / 255;
 
                 const pulseCircle = document.querySelector('.pulse-circle');
@@ -352,9 +558,42 @@
                     pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
                 }
 
-                animationFrame = requestAnimationFrame(updateAudioLevel);
+                animationFrame_input = requestAnimationFrame(updateAudioLevel);
             }
+
             updateAudioLevel();
+        }
+
+        function setupOutputVisualization(stream) {
+            // Create separate audio context for output visualization
+            audioContext_output = new (window.AudioContext || window.webkitAudioContext)();
+            analyser_output = audioContext_output.createAnalyser();
+            audioSource_output = audioContext_output.createMediaStreamSource(stream);
+            audioSource_output.connect(analyser_output);
+            analyser_output.fftSize = 2048;
+            dataArray_output = new Uint8Array(analyser_output.frequencyBinCount);
+
+            function updateVisualization() {
+                // Update output audio visualization (wave bars)
+                analyser_output.getByteFrequencyData(dataArray_output);
+
+                const boxes = document.querySelectorAll('.box');
+                for (let i = 0; i < boxes.length; i++) {
+                    const index = Math.floor(i * dataArray_output.length / boxes.length);
+                    const value = dataArray_output[index] / 255;
+                    boxes[i].style.transform = `scaleY(${Math.max(0.1, value * 1.5)})`;
+                }
+
+                animationFrame_output = requestAnimationFrame(updateVisualization);
+            }
+
+            updateVisualization();
+        }
+
+        // Reset wave visualization bars to minimum height
+        function resetVisualization() {
+            const boxes = document.querySelectorAll('.box');
+            boxes.forEach(box => box.style.transform = 'scaleY(0.1)');
         }
 
         function showError(message) {
@@ -363,7 +602,6 @@
             toast.className = 'toast error';
             toast.style.display = 'block';
 
-            // Hide toast after 5 seconds
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 5000);
@@ -371,7 +609,6 @@
 
         function handleMessage(event) {
             const eventJson = JSON.parse(event.data);
-            const typingIndicator = document.getElementById('typing-indicator');
 
             if (eventJson.type === "error") {
                 showError(eventJson.message);
@@ -407,7 +644,6 @@
                 toast.className = 'toast warning';
                 toast.style.display = 'block';
 
-                // Hide warning after 5 seconds
                 setTimeout(() => {
                     toast.style.display = 'none';
                 }, 5000);
@@ -422,6 +658,21 @@
 
                 stream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, stream);
+                });
+
+                // Add this listener to handle incoming audio track
+                peerConnection.addEventListener('track', (event) => {
+                    if (event.track.kind === 'audio') {
+                        console.log("Received audio track from server");
+
+                        if (audioOutput) {
+                            audioOutput.srcObject = event.streams[0];
+                            audioOutput.play().catch(e => console.error("Audio play failed:", e));
+                        }
+
+                        // Set up visualization for output audio with separate context
+                        setupOutputVisualization(event.streams[0]);
+                    }
                 });
 
                 const dataChannel = peerConnection.createDataChannel('text');
@@ -487,7 +738,7 @@
                     console.log(eventJson);
                     messages.push(eventJson.message);
                     addMessage(eventJson.message.role, eventJson.audio ?? eventJson.message.content);
-                });
+                })
             } catch (err) {
                 clearTimeout(timeoutId);
                 console.error('Error setting up WebRTC:', err);
@@ -499,18 +750,7 @@
         function addMessage(role, content) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', role);
-
-            if (role === 'user') {
-                // Create audio element for user messages
-                const audio = document.createElement('audio');
-                audio.controls = true;
-                audio.src = content;
-                messageDiv.appendChild(audio);
-            } else {
-                // Text content for assistant messages
-                messageDiv.textContent = content;
-            }
-
+            messageDiv.textContent = content;
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
@@ -521,16 +761,40 @@
                 eventSource = null;
             }
 
-            if (animationFrame) {
-                cancelAnimationFrame(animationFrame);
-                animationFrame = null;
+            if (animationFrame_input) {
+                cancelAnimationFrame(animationFrame_input);
+                animationFrame_input = null;
             }
-            if (audioContext) {
-                audioContext.close().catch(e => console.error("Error closing AudioContext:", e));
-                audioContext = null;
-                analyser = null;
-                audioSource = null;
+
+            if (animationFrame_output) {
+                cancelAnimationFrame(animationFrame_output);
+                animationFrame_output = null;
             }
+
+            if (audioContext_input) {
+                audioContext_input.close().catch(e => console.error("Error closing input AudioContext:", e));
+                audioContext_input = null;
+                analyser_input = null;
+                dataArray_input = null;
+                audioSource_input = null;
+            }
+
+            if (audioContext_output) {
+                audioContext_output.close().catch(e => console.error("Error closing output AudioContext:", e));
+                audioContext_output = null;
+                analyser_output = null;
+                dataArray_output = null;
+                audioSource_output = null;
+            }
+
+            if (audioOutput) {
+                audioOutput.pause();
+                audioOutput.srcObject = null;
+            }
+
+            // Reset visualization
+            resetVisualization();
+
             if (peerConnection) {
                 if (peerConnection.getTransceivers) {
                     peerConnection.getTransceivers().forEach(transceiver => {
@@ -546,8 +810,8 @@
 
                 peerConnection.close();
                 peerConnection = null;
-                console.log("Peer connection closed.");
             }
+
             isMuted = false;
             updateButtonState();
             audioLevel = 0;

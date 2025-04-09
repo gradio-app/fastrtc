@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.19"
+version = "0.0.20"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "MIT"
@@ -85,7 +85,7 @@ packages = ["/backend/fastrtc"]
 [tool.pytest.ini_options]
 testpaths = ["test/"]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope="function"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.ruff]
 src = ["demo", "backend/fastrtc", "test"]
@@ -100,19 +100,10 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint]
-select = [
-  "E",
-  "F",
-  "W",
-  "Q",
-  "I",
-  "UP",
-]
+select = ["E", "F", "W", "Q", "I", "UP"]
 
 # These can be turned on when the framework is more mature (Too many errors right now)
-exclude = [
-  "D",
-]
+exclude = ["D"]
 
 # Avoid enforcing line-length violations (`E501`)
 ignore = ["E501"]
@@ -126,10 +117,7 @@ convention = "google"
 
 [tool.pyright]
 include = ["backend/fastrtc"]
-exclude = [
-  "**/__pycache__",
-  "**/*.pyi",
-]
+exclude = ["**/__pycache__", "**/*.pyi"]
 
 reportMissingImports = false
 reportMissingTypeStubs = false

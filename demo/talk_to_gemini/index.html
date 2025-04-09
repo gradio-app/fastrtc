@@ -98,6 +98,11 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
         }
 
         button:hover {
@@ -134,7 +139,6 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
-            min-width: 180px;
         }
 
         .pulse-circle {
@@ -170,6 +174,23 @@
         .toast.warning {
             background-color: #ffd700;
             color: black;
+        }
+
+        /* Add styles for the mute toggle */
+        .mute-toggle {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .mute-toggle svg {
+            display: block;
+        }
+
+        #start-button {
+            margin-left: auto;
+            margin-right: auto;
         }
     </style>
 </head>
@@ -221,6 +242,11 @@
         let dataChannel;
         let isRecording = false;
         let webrtc_id;
+        let isMuted = false;
+        let analyser_input, dataArray_input;
+        let analyser, dataArray;
+        let source_input = null;
+        let source_output = null;
 
         const startButton = document.getElementById('start-button');
         const apiKeyInput = document.getElementById('api-key');
@@ -235,7 +261,28 @@
             boxContainer.appendChild(box);
         }
 
+        // SVG Icons
+        const micIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>`;
+
+        const micMutedIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>`;
+
         function updateButtonState() {
+            startButton.innerHTML = '';
+            startButton.onclick = null;
+
             if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
                 startButton.innerHTML = `
                     <div class="icon-with-spinner">
@@ -243,15 +290,28 @@
                         <span>Connecting...</span>
                     </div>
                 `;
+                startButton.disabled = true;
             } else if (peerConnection && peerConnection.connectionState === 'connected') {
-                startButton.innerHTML = `
-                    <div class="pulse-container">
-                        <div class="pulse-circle"></div>
-                        <span>Stop Recording</span>
-                    </div>
+                const pulseContainer = document.createElement('div');
+                pulseContainer.className = 'pulse-container';
+                pulseContainer.innerHTML = `
+                    <div class="pulse-circle"></div>
+                    <span>Stop Recording</span>
                 `;
+
+                const muteToggle = document.createElement('div');
+                muteToggle.className = 'mute-toggle';
+                muteToggle.title = isMuted ? 'Unmute' : 'Mute';
+                muteToggle.innerHTML = isMuted ? micMutedIconSVG : micIconSVG;
+                muteToggle.addEventListener('click', toggleMute);
+
+                startButton.appendChild(pulseContainer);
+                startButton.appendChild(muteToggle);
+                startButton.disabled = false;
+
             } else {
                 startButton.innerHTML = 'Start Recording';
+                startButton.disabled = false;
             }
         }
 
@@ -265,6 +325,23 @@
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 5000);
+        }
+
+        function toggleMute(event) {
+            event.stopPropagation();
+            if (!peerConnection || peerConnection.connectionState !== 'connected') return;
+
+            isMuted = !isMuted;
+            console.log("Mute toggled:", isMuted);
+
+            peerConnection.getSenders().forEach(sender => {
+                if (sender.track && sender.track.kind === 'audio') {
+                    sender.track.enabled = !isMuted;
+                    console.log(`Audio track ${sender.track.id} enabled: ${!isMuted}`);
+                }
+            });
+
+            updateButtonState();
         }
 
         async function setupWebRTC() {
@@ -288,58 +365,74 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
-                // Update audio visualization setup
-                audioContext = new AudioContext();
+                if (!audioContext || audioContext.state === 'closed') {
+                    audioContext = new AudioContext();
+                }
+                if (source_input) {
+                    try { source_input.disconnect(); } catch (e) { console.warn("Error disconnecting previous input source:", e); }
+                    source_input = null;
+                }
+                source_input = audioContext.createMediaStreamSource(stream);
                 analyser_input = audioContext.createAnalyser();
-                const source = audioContext.createMediaStreamSource(stream);
-                source.connect(analyser_input);
+                source_input.connect(analyser_input);
                 analyser_input.fftSize = 64;
                 dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
-
-                function updateAudioLevel() {
-                    analyser_input.getByteFrequencyData(dataArray_input);
-                    const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
-                    const audioLevel = average / 255;
-
-                    const pulseCircle = document.querySelector('.pulse-circle');
-                    if (pulseCircle) {
-                        console.log("audioLevel", audioLevel);
-                        pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
-                    }
-
-                    animationId = requestAnimationFrame(updateAudioLevel);
-                }
                 updateAudioLevel();
 
-                // Add connection state change listener
                 peerConnection.addEventListener('connectionstatechange', () => {
                     console.log('connectionstatechange', peerConnection.connectionState);
                     if (peerConnection.connectionState === 'connected') {
                         clearTimeout(timeoutId);
                         const toast = document.getElementById('error-toast');
                         toast.style.display = 'none';
+                        if (analyser_input) updateAudioLevel();
+                        if (analyser) updateVisualization();
+                    } else if (['disconnected', 'failed', 'closed'].includes(peerConnection.connectionState)) {
+                        // Explicitly stop animations if connection drops unexpectedly
+                        // Note: stopWebRTC() handles the normal stop case
                     }
                     updateButtonState();
                 });
 
-                // Handle incoming audio
-                peerConnection.addEventListener('track', (evt) => {
-                    if (audioOutput && audioOutput.srcObject !== evt.streams[0]) {
-                        audioOutput.srcObject = evt.streams[0];
-                        audioOutput.play();
+                peerConnection.onicecandidate = ({ candidate }) => {
+                    if (candidate) {
+                        console.debug("Sending ICE candidate", candidate);
+                        fetch('/webrtc/offer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                candidate: candidate.toJSON(),
+                                webrtc_id: webrtc_id,
+                                type: "ice-candidate",
+                            })
+                        })
+                    }
+                };
 
-                        // Set up audio visualization on the output stream
-                        audioContext = new AudioContext();
-                        analyser = audioContext.createAnalyser();
-                        const source = audioContext.createMediaStreamSource(evt.streams[0]);
-                        source.connect(analyser);
-                        analyser.fftSize = 2048;
-                        dataArray = new Uint8Array(analyser.frequencyBinCount);
-                        updateVisualization();
+                peerConnection.addEventListener('track', (evt) => {
+                    if (evt.track.kind === 'audio' && audioOutput) {
+                        if (audioOutput.srcObject !== evt.streams[0]) {
+                            audioOutput.srcObject = evt.streams[0];
+                            audioOutput.play().catch(e => console.error("Audio play failed:", e));
+
+                            if (!audioContext || audioContext.state === 'closed') {
+                                console.warn("AudioContext not ready for output track analysis.");
+                                return;
+                            }
+                            if (source_output) {
+                                try { source_output.disconnect(); } catch (e) { console.warn("Error disconnecting previous output source:", e); }
+                                source_output = null;
+                            }
+                            source_output = audioContext.createMediaStreamSource(evt.streams[0]);
+                            analyser = audioContext.createAnalyser();
+                            source_output.connect(analyser);
+                            analyser.fftSize = 2048;
+                            dataArray = new Uint8Array(analyser.frequencyBinCount);
+                            updateVisualization();
+                        }
                     }
                 });
 
-                // Create data channel for messages
                 dataChannel = peerConnection.createDataChannel('text');
                 dataChannel.onmessage = (event) => {
                     const eventJson = JSON.parse(event.data);
@@ -360,23 +453,8 @@
                     }
                 };
 
-                // Create and send offer
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
-
-                await new Promise((resolve) => {
-                    if (peerConnection.iceGatheringState === "complete") {
-                        resolve();
-                    } else {
-                        const checkState = () => {
-                            if (peerConnection.iceGatheringState === "complete") {
-                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
-                                resolve();
-                            }
-                        };
-                        peerConnection.addEventListener("icegatheringstatechange", checkState);
-                    }
-                });
 
                 const response = await fetch('/webrtc/offer', {
                     method: 'POST',
@@ -394,7 +472,7 @@
                     showError(serverResponse.meta.error === 'concurrency_limit_reached'
                         ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
                         : serverResponse.meta.error);
-                    stop();
+                    stopWebRTC();
                     startButton.textContent = 'Start Recording';
                     return;
                 }
@@ -404,13 +482,17 @@
                 clearTimeout(timeoutId);
                 console.error('Error setting up WebRTC:', err);
                 showError('Failed to establish connection. Please try again.');
-                stop();
+                stopWebRTC();
                 startButton.textContent = 'Start Recording';
             }
         }
 
         function updateVisualization() {
-            if (!analyser) return;
+            if (!analyser || !peerConnection || !['connected', 'connecting'].includes(peerConnection.connectionState)) {
+                const bars = document.querySelectorAll('.box');
+                bars.forEach(bar => bar.style.transform = 'scaleY(0.1)');
+                return;
+            }
 
             analyser.getByteFrequencyData(dataArray);
             const bars = document.querySelectorAll('.box');
@@ -420,32 +502,114 @@
                 bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
             }
 
-            animationId = requestAnimationFrame(updateVisualization);
+            requestAnimationFrame(updateVisualization);
+        }
+
+        function updateAudioLevel() {
+            if (!analyser_input || !peerConnection || !['connected', 'connecting'].includes(peerConnection.connectionState)) {
+                const pulseCircle = document.querySelector('.pulse-circle');
+                if (pulseCircle) {
+                    pulseCircle.style.setProperty('--audio-level', 1);
+                }
+                return;
+            }
+            analyser_input.getByteFrequencyData(dataArray_input);
+            const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
+            const audioLevel = average / 255;
+
+            const pulseCircle = document.querySelector('.pulse-circle');
+            if (pulseCircle) {
+                pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+            }
+
+            requestAnimationFrame(updateAudioLevel);
         }
 
         function stopWebRTC() {
+            console.log("Running stopWebRTC");
             if (peerConnection) {
-                peerConnection.close();
+                peerConnection.getSenders().forEach(sender => {
+                    if (sender.track) {
+                        sender.track.stop();
+                    }
+                });
+                peerConnection.ontrack = null;
+                peerConnection.onicegatheringstatechange = null;
+                peerConnection.onconnectionstatechange = null;
+
+                if (dataChannel) {
+                    dataChannel.onmessage = null;
+                    try { dataChannel.close(); } catch (e) { console.warn("Error closing data channel:", e); }
+                    dataChannel = null;
+                }
+                try { peerConnection.close(); } catch (e) { console.warn("Error closing peer connection:", e); }
+                peerConnection = null;
             }
-            if (animationId) {
-                cancelAnimationFrame(animationId);
+
+            if (audioOutput) {
+                audioOutput.pause();
+                audioOutput.srcObject = null;
             }
-            if (audioContext) {
-                audioContext.close();
+
+            if (source_input) {
+                try { source_input.disconnect(); } catch (e) { console.warn("Error disconnecting input source:", e); }
+                source_input = null;
             }
+            if (source_output) {
+                try { source_output.disconnect(); } catch (e) { console.warn("Error disconnecting output source:", e); }
+                source_output = null;
+            }
+
+            if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close().then(() => {
+                    console.log("AudioContext closed successfully.");
+                    audioContext = null;
+                }).catch(e => {
+                    console.error("Error closing AudioContext:", e);
+                    audioContext = null;
+                });
+            } else {
+                audioContext = null;
+            }
+
+            analyser_input = null;
+            dataArray_input = null;
+            analyser = null;
+            dataArray = null;
+
+            isMuted = false;
+            isRecording = false;
             updateButtonState();
+
+            const bars = document.querySelectorAll('.box');
+            bars.forEach(bar => bar.style.transform = 'scaleY(0.1)');
+            const pulseCircle = document.querySelector('.pulse-circle');
+            if (pulseCircle) {
+                pulseCircle.style.setProperty('--audio-level', 1);
+            }
         }
 
-        startButton.addEventListener('click', () => {
-            if (!isRecording) {
-                setupWebRTC();
-                startButton.classList.add('recording');
-            } else {
-                stopWebRTC();
-                startButton.classList.remove('recording');
+        startButton.addEventListener('click', (event) => {
+            if (event.target.closest('.mute-toggle')) {
+                return;
             }
-            isRecording = !isRecording;
+
+            if (peerConnection && peerConnection.connectionState === 'connected') {
+                console.log("Stop button clicked");
+                stopWebRTC();
+            } else if (!peerConnection || ['new', 'closed', 'failed', 'disconnected'].includes(peerConnection.connectionState)) {
+                console.log("Start button clicked");
+                if (!apiKeyInput.value) {
+                    showError("Please enter your API Key.");
+                    return;
+                }
+                setupWebRTC();
+                isRecording = true;
+                updateButtonState();
+            }
         });
+
+        updateButtonState();
     </script>
 </body>
 

@@ -1,3 +1,4 @@
+import inspect
 import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
@@ -9,6 +10,7 @@ from typing import (
     cast,
 )
 
+import anyio
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -18,6 +20,7 @@ from pydantic import BaseModel
 from typing_extensions import NotRequired
 
 from .tracks import HandlerType, StreamHandlerImpl
+from .utils import RTCConfigurationCallable
 from .webrtc import WebRTC
 from .webrtc_connection_mixin import WebRTCConnectionMixin
 from .websocket import WebSocketHandler
@@ -98,7 +101,7 @@ class Stream(WebRTCConnectionMixin):
         time_limit: float | None = None,
         allow_extra_tracks: bool = False,
         rtp_params: dict[str, Any] | None = None,
-        rtc_configuration: dict[str, Any] | None = None,
+        rtc_configuration: RTCConfigurationCallable | None = None,
         track_constraints: dict[str, Any] | None = None,
         additional_inputs: list[Component] | None = None,
         additional_outputs: list[Component] | None = None,
@@ -116,7 +119,7 @@ class Stream(WebRTCConnectionMixin):
             time_limit: Maximum execution time for the handler function in seconds.
             allow_extra_tracks: If True, allows connections with tracks not matching the modality.
             rtp_params: Optional dictionary of RTP encoding parameters.
-            rtc_configuration: Optional dictionary for RTCPeerConnection configuration (e.g., ICE servers).
+            rtc_configuration: Optional Callable or dictionary for RTCPeerConnection configuration (e.g., ICE servers).
                                Required when deploying on Colab or Spaces.
             track_constraints: Optional dictionary of constraints for media tracks (e.g., resolution, frame rate).
             additional_inputs: Optional list of extra Gradio input components.
@@ -748,6 +751,15 @@ class Stream(WebRTCConnectionMixin):
         return await self.handle_offer(
             body.model_dump(), set_outputs=self.set_additional_outputs(body.webrtc_id)
         )
+
+    async def get_rtc_configuration(self):
+        if inspect.isfunction(self.rtc_configuration):
+            if inspect.iscoroutinefunction(self.rtc_configuration):
+                return await self.rtc_configuration()
+            else:
+                return anyio.to_thread.run_sync(self.rtc_configuration)  # type: ignore
+        else:
+            return self.rtc_configuration
 
     async def handle_incoming_call(self, request: Request):
         """

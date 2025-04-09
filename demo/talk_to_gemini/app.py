@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse
 from fastrtc import (
     AsyncStreamHandler,
     Stream,
-    get_twilio_turn_credentials,
+    get_cloudflare_turn_credentials_async,
     wait_for_item,
 )
 from google import genai
@@ -117,7 +117,7 @@ stream = Stream(
     modality="audio",
     mode="send-receive",
     handler=GeminiHandler(),
-    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
+    rtc_configuration=get_cloudflare_turn_credentials_async if get_space() else None,
     concurrency_limit=5 if get_space() else None,
     time_limit=90 if get_space() else None,
     additional_inputs=[
@@ -160,7 +160,7 @@ async def _(body: InputData):
 
 @app.get("/")
 async def index():
-    rtc_config = get_twilio_turn_credentials() if get_space() else None
+    rtc_config = await get_cloudflare_turn_credentials_async() if get_space() else None
     html_content = (current_dir / "index.html").read_text()
     html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
     return HTMLResponse(content=html_content)

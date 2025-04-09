@@ -54,6 +54,9 @@ class OpenAIHandler(AsyncStreamHandler):
             )
             self.connection = conn
             async for event in self.connection:
+                # Handle interruptions
+                if event.type == "input_audio_buffer.speech_started":
+                    self.clear_queue()
                 if event.type == "response.audio_transcript.done":
                     await self.output_queue.put(AdditionalOutputs(event))
                 if event.type == "response.audio.delta":

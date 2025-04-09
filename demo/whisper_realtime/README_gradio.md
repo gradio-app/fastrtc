@@ -12,8 +12,7 @@ tags:
 - webrtc
 - websocket
 - gradio
-- secret|TWILIO_ACCOUNT_SID
-- secret|TWILIO_AUTH_TOKEN
+- secret|HF_TOKEN
 - secret|GROQ_API_KEY
 title: Whisper Realtime Transcription (Gradio UI)
 ---

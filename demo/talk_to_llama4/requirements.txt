@@ -1,0 +1,3 @@
+fastrtc[vad, tts]==0.0.20.rc2
+groq
+python-dotenv

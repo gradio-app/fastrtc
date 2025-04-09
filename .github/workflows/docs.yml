@@ -33,7 +33,7 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material mkdocs-llmstxt
+      - run: pip install mkdocs-material mkdocs-llmstxt==0.1.0
       - name: Build docs
         run: mkdocs build
 

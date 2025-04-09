@@ -1,6 +1,10 @@
 from .credentials import (
+    get_cloudflare_turn_credentials,
+    get_cloudflare_turn_credentials_async,
     get_hf_turn_credentials,
+    get_hf_turn_credentials_async,
     get_turn_credentials,
+    get_turn_credentials_async,
     get_twilio_turn_credentials,
 )
 from .pause_detection import (
@@ -70,6 +74,10 @@ __all__ = [
     "Warning",
     "get_tts_model",
     "KokoroTTSOptions",
+    "get_cloudflare_turn_credentials_async",
+    "get_hf_turn_credentials_async",
+    "get_turn_credentials_async",
+    "get_cloudflare_turn_credentials",
     "wait_for_item",
     "UIArgs",
     "ModelOptions",

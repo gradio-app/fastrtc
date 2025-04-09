@@ -3,27 +3,75 @@ When deploying in cloud environments with firewalls (like Hugging Face Spaces, R
 !!! tip
     The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](../userguide/gradio) component directly if you're building a standalone gradio app.
 
-## Community Server
 
-Hugging Face graciously provides a TURN server for the community.
+## Cloudflare Calls API
+
+Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www.cloudflare.com/en-au/developer-platform/products/cloudflare-calls/).
+
+### With a Hugging Face Token
+
+Cloudflare and Hugging Face have partnered to allow you to stream 10gb of WebRTC traffic per month for free with a Hugging Face account!
+
+```python
+from fastrtc import Stream, get_cloudflare_turn_credentials_async
+
+# Make sure the HF_TOKEN environment variable is set
+# Or pass in a callable with all arguments set
+
+# make sure you don't commit your token to git!
+TOKEN = "hf_..."
+async def get_credentials():
+    return await get_cloudflare_turn_credentials_async(hf_token=TOKEN)
+
+stream = Stream(
+    handler=...,
+    rtc_configuration=get_credentials,
+    modality="audio",
+    mode="send-receive",
+)
+```
+
+
+### With a Cloudflare API Token
+
+Once you have exhausted your monthly quota, you can create a **free** Cloudflare account.
+
+Create an [account](https://developers.cloudflare.com/fundamentals/setup/account/create-account/) and head to the [Calls section in your dashboard](https://dash.cloudflare.com/?to=/:account/calls).
+
+Choose `Create -> TURN App`, give it a name (like `fastrtc-demo`), and then hit the Create button.
+
+Take note of the Turn Token ID (often exported as `TURN_KEY_ID`) and API Token (exported as `TURN_KEY_API_TOKEN`).
+
+You can then connect from the WebRTC component like so:
+
+```python
+from fastrtc import Stream, get_cloudflare_turn_credentials_async
+
+# Make sure the TURN_KEY_ID and TURN_KEY_API_TOKEN environment variables are set
+stream = Stream(
+    handler=...,
+    rtc_configuration=get_cloudflare_turn_credentials_async,
+    modality="audio",
+    mode="send-receive",
+)
+```
+
+## Community Server (Deprecated)
+
+Hugging Face graciously provides 10gb of TURN  traffic through Cloudflare's global network.
 In order to use it, you need to first create a Hugging Face account by going to [huggingface.co](https://huggingface.co/).
-
-Then navigate to this [space](https://huggingface.co/spaces/fastrtc/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
-
-![turn_login](https://github.com/user-attachments/assets/cefa8dec-487e-47d8-bb96-1a14a701f6e5)
+Then you can create an [access token](https://huggingface.co/docs/hub/en/security-tokens).
 
 Then you can use the `get_hf_turn_credentials` helper to get your credentials:
 
 ```python
 from fastrtc import get_hf_turn_credentials, Stream
 
-# Pass a valid access token for your Hugging Face account
-# or set the HF_TOKEN environment variable 
-credentials = get_hf_turn_credentials(token=None)
+# Make sure the HF_TOKEN environment variable is set
 
 Stream(
     handler=...,
-    rtc_configuration=credentials,
+    rtc_configuration=get_hf_turn_credentials,
     modality="audio",
     mode="send-receive"
 )
@@ -31,8 +79,7 @@ Stream(
 
 !!! warning
 
-    This is a shared resource so we make no latency/availability guarantees.
-    For more robust options, see the Twilio, Cloudflare and self-hosting options below.
+    This function is now deprecated. Please use `get_cloudflare_turn_credentials` instead.
 
 
 ## Twilio API
@@ -77,50 +124,6 @@ Stream(
     # env variables but you can also pass in the tokens as parameters
     rtc_configuration = get_twilio_turn_credentials()
     ```
-
-## Cloudflare Calls API
-
-Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www.cloudflare.com/en-au/developer-platform/products/cloudflare-calls/).
-
-Create a **free** [account](https://developers.cloudflare.com/fundamentals/setup/account/create-account/) and head to the [Calls section in your dashboard](https://dash.cloudflare.com/?to=/:account/calls).
-
-Choose `Create -> TURN App`, give it a name (like `fastrtc-demo`), and then hit the Create button.
-
-Take note of the Turn Token ID (often exported as `TURN_KEY_ID`) and API Token (exported as `TURN_KEY_API_TOKEN`).
-
-You can then connect from the WebRTC component like so:
-
-```python
-from fastrtc import Stream
-import requests
-import os
-
-turn_key_id = os.environ.get("TURN_KEY_ID")
-turn_key_api_token = os.environ.get("TURN_KEY_API_TOKEN")
-ttl = 86400 # Can modify TTL, here it's set to 24 hours
-
-response = requests.post(
-    f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate-ice-servers",
-    headers={
-        "Authorization": f"Bearer {turn_key_api_token}",
-        "Content-Type": "application/json",
-    },
-    json={"ttl": ttl},  
-)
-if response.ok:
-    rtc_configuration = response.json()
-else:
-    raise Exception(
-        f"Failed to get TURN credentials: {response.status_code} {response.text}"
-    )
-
-stream = Stream(
-    handler=...,
-    rtc_configuration=rtc_configuration,
-    modality="audio",
-    mode="send-receive",
-)
-```
 
 ## Self Hosting
 

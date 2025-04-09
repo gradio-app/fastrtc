@@ -39,6 +39,7 @@ nav:
     - Pause Detection Handlers: reference/reply_on_pause.md
     - Stream Handlers: reference/stream_handlers.md
     - Utils: reference/utils.md
+    - TURN Credentials: reference/credentials.md
 
 extra_javascript:
   - https://cdn.jsdelivr.net/npm/marked/marked.min.js
