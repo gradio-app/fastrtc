@@ -12,15 +12,12 @@ import time
 import traceback
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from typing import (
     Any,
-    Generator,
     Literal,
-    Tuple,
     TypeAlias,
-    Union,
     cast,
 )
 
@@ -51,11 +48,11 @@ from fastrtc.utils import (
 
 logger = logging.getLogger(__name__)
 
-VideoNDArray: TypeAlias = Union[
-    np.ndarray[Any, np.dtype[np.uint8]],
-    np.ndarray[Any, np.dtype[np.uint16]],
-    np.ndarray[Any, np.dtype[np.float32]],
-]
+VideoNDArray: TypeAlias = (
+    np.ndarray[Any, np.dtype[np.uint8]]
+    | np.ndarray[Any, np.dtype[np.uint16]]
+    | np.ndarray[Any, np.dtype[np.float32]]
+)
 
 VideoEmitType = (
     VideoNDArray
@@ -219,7 +216,7 @@ class VideoCallback(VideoStreamTrack):
             else:
                 raise WebRTCError(str(e)) from e
 
-    async def next_timestamp(self) -> Tuple[int, fractions.Fraction]:
+    async def next_timestamp(self) -> tuple[int, fractions.Fraction]:
         """Override to control frame rate"""
         if self.readyState != "live":
             raise MediaStreamError
@@ -906,7 +903,7 @@ class ServerToClientVideo(VideoStreamTrack):
         self.latest_args = list(args)
         self.args_set.set()
 
-    async def next_timestamp(self) -> Tuple[int, fractions.Fraction]:
+    async def next_timestamp(self) -> tuple[int, fractions.Fraction]:
         """Override to control frame rate"""
         if self.readyState != "live":
             raise MediaStreamError

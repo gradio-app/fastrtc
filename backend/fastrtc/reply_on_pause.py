@@ -1,9 +1,10 @@
 import asyncio
 import inspect
+from collections.abc import AsyncGenerator, Callable, Generator
 from dataclasses import dataclass, field
 from logging import getLogger
 from threading import Event
-from typing import Any, AsyncGenerator, Callable, Generator, Literal, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -209,6 +210,7 @@ class ReplyOnPause(StreamHandler):
             ):
                 state.started_talking = True
                 logger.debug("Started talking")
+                self.send_message_sync(create_message("log", "started_talking"))
             if state.started_talking:
                 if state.stream is None:
                     state.stream = audio

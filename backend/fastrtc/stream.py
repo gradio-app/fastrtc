@@ -1,11 +1,10 @@
 import logging
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from typing import (
     Any,
-    AsyncContextManager,
-    Callable,
     Literal,
-    Optional,
     TypedDict,
     cast,
 )
@@ -29,8 +28,8 @@ curr_dir = Path(__file__).parent
 
 
 class Body(BaseModel):
-    sdp: Optional[str] = None
-    candidate: Optional[dict[str, Any]] = None
+    sdp: str | None = None
+    candidate: dict[str, Any] | None = None
     type: str
     webrtc_id: str
 
@@ -253,7 +252,7 @@ class Stream(WebRTCConnectionMixin):
         return wrapper
 
     def _inject_startup_message(
-        self, lifespan: Callable[[FastAPI], AsyncContextManager] | None = None
+        self, lifespan: Callable[[FastAPI], AbstractAsyncContextManager] | None = None
     ):
         """
         Create a FastAPI lifespan context manager to print startup messages and check environment.

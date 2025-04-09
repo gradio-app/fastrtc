@@ -73,6 +73,11 @@
         "error",
         `Too many concurrent connections. Please try again later!`,
       );
+    } else if (
+      msg.status === "failed" &&
+      msg.meta?.error === "connection_already_exists"
+    ) {
+      gradio.dispatch("error", "Connection already exists");
     } else {
       gradio.dispatch("error", "Unexpected server error");
     }

@@ -2,7 +2,6 @@ import logging
 import warnings
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import List
 
 import click
 import numpy as np
@@ -102,7 +101,7 @@ class SileroVADModel:
         return h, c
 
     @staticmethod
-    def collect_chunks(audio: np.ndarray, chunks: List[AudioChunk]) -> np.ndarray:
+    def collect_chunks(audio: np.ndarray, chunks: list[AudioChunk]) -> np.ndarray:
         """Collects and concatenates audio chunks."""
         if not chunks:
             return np.array([], dtype=np.float32)
@@ -116,7 +115,7 @@ class SileroVADModel:
         audio: np.ndarray,
         vad_options: SileroVadOptions,
         **kwargs,
-    ) -> List[AudioChunk]:
+    ) -> list[AudioChunk]:
         """This method is used for splitting long audios into speech chunks using silero VAD.
 
         Args:

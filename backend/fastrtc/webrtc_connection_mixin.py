@@ -6,10 +6,9 @@ import asyncio
 import inspect
 import logging
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, field
 from typing import (
-    AsyncGenerator,
     Literal,
     ParamSpec,
     TypeVar,
@@ -106,6 +105,7 @@ class WebRTCConnectionMixin:
     def clean_up(self, webrtc_id: str):
         self.handlers.pop(webrtc_id, None)
         self.connection_timeouts.pop(webrtc_id, None)
+        self.pcs.pop(webrtc_id, None)
         connection = self.connections.pop(webrtc_id, [])
         for conn in connection:
             if isinstance(conn, AudioCallback):
@@ -229,7 +229,18 @@ class WebRTCConnectionMixin:
                 content={"status": "failed", "meta": {"error": "connection_closed"}},
             )
 
-        if len(self.connections) >= cast(int, self.concurrency_limit):
+        if body["webrtc_id"] in self.connections:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "status": "failed",
+                    "meta": {
+                        "error": "connection_already_exists",
+                    },
+                },
+            )
+
+        if len(self.pcs) >= cast(int, self.concurrency_limit):
             return JSONResponse(
                 status_code=200,
                 content={
