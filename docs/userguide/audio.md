@@ -403,6 +403,9 @@ async def start_call(req: Request):
   auth_token = os.getenv("TWILIO_AUTH_TOKEN")
   client = Client(account_sid, auth_token)
 
+  # Use the public URL of your application
+  # here we're using ngrok to expose an app
+  # running locally
   call = client.calls.create(
     to=to_no,
     from_=from_no,
@@ -423,6 +426,7 @@ async def handle_incoming_call(req: Request):
 
 @app.websocket("/media-stream")
 async def handle_media_stream(websocket: WebSocket):
+  # stream is a FastRTC stream defined elsewhere
   await stream.telephone_handler(websocket)
 
 app = gr.mount_gradio_app(app, stream.ui, path="/")
