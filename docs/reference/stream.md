@@ -39,7 +39,8 @@ This class encapsulates the logic for handling real-time communication (WebRTC) 
 | `additional_outputs_handler`   | `Callable \| None`                            | Handler for additional outputs.                                          |
 | `track_constraints`            | `dict[str, Any] \| None`                      | Constraints for media tracks (e.g., resolution).                         |
 | `webrtc_component`             | `WebRTC`                                      | The underlying Gradio WebRTC component instance.                         |
-| `rtc_configuration`            | `dict[str, Any] \| None`                      | Configuration for the RTCPeerConnection (e.g., ICE servers).             |
+| `rtc_configuration`            | `dict[str, Any] \| None \| Callable`          | Configuration for the RTCPeerConnection (e.g., ICE servers).             |
+| `server_rtc_configuration`     | `dict[str, Any] \| None`                      | Configuration for the RTCPeerConnection (e.g., ICE servers) to be used in the server |
 | `_ui`                          | `Blocks`                                      | The Gradio Blocks UI instance.                                           |
 
 ## Methods

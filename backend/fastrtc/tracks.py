@@ -436,6 +436,7 @@ EmitType: TypeAlias = (
     | tuple[int, npt.NDArray[np.int16 | np.float32], Literal["mono", "stereo"]]
     | AdditionalOutputs
     | tuple[tuple[int, npt.NDArray[np.int16 | np.float32]], AdditionalOutputs]
+    | CloseStream
     | None
 )
 AudioEmitType = EmitType

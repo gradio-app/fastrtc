@@ -102,6 +102,7 @@ class Stream(WebRTCConnectionMixin):
         allow_extra_tracks: bool = False,
         rtp_params: dict[str, Any] | None = None,
         rtc_configuration: RTCConfigurationCallable | None = None,
+        server_rtc_configuration: dict[str, Any] | None = None,
         track_constraints: dict[str, Any] | None = None,
         additional_inputs: list[Component] | None = None,
         additional_outputs: list[Component] | None = None,
@@ -121,6 +122,8 @@ class Stream(WebRTCConnectionMixin):
             rtp_params: Optional dictionary of RTP encoding parameters.
             rtc_configuration: Optional Callable or dictionary for RTCPeerConnection configuration (e.g., ICE servers).
                                Required when deploying on Colab or Spaces.
+            server_rtc_configuration: Optional dictionary for RTCPeerConnection configuration on the server side. Note
+                                      that setting iceServers to be an empty list will mean no ICE servers will be used in the server.
             track_constraints: Optional dictionary of constraints for media tracks (e.g., resolution, frame rate).
             additional_inputs: Optional list of extra Gradio input components.
             additional_outputs: Optional list of extra Gradio output components. Requires `additional_outputs_handler`.
@@ -149,6 +152,9 @@ class Stream(WebRTCConnectionMixin):
         self.track_constraints = track_constraints
         self.webrtc_component: WebRTC
         self.rtc_configuration = rtc_configuration
+        self.server_rtc_configuration = self.convert_to_aiortc_format(
+            server_rtc_configuration
+        )
         self._ui = self._generate_default_ui(ui_args)
         self._ui.launch = self._wrap_gradio_launch(self._ui.launch)
 
@@ -923,6 +929,7 @@ class Stream(WebRTCConnectionMixin):
                 json={"url": host},
                 headers={"Authorization": token or get_token() or ""},
             )
+            r.raise_for_status()
         except Exception:
             URL = "https://fastrtc-fastphone.hf.space"
             r = httpx.post(
@@ -931,6 +938,14 @@ class Stream(WebRTCConnectionMixin):
                 headers={"Authorization": token or get_token() or ""},
             )
         r.raise_for_status()
+        if r.status_code == 202:
+            print(
+                click.style("INFO", fg="orange")
+                + ":\t  You have "
+                + "run out of your quota"
+            )
+            return
+
         data = r.json()
         code = f"{data['code']}"
         phone_number = data["phone"]

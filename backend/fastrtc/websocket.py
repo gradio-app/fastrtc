@@ -43,7 +43,9 @@ def convert_to_mulaw(
     audio_data = audio_to_float32(audio_data)
 
     if original_rate != target_rate:
-        audio_data = librosa.resample(audio_data, orig_sr=original_rate, target_sr=8000)
+        audio_data = librosa.resample(
+            audio_data, orig_sr=original_rate, target_sr=target_rate
+        )
 
     audio_data = audio_to_int16(audio_data)
 
@@ -79,17 +81,11 @@ class WebSocketHandler:
         self._graceful_shutdown_task: asyncio.Task | None = None
 
     def _clear_queue(self):
-        old_queue = self.queue
-        self.queue = asyncio.Queue()
-        logger.debug("clearing queue")
         i = 0
-        while not old_queue.empty():
-            try:
-                old_queue.get_nowait()
-                i += 1
-            except asyncio.QueueEmpty:
-                break
-        logger.debug("popped %d items from queue", i)
+        while not self.queue.empty():
+            self.queue.get_nowait()
+            i += 1
+        logger.debug("websocket: popped %d items from queue", i)
 
     def set_args(self, args: list[Any]):
         self.stream_handler.set_args(args)
@@ -128,7 +124,10 @@ class WebSocketHandler:
                         audioop.ulaw2lin(audio_payload, 2), dtype=np.int16
                     )
 
-                    if self.stream_handler.input_sample_rate != 8000:
+                    if (
+                        self.stream_handler.phone_mode
+                        and self.stream_handler.input_sample_rate != 8000
+                    ):
                         audio_array = audio_to_float32(audio_array)
                         audio_array = librosa.resample(
                             audio_array,
@@ -255,8 +254,8 @@ class WebSocketHandler:
     async def _emit_loop(self):
         try:
             while not self.quit.is_set():
+                wait_duration = 0.02
                 output = await self.queue.get()
-
                 if output is not None:
                     frame, output = split_output(output)
                     if isinstance(output, AdditionalOutputs):
@@ -269,21 +268,20 @@ class WebSocketHandler:
 
                     if not isinstance(frame, tuple):
                         continue
-
                     target_rate = (
-                        self.stream_handler.output_sample_rate
-                        if not self.stream_handler.phone_mode
-                        else 8000
+                        8_000
+                        if self.stream_handler.phone_mode
+                        else self.stream_handler.output_sample_rate
                     )
+                    duration = np.atleast_2d(frame[1]).shape[1] / frame[0]
                     mulaw_audio = convert_to_mulaw(
-                        frame[1], frame[0], target_rate=target_rate
+                        frame[1],
+                        frame[0],
+                        target_rate=target_rate,
                     )
                     audio_payload = base64.b64encode(mulaw_audio).decode("utf-8")
 
                     if self.websocket and self.stream_id:
-                        sample_rate, audio_array = frame[:2]
-                        duration = len(audio_array) / sample_rate
-
                         self.playing_durations.append(duration)
 
                         payload = {
@@ -292,9 +290,10 @@ class WebSocketHandler:
                         }
                         if self.stream_handler.phone_mode:
                             payload["streamSid"] = self.stream_id
+                            # yield audio slightly faster than real-time
+                            wait_duration = 0.75 * duration
                         await self.websocket.send_json(payload)
-
-                await asyncio.sleep(0.02)
+                await asyncio.sleep(wait_duration)
 
         except asyncio.CancelledError:
             logger.debug("Emit loop cancelled")

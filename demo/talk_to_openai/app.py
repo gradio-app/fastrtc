@@ -17,7 +17,6 @@ from fastrtc import (
     wait_for_item,
 )
 from gradio.utils import get_space
-from openai.types.beta.realtime import ResponseAudioTranscriptDoneEvent
 
 load_dotenv()
 
@@ -103,8 +102,8 @@ class OpenAIHandler(AsyncStreamHandler):
             self.connection = None
 
 
-def update_chatbot(chatbot: list[dict], response: ResponseAudioTranscriptDoneEvent):
-    chatbot.append({"role": "assistant", "content": response.transcript})
+def update_chatbot(chatbot: list[dict], response: dict):
+    chatbot.append(response)
     return chatbot
 
 

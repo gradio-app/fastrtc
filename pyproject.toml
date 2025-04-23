@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.20"
+version = "0.0.22"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "MIT"
@@ -28,17 +28,17 @@ keywords = [
   "video processing",
   "gradio-custom-component",
 ]
-# Add dependencies here
 dependencies = [
   "gradio>=4.0,<6.0",
   "aiortc",
+  "aioice>=0.10.1",
   "audioop-lts;python_version>='3.13'",
   "librosa",
   "numpy>=2.0.2",                          # because of librosa
   "numba>=0.60.0",
   "standard-aifc;python_version>='3.13'",
   "standard-sunau;python_version>='3.13'",
-]
+] # Add dependencies here
 classifiers = [
   'Development Status :: 3 - Alpha',
   'Operating System :: OS Independent',
@@ -65,8 +65,8 @@ classifiers = [
 # encounter your project in the wild.
 
 [project.urls]
-repository = "https://github.com/freddyaboulton/fastrtc"
-issues = "https://github.com/freddyaboulton/fastrtc/issues"
+repository = "https://github.com/gradio-app/fastrtc"
+issues = "https://github.com/gradio-app/fastrtc/issues"
 Documentation = "https://fastrtc.org/"
 
 [project.optional-dependencies]

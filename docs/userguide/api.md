@@ -403,6 +403,9 @@ WebSocket connections are currently only supported for audio in send-receive mod
 
 To connect to the server via WebSocket, you'll need to establish a WebSocket connection and handle audio processing. The code below assumes there is an HTML audio element for output playback.
 
+The input audio must be mu-law encoded with a sample rate equal to the input_sample_rate of the handler you are connecting to. By default it is 48k Hz. 
+The out audio will also be mulaw encoded and the sample rate will be equal to the output_sample_rate of the handler. By default it is 48k Hz.
+
 \`\`\`javascript
 // Setup audio context and stream
 const audioContext = new AudioContext();
@@ -440,6 +443,40 @@ ws.onopen = () => {
             }));
         }
     };
+};
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data?.type === "send_input") {
+        fetch('/input_hook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // Send additional input data here
+            body: JSON.stringify({ webrtc_id: wsId })
+        });
+    }
+    if (data.event === "media") {
+        // Process received audio
+        const audioData = atob(data.media.payload);
+        const mulawData = new Uint8Array(audioData.length);
+        for (let i = 0; i < audioData.length; i++) {
+            mulawData[i] = audioData.charCodeAt(i);
+        }
+
+        // Convert mu-law to linear PCM
+        const linearData = alawmulaw.mulaw.decode(mulawData);
+
+        // Create an AudioBuffer
+        const audioBuffer = outputContext.createBuffer(1, linearData.length, sampleRate);
+        const channelData = audioBuffer.getChannelData(0);
+
+        // Fill the buffer with the decoded data
+        for (let i = 0; i < linearData.length; i++) {
+            channelData[i] = linearData[i] / 32768.0;
+        }
+
+        // Do something with Audio Buffer
+    }
 };
 \`\`\`
 {{?}}

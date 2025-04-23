@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import logging
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
@@ -15,8 +14,6 @@ from typing import (
     cast,
 )
 
-import anyio
-import anyio.to_thread
 from gradio import wasm_utils
 from gradio.components.base import Component, server
 from gradio_client import handle_file
@@ -82,6 +79,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         key: int | str | None = None,
         mirror_webcam: bool = True,
         rtc_configuration: dict[str, Any] | None | RTCConfigurationCallable = None,
+        server_rtc_configuration: dict[str, Any] | None = None,
         track_constraints: dict[str, Any] | None = None,
         time_limit: float | None = None,
         allow_extra_tracks: bool = False,
@@ -115,6 +113,8 @@ class WebRTC(Component, WebRTCConnectionMixin):
             key: if assigned, will be used to assume identity across a re-render. Components that have the same key across a re-render will have their value preserved.
             mirror_webcam: if True webcam will be mirrored. Default is True.
             rtc_configuration: WebRTC configuration options. See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection . If running the demo on a remote server, you will need to specify a rtc_configuration. See https://freddyaboulton.github.io/gradio-webrtc/deployment/
+            server_rtc_configuration: Optional dictionary for RTCPeerConnection configuration on the server side. Note
+                                      that setting iceServers to be an empty list will mean no ICE servers will be used in the server.
             track_constraints: Media track constraints for WebRTC. For example, to set video height, width use {"width": {"exact": 800}, "height": {"exact": 600}, "aspectRatio": {"exact": 1.33333}}
             time_limit: Maximum duration in seconds for recording.
             allow_extra_tracks: Allow tracks not supported by the modality. For example, a peer connection with an audio track would be allowed even if modality is 'video', which normally throws a ``ValueError`` exception.
@@ -134,6 +134,9 @@ class WebRTC(Component, WebRTCConnectionMixin):
         self.mirror_webcam = mirror_webcam
         self.concurrency_limit = 1
         self.rtc_configuration = rtc_configuration
+        self.server_rtc_configuration = self.convert_to_aiortc_format(
+            server_rtc_configuration
+        )
         self.allow_extra_tracks = allow_extra_tracks
         self.mode = mode
         self.modality = modality
@@ -238,7 +241,6 @@ class WebRTC(Component, WebRTCConnectionMixin):
             inputs = list(inputs)
 
         async def handler(webrtc_id: str, *args):
-            print("webrtc_id", webrtc_id)
             async for next_outputs in self.output_stream(webrtc_id):
                 yield fn(*args, *next_outputs.args)  # type: ignore
 
@@ -366,13 +368,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
     @server
     async def turn(self, _):
         try:
-            if inspect.isfunction(self.rtc_configuration):
-                if inspect.iscoroutinefunction(self.rtc_configuration):
-                    return await self.rtc_configuration()
-                else:
-                    return await anyio.to_thread.run_sync(self.rtc_configuration)
-            else:
-                return self.rtc_configuration or {}
+            return await self.resolve_rtc_configuration()
         except Exception as e:
             return {"error": str(e)}
 

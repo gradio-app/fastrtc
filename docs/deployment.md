@@ -13,7 +13,7 @@ Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www
 Cloudflare and Hugging Face have partnered to allow you to stream 10gb of WebRTC traffic per month for free with a Hugging Face account!
 
 ```python
-from fastrtc import Stream, get_cloudflare_turn_credentials_async
+from fastrtc import Stream, get_cloudflare_turn_credentials_async, get_cloudflare_turn_credentials
 
 # Make sure the HF_TOKEN environment variable is set
 # Or pass in a callable with all arguments set
@@ -26,11 +26,14 @@ async def get_credentials():
 stream = Stream(
     handler=...,
     rtc_configuration=get_credentials,
+    server_rtc_configuration=get_cloudflare_turn_credentials(ttl=360_000)
     modality="audio",
     mode="send-receive",
 )
 ```
 
+!!! tip
+    Setting an rtc configuration in the server is recommended but not required. It's a good practice to set short lived credentials in the client (default `ttl` value of 10 minutes when calling `get_cloudflare_turn_credentials*`) but you can share the same credentials between server and client. 
 
 ### With a Cloudflare API Token
 

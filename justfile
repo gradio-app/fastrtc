@@ -42,6 +42,38 @@ publish:
     print(f"Uploading {latest_wheel}")
     os.system(f"twine upload {latest_wheel}")
 
+# Upload the latest wheel to HF space with a random ID
+publish-dev:
+    #!/usr/bin/env python
+    import glob
+    import os
+    import uuid
+    import subprocess
+    
+    # Find all wheel files in dist directory
+    wheels = glob.glob('dist/*.whl')
+    if not wheels:
+        print("No wheel files found in dist directory")
+        exit(1)
+    
+    # Sort by creation time to get the latest
+    latest_wheel = max(wheels, key=os.path.getctime)
+    wheel_name = os.path.basename(latest_wheel)
+    
+    # Generate random ID
+    random_id = str(uuid.uuid4())[:8]
+    
+    # Define the HF path
+    hf_space = "freddyaboulton/bucket"
+    hf_path = f"wheels/fastrtc/{random_id}/"
+    
+    # Upload to Hugging Face space
+    cmd = f"huggingface-cli upload {hf_space} {latest_wheel} {hf_path}{wheel_name} --repo-type dataset"
+    subprocess.run(cmd, shell=True, check=True)
+    
+    # Print the URL
+    print(f"Wheel uploaded successfully!")
+    print(f"URL: https://huggingface.co/datasets/{hf_space}/resolve/main/{hf_path}{wheel_name}")
 
 # Build the package
 build:

@@ -390,35 +390,8 @@
             rttValues: []
         };
 
-        // Load mu-law library
-
-        // Add load promise to track when the script is ready
-
-
-        function resample(audioData, fromSampleRate, toSampleRate) {
-            const ratio = fromSampleRate / toSampleRate;
-            const newLength = Math.round(audioData.length / ratio);
-            const result = new Float32Array(newLength);
-
-            for (let i = 0; i < newLength; i++) {
-                const position = i * ratio;
-                const index = Math.floor(position);
-                const fraction = position - index;
-
-                if (index + 1 < audioData.length) {
-                    result[i] = audioData[index] * (1 - fraction) + audioData[index + 1] * fraction;
-                } else {
-                    result[i] = audioData[index];
-                }
-            }
-            return result;
-        }
 
         function convertToMulaw(audioData, sampleRate) {
-            // Resample to 8000 Hz if needed
-            if (sampleRate !== 8000) {
-                audioData = resample(audioData, sampleRate, 8000);
-            }
 
             // Convert float32 [-1,1] to int16 [-32768,32767]
             const int16Data = new Int16Array(audioData.length);
@@ -449,7 +422,7 @@
                 wsMetrics.startTime = performance.now();
 
                 // Create audio context and analyser for visualization
-                const audioContext = new AudioContext();
+                const audioContext = new AudioContext({ sampleRate: 24000 });
                 const analyser = audioContext.createAnalyser();
                 const source = audioContext.createMediaStreamSource(stream);
                 source.connect(analyser);

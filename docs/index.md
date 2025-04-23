@@ -8,7 +8,7 @@
 
 <div style="display: flex; flex-direction: row; justify-content: center">
 <img style="display: block; padding-right: 5px; height: 20px;" alt="Static Badge" src="https://img.shields.io/pypi/v/fastrtc"> 
-<a href="https://github.com/freddyaboulton/fastrtc" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
+<a href="https://github.com/gradio-app/fastrtc" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
 </div>
 
 <h3 style='text-align: center'>
