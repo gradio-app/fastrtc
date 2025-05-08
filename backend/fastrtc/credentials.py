@@ -137,7 +137,7 @@ def get_cloudflare_turn_credentials(
     """
     if hf_token is None:
         hf_token = os.getenv("HF_TOKEN")
-    if hf_token is not None:
+    if hf_token:
         return httpx.get(
             CLOUDFLARE_FASTRTC_TURN_URL,
             headers={"Authorization": f"Bearer {hf_token}"},
