@@ -44,6 +44,7 @@ from fastrtc.utils import (
     RTCConfigurationCallable,
     create_message,
     webrtc_error_handler,
+    WebRTCData,
 )
 
 Track = (
@@ -150,6 +151,9 @@ class WebRTCConnectionMixin:
         if webrtc_id in self.connections:
             for conn in self.connections[webrtc_id]:
                 conn.set_args(list(args))
+
+    def set_input_gradio(self, webrtc_data: WebRTCData, *args):
+        self.set_input(webrtc_data.webrtc_id, webrtc_data, *args)
 
     async def output_stream(
         self, webrtc_id: str

@@ -15,14 +15,16 @@
     Microphone,
   } from "@gradio/icons";
   import MicrophoneMuted from "./MicrophoneMuted.svelte";
+  import type { WebRTCValue } from "./utils";
 
   import { start, stop } from "./webrtc_utils";
   import { get_devices, set_available_devices } from "./stream_utils";
   import AudioWave from "./AudioWave.svelte";
+  import TextboxWithMic from "./TextboxWithMic.svelte";
   import WebcamPermissions from "./WebcamPermissions.svelte";
   import PulsingIcon from "./PulsingIcon.svelte";
   export let mode: "send-receive" | "send";
-  export let value: string | null = null;
+  export let value: WebRTCValue | null = null;
   export let label: string | undefined = undefined;
   export let show_label = true;
   export let rtc_configuration: Object | null = null;
@@ -37,6 +39,8 @@
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
   export let button_labels: { start: string; stop: string; waiting: string };
+  export let variant: "textbox" | "wave" = "textbox";
+
   let pending = false;
 
   let stopword_recognized = false;
@@ -44,7 +48,7 @@
   let notification_sound;
 
   onMount(() => {
-    if (value === "__webrtc_value__") {
+    if (value?.webrtc_id === "__webrtc_value__") {
       notification_sound = new Audio(
         "https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/pop-sounds.mp3",
       );
@@ -148,7 +152,7 @@
       return;
     }
     _webrtc_id = Math.random().toString(36).substring(2);
-    value = _webrtc_id;
+    value.webrtc_id = _webrtc_id;
     stream_state = "waiting";
     await server.turn().then((rtc_configuration_) => {
       if (rtc_configuration_.error) {
@@ -296,24 +300,51 @@
   $: if (stopword_recognized) {
     notification_sound.play();
   }
+
+  function input_audio_source_callback(): MediaStream {
+    return stream;
+  }
 </script>
 
-<BlockLabel
-  {show_label}
-  Icon={Music}
-  float={false}
-  label={label || i18n("audio.audio")}
-/>
+{#if variant !== "textbox"}
+  <BlockLabel
+    {show_label}
+    Icon={Music}
+    float={false}
+    label={label || i18n("audio.audio")}
+  />
+{/if}
 <div class="audio-container">
   <audio
     class="standard-player"
-    class:hidden={value === "__webrtc_value__"}
+    class:hidden={true}
     on:load
     bind:this={audio_player}
     on:ended={() => dispatch("stop")}
     on:play={() => dispatch("play")}
   />
-  {#if !mic_accessed}
+  {#if variant === "textbox"}
+    <TextboxWithMic
+      bind:value
+      bind:stream_state
+      {rtc_configuration}
+      {time_limit}
+      {start_stream}
+      {access_mic}
+      {audio_source_callback}
+      {input_audio_source_callback}
+      {toggleMuteMicrophone}
+      {handle_click_outside}
+      {handle_device_change}
+      {toggleMute}
+      {icon}
+      {icon_button_color}
+      {pulse_color}
+      bind:mic_accessed
+      bind:is_muted
+      bind:is_mic_muted
+    />
+  {:else if !mic_accessed}
     <div
       in:fade={{ delay: 100, duration: 200 }}
       title="grant webcam access"
@@ -353,7 +384,7 @@
                 style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
               >
                 <PulsingIcon
-                  audio_source_callback={() => stream}
+                  audio_source_callback={input_audio_source_callback}
                   stream_state={"open"}
                   icon={Circle}
                   {icon_button_color}

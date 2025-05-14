@@ -12,6 +12,7 @@ from collections.abc import Callable, Coroutine
 from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, TypedDict, cast
+from gradio.data_classes import GradioModel
 
 import av
 import librosa
@@ -28,6 +29,12 @@ AUDIO_PTIME = 0.020
 class AudioChunk(TypedDict):
     start: int
     end: int
+
+
+class WebRTCData(GradioModel):
+    webrtc_id: str
+    textbox: str = ""
+    audio: Any | None = None
 
 
 class AdditionalOutputs:

@@ -398,7 +398,7 @@ class StreamHandlerBase(ABC):
             args: A list of arguments.
         """
         logger.debug("setting args in audio callback %s", args)
-        self.latest_args = ["__webrtc_value__"] + list(args)
+        self.latest_args = list(args)
         self.args_set.set()
 
     def reset(self):

@@ -26,7 +26,7 @@ from .tracks import (
     VideoEventHandler,
     VideoStreamHandler,
 )
-from .utils import RTCConfigurationCallable
+from .utils import RTCConfigurationCallable, WebRTCData
 from .webrtc_connection_mixin import WebRTCConnectionMixin
 
 if TYPE_CHECKING:
@@ -58,6 +58,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
     """
 
     EVENTS = ["tick", "state_change"]
+    data_model = WebRTCData
 
     def __init__(
         self,
@@ -91,6 +92,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         pulse_color: str | None = None,
         icon_radius: int | None = None,
         button_labels: dict | None = None,
+        variant: Literal["textbox", "wave"] = "textbox",
     ):
         """
         Parameters:
@@ -128,6 +130,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             icon_radius: Border radius of the icon button expressed as a percentage of the button size. Default is 50%
         """
         WebRTCConnectionMixin.__init__(self)
+        self.variant = variant
         self.time_limit = time_limit
         self.height = height
         self.width = width
@@ -206,7 +209,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             icon if not icon else cast(dict, self.serve_static_file(icon)).get("url")
         )
 
-    def preprocess(self, payload: str) -> str:
+    def preprocess(self, payload: WebRTCData) -> WebRTCData:
         """
         Parameters:
             payload: An instance of VideoData containing the video and subtitle files.
@@ -317,7 +320,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             for input_component in inputs[1:]:  # type: ignore
                 if hasattr(input_component, "change") and send_input_on == "change":
                     input_component.change(  # type: ignore
-                        self.set_input,
+                        self.set_input_gradio,
                         inputs=inputs,
                         outputs=None,
                         concurrency_id=concurrency_id,
@@ -327,13 +330,13 @@ class WebRTC(Component, WebRTCConnectionMixin):
                     )
                 if hasattr(input_component, "submit") and send_input_on == "submit":
                     input_component.submit(  # type: ignore
-                        self.set_input,
+                        self.set_input_gradio,
                         inputs=inputs,
                         outputs=None,
                         concurrency_id=concurrency_id,
                     )
             return self.tick(  # type: ignore
-                self.set_input,
+                self.set_input_gradio,
                 inputs=inputs,
                 outputs=None,
                 concurrency_id=concurrency_id,
@@ -359,7 +362,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
                 )
             trigger(lambda: "start_webrtc_stream", inputs=None, outputs=self)
             self.tick(  # type: ignore
-                self.set_input,
+                self.set_input_gradio,
                 inputs=[self] + list(inputs),
                 outputs=None,
                 concurrency_id=concurrency_id,

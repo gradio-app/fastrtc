@@ -8,11 +8,14 @@
   import StaticVideo from "./shared/StaticVideo.svelte";
   import StaticAudio from "./shared/StaticAudio.svelte";
   import InteractiveAudio from "./shared/InteractiveAudio.svelte";
-
+  import type { WebRTCValue } from "./shared/utils";
   export let elem_id = "";
   export let elem_classes: string[] = [];
   export let visible = true;
-  export let value: string = "__webrtc_value__";
+  export let value: WebRTCValue = {
+    textbox: "",
+    webrtc_id: "__webrtc_value__",
+  };
   export let button_labels: { start: string; stop: string; waiting: string };
 
   export let label: string;
@@ -40,6 +43,7 @@
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
+  export let variant: "textbox" | "wave" = "textbox";
 
   const on_change_cb = (msg: "change" | "tick" | any) => {
     if (
@@ -192,6 +196,7 @@
       {icon_radius}
       {pulse_color}
       {button_labels}
+      {variant}
       on:tick={() => gradio.dispatch("tick")}
       on:error={({ detail }) => gradio.dispatch("error", detail)}
       on:warning={({ detail }) => gradio.dispatch("warning", detail)}

@@ -22474,7 +22474,7 @@ function Mp(n) {
 function Bp(n, e, t) {
   let { elem_id: r = "" } = e, { elem_classes: a = [] } = e, { visible: i = !0 } = e, { value: l = "__webrtc_value__" } = e, { button_labels: s } = e, { label: o } = e, { root: c } = e, { show_label: h } = e, { loading_status: m } = e, { height: f } = e, { width: p } = e, { server: v } = e, { container: w = !1 } = e, { scale: S = null } = e, { min_width: A = void 0 } = e, { gradio: b } = e, { rtc_configuration: y } = e, { time_limit: E = null } = e, { modality: F = "video" } = e, { mode: T = "send-receive" } = e, { rtp_params: z = {} } = e, { track_constraints: I = {} } = e, { icon: B = void 0 } = e, { icon_button_color: R = "var(--color-accent)" } = e, { pulse_color: L = "var(--color-accent)" } = e, { icon_radius: W = 50 } = e;
   const oe = (N) => {
-    console.log("on_change_cb", N), (N == null ? void 0 : N.type) === "info" || (N == null ? void 0 : N.type) === "warning" || (N == null ? void 0 : N.type) === "error" ? b.dispatch(
+    (N == null ? void 0 : N.type) === "info" || (N == null ? void 0 : N.type) === "warning" || (N == null ? void 0 : N.type) === "error" ? b.dispatch(
       (N == null ? void 0 : N.type) === "error" ? "error" : "warning",
       (N == null ? void 0 : N.data) || (N == null ? void 0 : N.message)
     ) : (N == null ? void 0 : N.type) === "end_stream" ? b.dispatch("warning", N.data) : (N == null ? void 0 : N.type) === "fetch_output" ? b.dispatch("state_change") : (N == null ? void 0 : N.type) === "send_input" ? b.dispatch("tick") : (N == null ? void 0 : N.type) === "connection_timeout" && b.dispatch("warning", "Taking a while to connect. Are you on a VPN?"), N.type === "state_change" && b.dispatch(N === "change" ? "state_change" : "tick");

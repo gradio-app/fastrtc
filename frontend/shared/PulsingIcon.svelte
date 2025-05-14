@@ -8,6 +8,7 @@
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
+  export let pulse_intensity_threshold: number = 0;
 
   let audioContext: AudioContext;
   let analyser: AnalyserNode;
@@ -61,7 +62,7 @@
 
 <div class="gradio-webrtc-icon-wrapper">
   <div class="gradio-webrtc-pulsing-icon-container">
-    {#if pulseIntensity > 0}
+    {#if pulseIntensity > pulse_intensity_threshold}
       {#each Array(3) as _, i}
         <div
           class="pulse-ring"
@@ -76,7 +77,7 @@
     <div
       class="gradio-webrtc-pulsing-icon"
       style:transform={`scale(${pulseScale})`}
-      style:background={icon_button_color}
+      style:background={"none"}
     >
       {#if typeof icon === "string"}
         <img

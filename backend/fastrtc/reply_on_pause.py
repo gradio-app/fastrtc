@@ -354,10 +354,13 @@ class ReplyOnPause(StreamHandler):
                 logger.debug("Creating generator")
                 audio = cast(np.ndarray, self.state.stream).reshape(1, -1)
                 if self._needs_additional_inputs:
-                    self.latest_args[0] = (self.state.sampling_rate, audio)
+                    self.latest_args[0].audio = (self.state.sampling_rate, audio)
                     self.generator = self.fn(*self.latest_args)  # type: ignore
                 else:
-                    self.generator = self.fn((self.state.sampling_rate, audio))  # type: ignore
+                    self.wait_for_args_sync()
+                    print("latest args", self.latest_args)
+                    self.latest_args[0].audio = (self.state.sampling_rate, audio)
+                    self.generator = self.fn(self.latest_args[0])  # type: ignore
                 logger.debug("Latest args: %s", self.latest_args)
                 self.state = self.state.new()
             self.state.responding = True
