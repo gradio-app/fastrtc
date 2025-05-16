@@ -1,10 +1,7 @@
 <script lang="ts">
   import type { WebRTCValue } from "./utils";
   import { Block } from "@gradio/atoms";
-  import type { I18nFormatter } from "@gradio/utils";
   import { createEventDispatcher } from "svelte";
-  import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
   import {
     Circle,
     Spinner,
@@ -32,6 +29,8 @@
   export let handle_click_outside: (event: MouseEvent) => void;
   export let handle_device_change: (event: Event) => void;
   export let toggleMute: () => void;
+  export let on_change_cb: (mg: "tick" | "change") => void;
+  export let trigger_response: (body: { webrtc_id: string }) => Promise<void>;
   export let icon: string | undefined = undefined;
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
@@ -66,6 +65,11 @@
       root={undefined}
       info={undefined}
       submit_btn={true}
+      on:submit={async () => {
+        on_change_cb({ type: "send_input" });
+        console.log("called tick");
+        await trigger_response({ webrtc_id: value.webrtc_id });
+      }}
     />
 
     <button

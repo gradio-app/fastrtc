@@ -42,9 +42,9 @@ from fastrtc.utils import (
     AdditionalOutputs,
     Context,
     RTCConfigurationCallable,
+    WebRTCData,
     create_message,
     webrtc_error_handler,
-    WebRTCData,
 )
 
 Track = (
@@ -150,6 +150,7 @@ class WebRTCConnectionMixin:
     def set_input(self, webrtc_id: str, *args):
         if webrtc_id in self.connections:
             for conn in self.connections[webrtc_id]:
+                print("setting args", args)
                 conn.set_args(list(args))
 
     def set_input_gradio(self, webrtc_data: WebRTCData, *args):
@@ -185,6 +186,17 @@ class WebRTCConnectionMixin:
                 return await run_sync(self.rtc_configuration)
         else:
             return cast(dict[str, Any], self.rtc_configuration) or {}
+
+    async def _trigger_response(self, webrtc_id: str):
+        from fastrtc import ReplyOnPause
+
+        if webrtc_id in self.connections and isinstance(
+            self.handlers[webrtc_id], ReplyOnPause
+        ):
+            cast(ReplyOnPause, self.handlers[webrtc_id]).trigger_response()
+            return {"status": "success"}
+        else:
+            return {"status": "failed", "meta": {"error": "not_a_reply_on_pause"}}
 
     async def handle_offer(self, body, set_outputs):
         logger.debug("Starting to handle offer")

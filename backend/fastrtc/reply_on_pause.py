@@ -4,14 +4,14 @@ from collections.abc import AsyncGenerator, Callable, Generator
 from dataclasses import dataclass, field
 from logging import getLogger
 from threading import Event
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, get_type_hints
 
 import numpy as np
 from numpy.typing import NDArray
 
 from .pause_detection import ModelOptions, PauseDetectionModel, get_silero_model
 from .tracks import EmitType, StreamHandler
-from .utils import AdditionalOutputs, create_message, split_output
+from .utils import AdditionalOutputs, WebRTCData, create_message, split_output
 
 logger = getLogger(__name__)
 
@@ -345,22 +345,32 @@ class ReplyOnPause(StreamHandler):
         else:
             if not self.generator:
                 self.send_message_sync(create_message("log", "pause_detected"))
-                if self._needs_additional_inputs and not self.args_set.is_set():
+                if not self.args_set.is_set():
                     if not self.phone_mode:
                         self.wait_for_args_sync()
                     else:
                         self.latest_args = [None]
                         self.args_set.set()
+                print("latest_args", self.latest_args)
                 logger.debug("Creating generator")
-                audio = cast(np.ndarray, self.state.stream).reshape(1, -1)
-                if self._needs_additional_inputs:
-                    self.latest_args[0].audio = (self.state.sampling_rate, audio)
-                    self.generator = self.fn(*self.latest_args)  # type: ignore
+                if self.state.stream is not None and self.state.stream.size > 0:
+                    audio = cast(np.ndarray, self.state.stream).reshape(1, -1)
                 else:
-                    self.wait_for_args_sync()
-                    print("latest args", self.latest_args)
+                    audio = np.array([[]], dtype=np.int16)
+                if isinstance(self.latest_args[0], WebRTCData):
                     self.latest_args[0].audio = (self.state.sampling_rate, audio)
-                    self.generator = self.fn(self.latest_args[0])  # type: ignore
+                else:
+                    self.latest_args[0] = (self.state.sampling_rate, audio)
+                self.generator = self.fn(*self.latest_args)  # type: ignore
+                # if self._needs_additional_inputs:
+
+                #     if self._needs_webrtc_data:
+                #         self.latest_args[0].audio = (self.state.sampling_rate, audio)
+                #     else:
+                #         self.latest_args[0] = (self.state.sampling_rate, audio)
+                #     self.generator = self.fn(*self.latest_args)  # type: ignore
+                # else:
+                #     self.generator = self.fn((self.state.sampling_rate, audio))  # type: ignore
                 logger.debug("Latest args: %s", self.latest_args)
                 self.state = self.state.new()
             self.state.responding = True

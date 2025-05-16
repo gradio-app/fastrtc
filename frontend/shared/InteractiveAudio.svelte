@@ -78,6 +78,7 @@
   export let server: {
     offer: (body: any) => Promise<any>;
     turn: () => Promise<any>;
+    trigger_response: (body: any) => Promise<any>;
   };
 
   let stream_state: "open" | "closed" | "waiting" = "closed";
@@ -337,6 +338,8 @@
       {handle_click_outside}
       {handle_device_change}
       {toggleMute}
+      {on_change_cb}
+      trigger_response={server.trigger_response}
       {icon}
       {icon_button_color}
       {pulse_color}

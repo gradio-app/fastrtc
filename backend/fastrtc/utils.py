@@ -12,11 +12,11 @@ from collections.abc import Callable, Coroutine
 from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, TypedDict, cast
-from gradio.data_classes import GradioModel
 
 import av
 import librosa
 import numpy as np
+from gradio.data_classes import GradioModel
 from numpy.typing import NDArray
 from pydub import AudioSegment
 

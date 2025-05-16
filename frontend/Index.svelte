@@ -27,6 +27,7 @@
   export let server: {
     offer: (body: any) => Promise<any>;
     turn: () => Promise<any>;
+    trigger_response: (body: any) => Promise<any>;
   };
 
   export let container = false;
@@ -46,6 +47,7 @@
   export let variant: "textbox" | "wave" = "textbox";
 
   const on_change_cb = (msg: "change" | "tick" | any) => {
+    console.log("on_change_cb in index.svelte", msg);
     if (
       msg?.type === "info" ||
       msg?.type === "warning" ||

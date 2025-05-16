@@ -209,14 +209,17 @@ class WebRTC(Component, WebRTCConnectionMixin):
             icon if not icon else cast(dict, self.serve_static_file(icon)).get("url")
         )
 
-    def preprocess(self, payload: WebRTCData) -> WebRTCData:
+    def preprocess(self, payload: WebRTCData) -> WebRTCData | str:
         """
         Parameters:
             payload: An instance of VideoData containing the video and subtitle files.
         Returns:
             Passes the uploaded video as a `str` filepath or URL whose extension can be modified by `format`.
         """
-        return payload
+        if self.variant == "textbox":
+            return payload
+        else:
+            return payload.webrtc_id
 
     def postprocess(self, value: Any) -> str:
         """
@@ -243,7 +246,9 @@ class WebRTC(Component, WebRTCConnectionMixin):
             inputs = [inputs]
             inputs = list(inputs)
 
-        async def handler(webrtc_id: str, *args):
+        async def handler(webrtc_id: str | WebRTCData, *args):
+            if isinstance(webrtc_id, WebRTCData):
+                webrtc_id = webrtc_id.webrtc_id
             async for next_outputs in self.output_stream(webrtc_id):
                 yield fn(*args, *next_outputs.args)  # type: ignore
 
@@ -380,6 +385,10 @@ class WebRTC(Component, WebRTCConnectionMixin):
         return await self.handle_offer(
             body, self.set_additional_outputs(body["webrtc_id"])
         )
+
+    @server
+    async def trigger_response(self, body):
+        return await self._trigger_response(body["webrtc_id"])
 
     def example_payload(self) -> Any:
         return {
