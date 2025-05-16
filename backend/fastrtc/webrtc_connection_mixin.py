@@ -153,8 +153,11 @@ class WebRTCConnectionMixin:
                 print("setting args", args)
                 conn.set_args(list(args))
 
-    def set_input_gradio(self, webrtc_data: WebRTCData, *args):
-        self.set_input(webrtc_data.webrtc_id, webrtc_data, *args)
+    def set_input_gradio(self, webrtc_data: WebRTCData | str, *args):
+        webrtc_id = webrtc_data
+        if isinstance(webrtc_data, WebRTCData):
+            webrtc_id = webrtc_data.webrtc_id
+        self.set_input(cast(str, webrtc_id), webrtc_data, *args)
 
     async def output_stream(
         self, webrtc_id: str

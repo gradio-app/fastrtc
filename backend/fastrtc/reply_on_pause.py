@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator, Callable, Generator
 from dataclasses import dataclass, field
 from logging import getLogger
 from threading import Event
-from typing import Any, Literal, cast, get_type_hints
+from typing import Any, Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray

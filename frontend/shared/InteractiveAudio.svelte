@@ -39,7 +39,7 @@
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
   export let button_labels: { start: string; stop: string; waiting: string };
-  export let variant: "textbox" | "wave" = "textbox";
+  export let variant: "textbox" | "wave" = "wave";
 
   let pending = false;
 

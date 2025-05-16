@@ -44,7 +44,7 @@
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
-  export let variant: "textbox" | "wave" = "textbox";
+  export let variant: "textbox" | "wave" = "wave";
 
   const on_change_cb = (msg: "change" | "tick" | any) => {
     console.log("on_change_cb in index.svelte", msg);

@@ -92,7 +92,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         pulse_color: str | None = None,
         icon_radius: int | None = None,
         button_labels: dict | None = None,
-        variant: Literal["textbox", "wave"] = "textbox",
+        variant: Literal["textbox", "wave"] = "wave",
     ):
         """
         Parameters:
