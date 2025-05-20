@@ -397,7 +397,7 @@ class StreamHandlerBase(ABC):
         Args:
             args: A list of arguments.
         """
-        print("setting args in audio callback %s", args)
+        logger.debug("setting args in audio callback %s", args)
         self.latest_args = list(args)
         self.args_set.set()
 
