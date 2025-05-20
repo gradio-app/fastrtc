@@ -139,6 +139,15 @@ class Stream(WebRTCConnectionMixin):
         self.modality = modality
         self.rtp_params = rtp_params
         self.event_handler = handler
+        if (
+            ui_args
+            and ui_args.get("variant") == "textbox"
+            and hasattr(handler, "needs_args")
+        ):
+            self.event_handler.needs_args = True  # type: ignore
+        else:
+            self.event_handler.needs_args = False  # type: ignore
+
         self.concurrency_limit = cast(
             (int),
             1 if concurrency_limit in ["default", None] else concurrency_limit,

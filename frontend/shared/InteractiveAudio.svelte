@@ -339,6 +339,7 @@
       {handle_device_change}
       {toggleMute}
       {on_change_cb}
+      {mode}
       trigger_response={server.trigger_response}
       {icon}
       {icon_button_color}

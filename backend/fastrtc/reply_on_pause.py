@@ -58,6 +58,14 @@ ReplyFnGenerator = (
         [tuple[int, NDArray[np.int16]], Any],
         AsyncGenerator[EmitType, None],
     ]
+    | Callable[
+        [WebRTCData],
+        Generator[EmitType, None, None],
+    ]
+    | Callable[
+        [WebRTCData, Any],
+        AsyncGenerator[EmitType, None],
+    ]
 )
 
 
@@ -106,6 +114,7 @@ class ReplyOnPause(StreamHandler):
         output_frame_size: int | None = None,  # Deprecated
         input_sample_rate: int = 48000,
         model: PauseDetectionModel | None = None,
+        needs_args: bool = False,
     ):
         """
         Initializes the ReplyOnPause handler.
@@ -123,6 +132,7 @@ class ReplyOnPause(StreamHandler):
             output_frame_size: Deprecated.
             input_sample_rate: The expected sample rate of incoming audio.
             model: An optional pre-initialized VAD model instance.
+            needs_args: Whether the reply function expects additional arguments.
         """
         super().__init__(
             expected_layout,
@@ -143,11 +153,12 @@ class ReplyOnPause(StreamHandler):
         self.model_options = model_options
         self.algo_options = algo_options or AlgoOptions()
         self.startup_fn = startup_fn
+        self.needs_args = needs_args
 
     @property
     def _needs_additional_inputs(self) -> bool:
         """Checks if the reply function `fn` expects additional arguments."""
-        return len(inspect.signature(self.fn).parameters) > 1
+        return len(inspect.signature(self.fn).parameters) > 1 or self.needs_args
 
     def start_up(self):
         """
@@ -178,6 +189,7 @@ class ReplyOnPause(StreamHandler):
             self.output_frame_size,
             self.input_sample_rate,
             self.model,
+            self.needs_args,
         )
 
     def determine_pause(
@@ -345,13 +357,11 @@ class ReplyOnPause(StreamHandler):
         else:
             if not self.generator:
                 self.send_message_sync(create_message("log", "pause_detected"))
-                if not self.args_set.is_set():
-                    if not self.phone_mode:
-                        self.wait_for_args_sync()
-                    else:
-                        self.latest_args = [None]
-                        self.args_set.set()
-                print("latest_args", self.latest_args)
+                if self._needs_additional_inputs and not self.phone_mode:
+                    self.wait_for_args_sync()
+                else:
+                    self.latest_args = [None]
+                    self.args_set.set()
                 logger.debug("Creating generator")
                 if self.state.stream is not None and self.state.stream.size > 0:
                     audio = cast(np.ndarray, self.state.stream).reshape(1, -1)
@@ -362,15 +372,6 @@ class ReplyOnPause(StreamHandler):
                 else:
                     self.latest_args[0] = (self.state.sampling_rate, audio)
                 self.generator = self.fn(*self.latest_args)  # type: ignore
-                # if self._needs_additional_inputs:
-
-                #     if self._needs_webrtc_data:
-                #         self.latest_args[0].audio = (self.state.sampling_rate, audio)
-                #     else:
-                #         self.latest_args[0] = (self.state.sampling_rate, audio)
-                #     self.generator = self.fn(*self.latest_args)  # type: ignore
-                # else:
-                #     self.generator = self.fn((self.state.sampling_rate, audio))  # type: ignore
                 logger.debug("Latest args: %s", self.latest_args)
                 self.state = self.state.new()
             self.state.responding = True

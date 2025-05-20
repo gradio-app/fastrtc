@@ -299,7 +299,8 @@ class WebRTC(Component, WebRTCConnectionMixin):
         )
         self.event_handler = fn  # type: ignore
         self.time_limit = time_limit
-
+        if self.variant == "textbox":
+            self.event_handler.needs_args = True  # type: ignore
         if (
             self.mode == "send-receive"
             and self.modality in ["audio", "audio-video"]

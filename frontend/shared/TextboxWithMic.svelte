@@ -35,6 +35,7 @@
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let stream_state: "open" | "closed" | "waiting" = "closed";
+  export let mode: "send-receive" | "send" = "send-receive";
 
   export let mic_accessed = false;
   export let is_muted = false;
@@ -69,6 +70,7 @@
         on_change_cb({ type: "send_input" });
         console.log("called tick");
         await trigger_response({ webrtc_id: value.webrtc_id });
+        value.textbox = "";
       }}
     />
 
@@ -95,33 +97,34 @@
         {/if}
       </div>
     </button>
-
-    <button
-      class="button"
-      on:click={toggleMute}
-      aria-label={is_muted ? "unmute audio" : "mute audio"}
-      class:hidden={stream_state === "closed"}
-    >
-      <div
-        class="icon"
-        style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
+    {#if mode === "send-receive"}
+      <button
+        class="button"
+        on:click={toggleMute}
+        aria-label={is_muted ? "unmute audio" : "mute audio"}
+        class:hidden={stream_state === "closed"}
       >
-        {#if stream_state === "open"}
-          <PulsingIcon
-            {audio_source_callback}
-            stream_state={"open"}
-            icon={is_muted ? VolumeMuted : VolumeHigh}
-            {icon_button_color}
-            {pulse_color}
-            pulse_intensity_threshold={0.8}
-          />
-        {:else if is_muted}
-          <VolumeMuted />
-        {:else}
-          <VolumeHigh />
-        {/if}
-      </div>
-    </button>
+        <div
+          class="icon"
+          style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
+        >
+          {#if stream_state === "open"}
+            <PulsingIcon
+              {audio_source_callback}
+              stream_state={"open"}
+              icon={is_muted ? VolumeMuted : VolumeHigh}
+              {icon_button_color}
+              {pulse_color}
+              pulse_intensity_threshold={0.8}
+            />
+          {:else if is_muted}
+            <VolumeMuted />
+          {:else}
+            <VolumeHigh />
+          {/if}
+        </div>
+      </button>
+    {/if}
     <button
       class="button"
       on:click={click_stop_stream}

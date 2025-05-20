@@ -51,7 +51,7 @@ def get_tts_model(
         return m
     elif model == "cartesia":
         m = CartesiaTTSModel(api_key=kwargs.get("cartesia_api_key", ""))
-        m.tts("Hello, world!")
+        # m.tts("Hello, world!")
         return m
     else:
         raise ValueError(f"Invalid model: {model}")
@@ -213,7 +213,11 @@ class CartesiaTTSModel(TTSModel):
     def tts(
         self, text: str, options: CartesiaTTSOptions | None = None
     ) -> tuple[int, NDArray[np.int16]]:
-        loop = asyncio.new_event_loop()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
         buffer = np.array([], dtype=np.int16)
 
         options = options or CartesiaTTSOptions()
@@ -221,7 +225,9 @@ class CartesiaTTSModel(TTSModel):
         iterator = self.stream_tts(text, options).__aiter__()
         while True:
             try:
-                _, chunk = loop.run_until_complete(iterator.__anext__())
+                _, chunk = asyncio.run_coroutine_threadsafe(
+                    iterator.__anext__(), loop
+                ).result()
                 buffer = np.concatenate([buffer, chunk])
             except StopAsyncIteration:
                 break
