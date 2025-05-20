@@ -109,6 +109,7 @@ class Stream(WebRTCConnectionMixin):
         additional_inputs: list[Component] | None = None,
         additional_outputs: list[Component] | None = None,
         ui_args: UIArgs | None = None,
+        verbose: bool = True,
     ):
         """
         Initialize the Stream instance.
@@ -130,6 +131,7 @@ class Stream(WebRTCConnectionMixin):
             additional_inputs: Optional list of extra Gradio input components.
             additional_outputs: Optional list of extra Gradio output components. Requires `additional_outputs_handler`.
             ui_args: Optional dictionary to customize the default UI appearance (title, subtitle, icon, etc.).
+            verbose: Whether to print verbose logging on startup.
 
         Raises:
             ValueError: If `additional_outputs` are provided without `additional_outputs_handler`.
@@ -166,6 +168,7 @@ class Stream(WebRTCConnectionMixin):
         self.server_rtc_configuration = self.convert_to_aiortc_format(
             server_rtc_configuration
         )
+        self.verbose = verbose
         self._ui = self._generate_default_ui(ui_args)
         self._ui.launch = self._wrap_gradio_launch(self._ui.launch)
 
@@ -289,12 +292,13 @@ class Stream(WebRTCConnectionMixin):
 
         def print_startup_message():
             self._check_colab_or_spaces()
-            print(
-                click.style("INFO", fg="green")
-                + ":\t  Visit "
-                + click.style("https://fastrtc.org/userguide/api/", fg="cyan")
-                + " for WebRTC or Websocket API docs."
-            )
+            if self.verbose:
+                print(
+                    click.style("INFO", fg="green")
+                    + ":\t  Visit "
+                    + click.style("https://fastrtc.org/userguide/api/", fg="cyan")
+                    + " for WebRTC or Websocket API docs."
+                )
 
         @contextlib.asynccontextmanager
         async def new_lifespan(app: FastAPI):
