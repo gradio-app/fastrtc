@@ -1,12 +1,8 @@
 <script lang="ts">
   import type { WebRTCValue } from "./utils";
   import { Block } from "@gradio/atoms";
-  import { createEventDispatcher } from "svelte";
   import {
-    Circle,
     Spinner,
-    Music,
-    DropdownArrow,
     VolumeMuted,
     VolumeHigh,
     Microphone,
@@ -30,12 +26,16 @@
   export let handle_device_change: (event: Event) => void;
   export let toggleMute: () => void;
   export let on_change_cb: (mg: "tick" | "change") => void;
-  export let trigger_response: (body: { webrtc_id: string }) => Promise<void>;
+  export let trigger_response: (body: {
+    webrtc_id: string;
+    args: any[];
+  }) => Promise<void>;
   export let icon: string | undefined = undefined;
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
-  export let stream_state: "open" | "closed" | "waiting" = "closed";
+  export let stream_state: "open" | "closed" | "waiting" | "pending" = "closed";
   export let mode: "send-receive" | "send" = "send-receive";
+  export let pending = false;
 
   export let mic_accessed = false;
   export let is_muted = false;
@@ -65,14 +65,34 @@
       show_label={false}
       root={undefined}
       info={undefined}
-      submit_btn={true}
+      submit_btn={!pending}
+      disabled={pending}
       on:submit={async () => {
+        if (stream_state === "closed") {
+          await start_stream();
+          // @ts-ignore
+          while (stream_state !== "open") {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+        // @ts-ignore
         on_change_cb({ type: "send_input" });
         console.log("called tick");
-        await trigger_response({ webrtc_id: value.webrtc_id });
+        await trigger_response({
+          webrtc_id: value.webrtc_id,
+          args: [value],
+        });
         value.textbox = "";
       }}
     />
+    {#if pending}
+      <div
+        class="button"
+        style={`fill: ${icon_button_color}; stroke: ${icon_button_color}; color: ${icon_button_color};`}
+      >
+        <Spinner />
+      </div>
+    {/if}
 
     <button
       class="button"

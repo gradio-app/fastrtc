@@ -5,7 +5,7 @@ import huggingface_hub
 from fastrtc import (
     AdditionalOutputs,
     ReplyOnPause,
-    WebRTC,
+    Stream,
     WebRTCData,
     get_stt_model,
 )
@@ -47,13 +47,15 @@ def response(
     yield AdditionalOutputs(conversation)
 
 
-with gr.Blocks() as demo:
-    gr.Markdown("# Coming Soon: Integrated Textbox and Audio in FastRTC ⚡️")
-    with gr.Group():
-        cb = gr.Chatbot(type="messages")
-        webrtc = WebRTC(modality="audio", mode="send", variant="textbox")
-        webrtc.stream(ReplyOnPause(response), inputs=[webrtc], outputs=[cb])
-        webrtc.on_additional_outputs(lambda old, new: new, inputs=[cb], outputs=[cb])
+cb = gr.Chatbot(type="messages")
+stream = Stream(
+    handler=ReplyOnPause(response),
+    modality="audio",
+    mode="send-receive",
+    ui_args={"variant": "textbox", "title": "Talk or Type to Llama 4"},
+    additional_outputs=[cb],
+    additional_outputs_handler=lambda old, new: new,
+)
 
 if __name__ == "__main__":
-    demo.launch()
+    stream.ui.launch()

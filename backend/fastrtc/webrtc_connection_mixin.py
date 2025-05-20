@@ -150,7 +150,6 @@ class WebRTCConnectionMixin:
     def set_input(self, webrtc_id: str, *args):
         if webrtc_id in self.connections:
             for conn in self.connections[webrtc_id]:
-                print("setting args", args)
                 conn.set_args(list(args))
 
     def set_input_gradio(self, webrtc_data: WebRTCData | str, *args):
@@ -190,12 +189,14 @@ class WebRTCConnectionMixin:
         else:
             return cast(dict[str, Any], self.rtc_configuration) or {}
 
-    async def _trigger_response(self, webrtc_id: str):
+    async def _trigger_response(self, webrtc_id: str, args: list[Any] | None = None):
         from fastrtc import ReplyOnPause
 
         if webrtc_id in self.connections and isinstance(
             self.handlers[webrtc_id], ReplyOnPause
         ):
+            if args:
+                cast(ReplyOnPause, self.handlers[webrtc_id]).set_args(args)
             cast(ReplyOnPause, self.handlers[webrtc_id]).trigger_response()
             return {"status": "success"}
         else:

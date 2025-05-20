@@ -1,4 +1,4 @@
-import { E as s, a as t, I as l, l as d, d as o, b as p } from "./index-BuNTASmn.js";
+import { E as s, a as t, I as l, l as d, d as o, b as p } from "./index-Jc4KIE7a.js";
 export {
   s as BaseExample,
   t as BaseInteractiveVideo,

@@ -347,6 +347,7 @@
       bind:mic_accessed
       bind:is_muted
       bind:is_mic_muted
+      {pending}
     />
   {:else if !mic_accessed}
     <div

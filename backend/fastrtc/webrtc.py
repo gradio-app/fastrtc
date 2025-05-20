@@ -389,7 +389,12 @@ class WebRTC(Component, WebRTCConnectionMixin):
 
     @server
     async def trigger_response(self, body):
-        return await self._trigger_response(body["webrtc_id"])
+        args = body["args"]
+        try:
+            args[0] = WebRTCData.from_json(args[0])
+        except Exception:
+            pass
+        return await self._trigger_response(body["webrtc_id"], body["args"])
 
     def example_payload(self) -> Any:
         return {
