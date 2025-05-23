@@ -9,7 +9,6 @@
     Square,
   } from "@gradio/icons";
   import MicrophoneMuted from "./MicrophoneMuted.svelte";
-  import WebcamPermissions from "./WebcamPermissions.svelte";
   import PulsingIcon from "./PulsingIcon.svelte";
   import { BaseTextbox } from "@gradio/textbox";
 
@@ -76,12 +75,14 @@
           }
         }
         // @ts-ignore
-        on_change_cb({ type: "send_input" });
-        console.log("called tick");
-        await trigger_response({
-          webrtc_id: value.webrtc_id,
-          args: [value],
+        on_change_cb({
+          type: "submit",
+          data: {
+            value: { webrtc_id: value.webrtc_id, textbox: value.textbox },
+            is_value_data: true,
+          },
         });
+        console.log("called submit");
         value.textbox = "";
       }}
     />

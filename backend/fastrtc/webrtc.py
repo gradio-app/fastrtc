@@ -57,7 +57,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
     Demos: video_identity_2
     """
 
-    EVENTS = ["tick", "state_change"]
+    EVENTS = ["tick", "state_change", "submit"]
     data_model = WebRTCData
 
     def __init__(
@@ -341,6 +341,12 @@ class WebRTC(Component, WebRTCConnectionMixin):
                         outputs=None,
                         concurrency_id=concurrency_id,
                     )
+            self.submit(
+                self.set_input_on_submit,
+                inputs=inputs,
+                outputs=None,
+                concurrency_id=concurrency_id,
+            )
             return self.tick(  # type: ignore
                 self.set_input_gradio,
                 inputs=inputs,

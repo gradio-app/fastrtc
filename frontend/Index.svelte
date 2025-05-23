@@ -63,6 +63,9 @@
       gradio.dispatch("state_change");
     } else if (msg?.type === "send_input") {
       gradio.dispatch("tick");
+    } else if (msg?.type === "submit") {
+      console.log("submit in index.svelte", msg.data);
+      gradio.dispatch("submit", msg.data);
     } else if (msg?.type === "connection_timeout") {
       gradio.dispatch(
         "warning",
