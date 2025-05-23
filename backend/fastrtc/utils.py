@@ -16,6 +16,7 @@ from typing import Any, Literal, Protocol, TypedDict, cast
 import av
 import librosa
 import numpy as np
+from gradio.data_classes import GradioModel
 from numpy.typing import NDArray
 from pydub import AudioSegment
 
@@ -28,6 +29,12 @@ AUDIO_PTIME = 0.020
 class AudioChunk(TypedDict):
     start: int
     end: int
+
+
+class WebRTCData(GradioModel):
+    webrtc_id: str
+    textbox: str = ""
+    audio: Any | None = None
 
 
 class AdditionalOutputs:

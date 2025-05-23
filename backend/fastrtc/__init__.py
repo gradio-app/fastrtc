@@ -35,6 +35,7 @@ from .utils import (
     AdditionalOutputs,
     CloseStream,
     Warning,
+    WebRTCData,
     WebRTCError,
     aggregate_bytes_to_16bit,
     async_aggregate_bytes_to_16bit,
@@ -92,4 +93,5 @@ __all__ = [
     "CloseStream",
     "get_current_context",
     "CartesiaTTSOptions",
+    "WebRTCData",
 ]

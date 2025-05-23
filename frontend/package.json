@@ -1,6 +1,6 @@
 {
-  "name": "gradio_webrtc",
-  "version": "0.11.0-beta.3",
+  "name": "@freddyaboulton/fastrtc-component",
+  "version": "0.0.1",
   "description": "Gradio UI packages",
   "type": "module",
   "author": "",
@@ -15,6 +15,7 @@
     "@gradio/image": "0.16.4",
     "@gradio/markdown": "^0.10.3",
     "@gradio/statustracker": "0.9.1",
+    "@gradio/textbox": "^0.10.10",
     "@gradio/upload": "0.13.3",
     "@gradio/utils": "0.7.0",
     "@gradio/wasm": "0.14.2",
@@ -46,7 +47,7 @@
   "main_changeset": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gradio-app/gradio.git",
-    "directory": "js/video"
+    "url": "git+https://github.com/gradio-app/fastrtc.git",
+    "directory": "fastrtc/frontend"
   }
 }

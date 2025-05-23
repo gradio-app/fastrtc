@@ -61,6 +61,7 @@ class ReplyOnStopWords(ReplyOnPause):
         output_frame_size: int | None = None,  # Deprecated
         input_sample_rate: int = 48000,
         model: PauseDetectionModel | None = None,
+        needs_args: bool = False,
     ):
         """
         Initializes the ReplyOnStopWords handler.
@@ -80,6 +81,7 @@ class ReplyOnStopWords(ReplyOnPause):
             output_frame_size: Deprecated.
             input_sample_rate: The expected sample rate of incoming audio.
             model: An optional pre-initialized VAD model instance.
+            needs_args: Whether the reply function expects additional arguments.
         """
         super().__init__(
             fn,
@@ -92,6 +94,7 @@ class ReplyOnStopWords(ReplyOnPause):
             output_frame_size=output_frame_size,
             input_sample_rate=input_sample_rate,
             model=model,
+            needs_args=needs_args,
         )
         self.stop_words = stop_words
         self.state = ReplyOnStopWordsState()
@@ -236,4 +239,5 @@ class ReplyOnStopWords(ReplyOnPause):
             self.output_frame_size,
             self.input_sample_rate,
             self.model,
+            self.needs_args,
         )

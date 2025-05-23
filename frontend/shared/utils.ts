@@ -2,6 +2,11 @@ import { toBlobURL } from "@ffmpeg/util";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { lookup } from "mrmime";
 
+export type WebRTCValue = {
+  textbox: string;
+  webrtc_id: string;
+};
+
 export const prettyBytes = (bytes: number): string => {
   let units = ["B", "KB", "MB", "GB", "PB"];
   let i = 0;
