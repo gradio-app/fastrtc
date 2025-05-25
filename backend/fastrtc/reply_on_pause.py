@@ -23,6 +23,7 @@ class AlgoOptions:
     audio_chunk_duration: float = 0.6
     started_talking_threshold: float = 0.2
     speech_threshold: float = 0.1
+    max_continuous_speech_s: float = float("inf")
 
 
 @dataclass
@@ -216,7 +217,15 @@ class ReplyOnPause(StreamHandler):
                     state.stream = audio
                 else:
                     state.stream = np.concatenate((state.stream, audio))
+
+                # Check if continuous speech limit has been reached
+                current_duration = len(state.stream) / sampling_rate
+                if current_duration >= self.algo_options.max_continuous_speech_s:
+                    return True
+                
             state.buffer = None
+
+            # Check if a pause has been detected by the VAD model
             if dur_vad < self.algo_options.speech_threshold and state.started_talking:
                 return True
         return False
