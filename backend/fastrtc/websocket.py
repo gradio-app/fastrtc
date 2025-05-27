@@ -5,7 +5,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
-import anyio
+from anyio.to_thread import run_sync
 import librosa
 import numpy as np
 from fastapi import WebSocket
@@ -157,9 +157,7 @@ class WebSocketHandler:
                     if isinstance(self.stream_handler, AsyncStreamHandler):
                         start_up = self.stream_handler.start_up()
                     else:
-                        start_up = anyio.to_thread.run_sync(
-                            self.stream_handler.start_up
-                        )  # type: ignore
+                        start_up = run_sync(self.stream_handler.start_up)  # type: ignore
 
                     self.start_up_task = asyncio.create_task(start_up)
 
