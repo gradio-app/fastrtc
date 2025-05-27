@@ -230,7 +230,6 @@ class ReplyOnPause(StreamHandler):
                 current_duration = len(state.stream) / sampling_rate
                 if current_duration >= self.algo_options.max_continuous_speech_s:
                     return True
-                
             state.buffer = None
 
             # Check if a pause has been detected by the VAD model
