@@ -5,9 +5,9 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
-from anyio.to_thread import run_sync
 import librosa
 import numpy as np
+from anyio.to_thread import run_sync
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect, WebSocketState
 
@@ -50,9 +50,6 @@ def convert_to_mulaw(
     audio_data = audio_to_int16(audio_data)
 
     return audioop.lin2ulaw(audio_data, 2)  # type: ignore
-
-
-run_sync = anyio.to_thread.run_sync  # type: ignore
 
 
 class WebSocketHandler:
