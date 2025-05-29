@@ -79,6 +79,7 @@
     offer: (body: any) => Promise<any>;
     turn: () => Promise<any>;
     trigger_response: (body: any) => Promise<any>;
+    quit_output_stream: (body: any) => Promise<any>;
   };
 
   let stream_state: "open" | "closed" | "waiting" = "closed";
@@ -150,6 +151,7 @@
       stream_state = "closed";
       _time_limit = null;
       await access_mic();
+      await server.quit_output_stream({ webrtc_id: _webrtc_id });
       return;
     }
     _webrtc_id = Math.random().toString(36).substring(2);

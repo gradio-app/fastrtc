@@ -15,6 +15,7 @@ from fastrtc import (
     AsyncStreamHandler,
     Stream,
     get_cloudflare_turn_credentials_async,
+    get_current_context,
     wait_for_item,
 )
 from websockets.asyncio.client import connect
@@ -76,6 +77,8 @@ class QwenOmniHandler(AsyncStreamHandler):
                 )
             )
             self.connection = conn
+            context = get_current_context()
+            assert context.websocket is not None
             try:
                 async for data in self.connection:
                     event = json.loads(data)
@@ -83,8 +86,13 @@ class QwenOmniHandler(AsyncStreamHandler):
                     if "type" not in event:
                         continue
                     # Handle interruptions
-                    if event["type"] == "input_audio_buffer.speech_started":
-                        self.clear_queue()
+                    # if event["type"] == "input_audio_buffer.speech_started":
+                    #     await context.websocket.send_json(
+                    #         {
+                    #             "streamSid": context.webrtc_id,
+                    #             "event": "clear",
+                    #         }
+                    #     )
                     if event["type"] == "response.audio.delta":
                         print("putting output")
                         await self.output_queue.put(
@@ -211,7 +219,7 @@ async def _():
 
 
 if __name__ == "__main__":
-    #  stream.fastphone(host="0.0.0.0", port=7860)
+    stream.fastphone(host="0.0.0.0", port=7860)
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=7860)

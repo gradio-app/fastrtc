@@ -399,7 +399,6 @@ class StreamHandlerBase(ABC):
         """
         logger.debug("setting args in audio callback %s", args)
         self.latest_args = list(args)
-        print("self.latest_args", self.latest_args)
         self.args_set.set()
 
     def reset(self):

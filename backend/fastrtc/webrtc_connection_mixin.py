@@ -142,7 +142,7 @@ class WebRTCConnectionMixin:
                     conn.event_handler.reset()
         output = self.additional_outputs.pop(webrtc_id, None)
         if output:
-            logger.debug("setting quit for webrtc id %s", webrtc_id)
+            print("setting quit for webrtc id %s", webrtc_id)
             output.quit.set()
         self.data_channels.pop(webrtc_id, None)
         return connection
@@ -159,7 +159,6 @@ class WebRTCConnectionMixin:
         self.set_input(cast(str, webrtc_id), webrtc_data, *args)
 
     def set_input_on_submit(self, webrtc_data: WebRTCData | str, *args):
-        print("setting input on submit", webrtc_data, args)
         webrtc_id = webrtc_data
         if isinstance(webrtc_data, WebRTCData):
             webrtc_id = webrtc_data.webrtc_id
@@ -173,7 +172,9 @@ class WebRTCConnectionMixin:
         outputs = self.additional_outputs[webrtc_id]
         while not outputs.quit.is_set():
             try:
-                yield await asyncio.wait_for(outputs.queue.get(), 0.1)
+                ou = await asyncio.wait_for(outputs.queue.get(), 0.1)
+                print("output", ou)
+                yield ou
             except (asyncio.TimeoutError, TimeoutError):
                 logger.debug("Timeout waiting for output")
 

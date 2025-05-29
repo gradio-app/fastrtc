@@ -28,6 +28,7 @@
     offer: (body: any) => Promise<any>;
     turn: () => Promise<any>;
     trigger_response: (body: any) => Promise<any>;
+    quit_output_stream: (body: any) => Promise<any>;
   };
 
   export let container = false;

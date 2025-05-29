@@ -249,6 +249,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         async def handler(webrtc_id: str | WebRTCData, *args):
             if isinstance(webrtc_id, WebRTCData):
                 webrtc_id = webrtc_id.webrtc_id
+            print("IN state_change handler with id", webrtc_id)
             async for next_outputs in self.output_stream(webrtc_id):
                 yield fn(*args, *next_outputs.args)  # type: ignore
 
@@ -401,6 +402,13 @@ class WebRTC(Component, WebRTCConnectionMixin):
         except Exception:
             pass
         return await self._trigger_response(body["webrtc_id"], body["args"])
+
+    @server
+    async def quit_output_stream(self, body):
+        if body["webrtc_id"] in self.additional_outputs:
+            print("set quit for webrtc_id in server", body["webrtc_id"])
+            self.additional_outputs[body["webrtc_id"]].quit.set()
+        return {"success": True}
 
     def example_payload(self) -> Any:
         return {

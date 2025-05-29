@@ -49,8 +49,8 @@
     }
   }
 
-  function click_stop_stream() {
-    start_stream();
+  async function click_stop_stream() {
+    await start_stream();
   }
 
   $: console.log("value", value);
