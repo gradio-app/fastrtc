@@ -35,7 +35,7 @@ pip install "fastrtc[vad, tts]"
 - 🔌 Automatic WebRTC Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a webRTC endpoint for your own frontend! 
 - ⚡️ Websocket Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a websocket endpoint for your own frontend! 
 - 📞 Automatic Telephone Support - Use the `fastphone()` method of the stream to launch the application and get a free temporary phone number!
-- 🤖 Completely customizable backend - A `Stream` can easily be mounted on a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
+- 🤖 Completely customizable backend - A `Stream` can easily be mounted on a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example of how to serve a custom JS frontend.
 
 ## Docs
 
@@ -153,7 +153,7 @@ See the [Cookbook](https://fastrtc.org/cookbook/) for examples of how to use the
 
 ## Usage
 
-This is an shortened version of the official [usage guide](https://freddyaboulton.github.io/gradio-webrtc/user-guide/). 
+This is a shortened version of the official [usage guide](https://freddyaboulton.github.io/gradio-webrtc/user-guide/). 
 
 - `.ui.launch()`: Launch a built-in UI for easily testing and sharing your stream. Built with [Gradio](https://www.gradio.app/).
 - `.fastphone()`: Get a free temporary phone number to call into your stream. Hugging Face token required.

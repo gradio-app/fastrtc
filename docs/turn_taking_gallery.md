@@ -165,7 +165,7 @@ In this gallery, you can find a collection of turn-taking algorithms and VAD mod
     stream.ui.launch()
     ```
 
-3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/turn_taking_gallery.md) to add your model to the gallery! Ideally you model package should be pip installable so other can try it out easily.
+3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/turn_taking_gallery.md) to add your model to the gallery! Ideally your model package should be pip installable so others can try it out easily.
 
 !!! tip "Package Naming Convention"
     It is recommended to name your package `fastrtc-<package-name>` so developers can easily find it on [pypi](https://pypi.org/search/?q=fastrtc-).
