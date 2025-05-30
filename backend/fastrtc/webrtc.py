@@ -345,7 +345,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
                         outputs=None,
                         concurrency_id=concurrency_id,
                     )
-            self.submit(
+            self.submit(  # type: ignore
                 self.set_input_on_submit,
                 inputs=inputs,
                 outputs=None,
