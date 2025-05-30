@@ -669,7 +669,7 @@ class Stream(WebRTCConnectionMixin):
                     </div>
                     """
                         )
-                if ui_args.get("variant", "textbox"):
+                if ui_args.get("variant", "") == "textbox":
                     with gr.Row():
                         if additional_input_components:
                             with gr.Column():
@@ -689,7 +689,7 @@ class Stream(WebRTCConnectionMixin):
                             label="Stream",
                             rtc_configuration=self.rtc_configuration,
                             track_constraints=self.track_constraints,
-                            mode="send",
+                            mode="send-receive",
                             modality="audio",
                             icon=ui_args.get("icon"),
                             icon_button_color=ui_args.get("icon_button_color"),
@@ -698,9 +698,9 @@ class Stream(WebRTCConnectionMixin):
                             variant=ui_args.get("variant", "wave"),
                         )
                 else:
-                    with gr.Row():
-                        with gr.Column():
-                            with gr.Group():
+                    if additional_output_components:
+                        with gr.Row():
+                            with gr.Column():
                                 image = WebRTC(
                                     label="Stream",
                                     rtc_configuration=self.rtc_configuration,
@@ -711,15 +711,30 @@ class Stream(WebRTCConnectionMixin):
                                     icon_button_color=ui_args.get("icon_button_color"),
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
-                                    variant=ui_args.get("variant", "wave"),
                                 )
-                            for component in additional_input_components:
-                                if component not in same_components:
+                                for component in additional_input_components:
+                                    if component not in same_components:
+                                        component.render()
+                            with gr.Column():
+                                for component in additional_output_components:
                                     component.render()
-                    if additional_output_components:
-                        with gr.Column():
-                            for component in additional_output_components:
-                                component.render()
+                    else:
+                        with gr.Row():
+                            with gr.Column():
+                                image = WebRTC(
+                                    label="Stream",
+                                    rtc_configuration=self.rtc_configuration,
+                                    track_constraints=self.track_constraints,
+                                    mode="send-receive",
+                                    modality="audio",
+                                    icon=ui_args.get("icon"),
+                                    icon_button_color=ui_args.get("icon_button_color"),
+                                    pulse_color=ui_args.get("pulse_color"),
+                                    icon_radius=ui_args.get("icon_radius"),
+                                )
+                                for component in additional_input_components:
+                                    if component not in same_components:
+                                        component.render()
                 self.webrtc_component = image
                 image.stream(
                     fn=self.event_handler,

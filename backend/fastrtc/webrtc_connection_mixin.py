@@ -142,7 +142,7 @@ class WebRTCConnectionMixin:
                     conn.event_handler.reset()
         output = self.additional_outputs.pop(webrtc_id, None)
         if output:
-            print("setting quit for webrtc id %s", webrtc_id)
+            logger.debug("setting quit for webrtc id %s", webrtc_id)
             output.quit.set()
         self.data_channels.pop(webrtc_id, None)
         return connection
@@ -172,9 +172,7 @@ class WebRTCConnectionMixin:
         outputs = self.additional_outputs[webrtc_id]
         while not outputs.quit.is_set():
             try:
-                ou = await asyncio.wait_for(outputs.queue.get(), 0.1)
-                print("output", ou)
-                yield ou
+                yield await asyncio.wait_for(outputs.queue.get(), 0.1)
             except (asyncio.TimeoutError, TimeoutError):
                 logger.debug("Timeout waiting for output")
 

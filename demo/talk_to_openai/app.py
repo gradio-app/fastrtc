@@ -13,7 +13,6 @@ from fastrtc import (
     AdditionalOutputs,
     AsyncStreamHandler,
     Stream,
-    get_current_context,
     get_twilio_turn_credentials,
     wait_for_item,
 )
@@ -62,22 +61,7 @@ class OpenAIHandler(AsyncStreamHandler):
             async for event in self.connection:
                 # Handle interruptions
                 if event.type == "input_audio_buffer.speech_started":
-                    # self.clear_queue()
-                    try:
-                        context = get_current_context()
-                        if context.websocket is not None:
-                            await context.websocket.send_json(
-                                {
-                                    "streamSid": context.webrtc_id,
-                                    "event": "clear",
-                                }
-                            )
-                    except Exception as e:
-                        print(e)
-                        import traceback
-
-                        traceback.print_exc()
-
+                    self.clear_queue()
                 if (
                     event.type
                     == "conversation.item.input_audio_transcription.completed"

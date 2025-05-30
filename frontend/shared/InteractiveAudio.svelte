@@ -330,23 +330,16 @@
     <TextboxWithMic
       bind:value
       bind:stream_state
-      {rtc_configuration}
-      {time_limit}
       {start_stream}
       {access_mic}
       {audio_source_callback}
       {input_audio_source_callback}
       {toggleMuteMicrophone}
-      {handle_click_outside}
-      {handle_device_change}
       {toggleMute}
       {on_change_cb}
       {mode}
-      trigger_response={server.trigger_response}
-      {icon}
       {icon_button_color}
       {pulse_color}
-      bind:mic_accessed
       bind:is_muted
       bind:is_mic_muted
       {pending}

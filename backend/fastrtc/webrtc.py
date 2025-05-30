@@ -26,7 +26,7 @@ from .tracks import (
     VideoEventHandler,
     VideoStreamHandler,
 )
-from .utils import RTCConfigurationCallable, WebRTCData
+from .utils import RTCConfigurationCallable, WebRTCData, WebRTCModel
 from .webrtc_connection_mixin import WebRTCConnectionMixin
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
     """
 
     EVENTS = ["tick", "state_change", "submit"]
-    data_model = WebRTCData
+    data_model = WebRTCModel
 
     def __init__(
         self,
@@ -209,7 +209,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             icon if not icon else cast(dict, self.serve_static_file(icon)).get("url")
         )
 
-    def preprocess(self, payload: WebRTCData) -> WebRTCData | str:
+    def preprocess(self, payload: WebRTCModel) -> WebRTCData | str:
         """
         Parameters:
             payload: An instance of VideoData containing the video and subtitle files.
@@ -217,9 +217,13 @@ class WebRTC(Component, WebRTCConnectionMixin):
             Passes the uploaded video as a `str` filepath or URL whose extension can be modified by `format`.
         """
         if self.variant == "textbox":
-            return payload
+            return payload.root
         else:
-            return payload.webrtc_id
+            return (
+                payload.root
+                if isinstance(payload.root, str)
+                else payload.root.webrtc_id
+            )
 
     def postprocess(self, value: Any) -> str:
         """
@@ -249,7 +253,6 @@ class WebRTC(Component, WebRTCConnectionMixin):
         async def handler(webrtc_id: str | WebRTCData, *args):
             if isinstance(webrtc_id, WebRTCData):
                 webrtc_id = webrtc_id.webrtc_id
-            print("IN state_change handler with id", webrtc_id)
             async for next_outputs in self.output_stream(webrtc_id):
                 yield fn(*args, *next_outputs.args)  # type: ignore
 
@@ -395,18 +398,8 @@ class WebRTC(Component, WebRTCConnectionMixin):
         )
 
     @server
-    async def trigger_response(self, body):
-        args = body["args"]
-        try:
-            args[0] = WebRTCData.from_json(args[0])
-        except Exception:
-            pass
-        return await self._trigger_response(body["webrtc_id"], body["args"])
-
-    @server
     async def quit_output_stream(self, body):
         if body["webrtc_id"] in self.additional_outputs:
-            print("set quit for webrtc_id in server", body["webrtc_id"])
             self.additional_outputs[body["webrtc_id"]].quit.set()
         return {"success": True}
 

@@ -12,10 +12,6 @@
   export let elem_id = "";
   export let elem_classes: string[] = [];
   export let visible = true;
-  export let value: WebRTCValue = {
-    textbox: "",
-    webrtc_id: "__webrtc_value__",
-  };
   export let button_labels: { start: string; stop: string; waiting: string };
 
   export let label: string;
@@ -46,6 +42,15 @@
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
   export let variant: "textbox" | "wave" = "wave";
+
+  export let value: WebRTCValue | string =
+    variant === "textbox" ||
+    ((mode === "send-receive" || mode == "send") && modality === "audio")
+      ? {
+          textbox: "",
+          webrtc_id: "__webrtc_value__",
+        }
+      : "__webrtc_value__";
 
   const on_change_cb = (msg: "change" | "tick" | any) => {
     console.log("on_change_cb in index.svelte", msg);

@@ -5,7 +5,6 @@
 # ]
 # ///
 
-import os
 
 import gradio as gr
 import huggingface_hub
@@ -18,7 +17,6 @@ from fastrtc import (
     get_stt_model,
 )
 from openai import OpenAI
-
 
 stt_model = get_stt_model()
 

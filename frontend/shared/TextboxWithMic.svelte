@@ -13,30 +13,18 @@
   import { BaseTextbox } from "@gradio/textbox";
 
   export let value: WebRTCValue | null = null;
-  export let rtc_configuration: Object | null = null;
-  export let time_limit: number | null = null;
-  export let track_constraints: MediaTrackConstraints = {};
   export let access_mic: () => Promise<void>;
   export let start_stream: () => Promise<void>;
   export let audio_source_callback: () => MediaStream;
   export let input_audio_source_callback: () => MediaStream;
   export let toggleMuteMicrophone: () => void;
-  export let handle_click_outside: (event: MouseEvent) => void;
-  export let handle_device_change: (event: Event) => void;
   export let toggleMute: () => void;
   export let on_change_cb: (mg: "tick" | "change") => void;
-  export let trigger_response: (body: {
-    webrtc_id: string;
-    args: any[];
-  }) => Promise<void>;
-  export let icon: string | undefined = undefined;
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let stream_state: "open" | "closed" | "waiting" | "pending" = "closed";
   export let mode: "send-receive" | "send" = "send-receive";
   export let pending = false;
-
-  export let mic_accessed = false;
   export let is_muted = false;
   export let is_mic_muted = false;
 
@@ -82,7 +70,7 @@
             is_value_data: true,
           },
         });
-        console.log("called submit");
+        console.debug("textbox called submit");
         value.textbox = "";
       }}
     />

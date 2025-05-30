@@ -5,10 +5,11 @@
   import { BlockLabel } from "@gradio/atoms";
   import Webcam from "./Webcam.svelte";
   import { Video } from "@gradio/icons";
+  import type { WebRTCValue } from "./utils";
 
   import type { I18nFormatter } from "@gradio/utils";
 
-  export let value: string = null;
+  export let value: string | WebRTCValue | null = null;
   export let label: string | undefined = undefined;
   export let show_label = true;
   export let include_audio: boolean;
@@ -20,6 +21,7 @@
   export let button_labels: { start: string; stop: string; waiting: string };
   export let server: {
     offer: (body: any) => Promise<any>;
+    turn: () => Promise<any>;
   };
   export let rtc_configuration: Object;
   export let track_constraints: MediaTrackConstraints = {};
@@ -48,6 +50,7 @@
 
   let dragging = false;
   $: dispatch("drag", dragging);
+  $: webrtc_id = typeof value === "string" ? value : value.webrtc_id;
 </script>
 
 <BlockLabel {show_label} Icon={Video} label={label || "Video"} />
@@ -72,7 +75,7 @@
     {i18n}
     stream_every={0.5}
     {server}
-    bind:webrtc_id={value}
+    bind:webrtc_id
     {reject_cb}
   />
 

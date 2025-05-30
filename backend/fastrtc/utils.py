@@ -16,8 +16,8 @@ from typing import Any, Literal, Protocol, TypedDict, cast
 import av
 import librosa
 import numpy as np
-from gradio.data_classes import GradioModel
 from fastapi import WebSocket
+from gradio.data_classes import GradioModel, GradioRootModel
 from numpy.typing import NDArray
 from pydub import AudioSegment
 
@@ -36,6 +36,10 @@ class WebRTCData(GradioModel):
     webrtc_id: str
     textbox: str = ""
     audio: Any | None = None
+
+
+class WebRTCModel(GradioRootModel):
+    root: WebRTCData | str
 
 
 class AdditionalOutputs:
