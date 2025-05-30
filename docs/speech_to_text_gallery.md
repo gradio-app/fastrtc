@@ -53,7 +53,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     ---
 
     Description: 
-    [Distil-whisper](https://github.com/huggingface/distil-whisper) from Hugging Face wraped in a pypi package for plug and play!
+    [Distil-whisper](https://github.com/huggingface/distil-whisper) from Hugging Face wrapped in a pypi package for plug and play!
 
     Install Instructions
     ```python
@@ -131,4 +131,4 @@ document.querySelectorAll('.tag-button').forEach(button => {
     stream.ui.launch()
     ```
 
-3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/speech_to_text_gallery.md) to add your model to the gallery! Ideally you model package should be pip installable so other can try it out easily.
+3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/speech_to_text_gallery.md) to add your model to the gallery! Ideally your model package should be pip installable so others can try it out easily.

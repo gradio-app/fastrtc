@@ -184,7 +184,7 @@ Learn more about the [Stream](userguide/streams) in the user guide.
 ## Examples
 See the [cookbook](/cookbook).
 
-Follow and join or [organization](https://huggingface.co/fastrtc) on Hugging Face!
+Follow and join our [organization](https://huggingface.co/fastrtc) on Hugging Face!
 
 <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; max-width: 600px; margin: 0 auto;">
     <img style="display: block; height: 100px; margin-right: 20px;" src="/hf-logo-with-title.svg">

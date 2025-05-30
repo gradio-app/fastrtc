@@ -89,7 +89,7 @@ Stream(
 
 An easy way to do this is to use a service like Twilio.
 
-Create a **free** [account](https://login.twilio.com/u/signup) and the install the `twilio` package with pip (`pip install twilio`). You can then connect from the WebRTC component like so:
+Create a **free** [account](https://login.twilio.com/u/signup) and then install the `twilio` package with pip (`pip install twilio`). You can then connect from the WebRTC component like so:
 
 ```python
 from fastrtc import Stream

@@ -125,4 +125,4 @@ document.querySelectorAll('.tag-button').forEach(button => {
     stream.ui.launch()
     ```
 
-3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/text_to_speech_gallery.md) to add your model to the gallery! Ideally your model package should be pip installable so other can try it out easily.
+3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/text_to_speech_gallery.md) to add your model to the gallery! Ideally your model package should be pip installable so others can try it out easily.
