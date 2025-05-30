@@ -8,11 +8,10 @@
   import StaticVideo from "./shared/StaticVideo.svelte";
   import StaticAudio from "./shared/StaticAudio.svelte";
   import InteractiveAudio from "./shared/InteractiveAudio.svelte";
-
+  import type { WebRTCValue } from "./shared/utils";
   export let elem_id = "";
   export let elem_classes: string[] = [];
   export let visible = true;
-  export let value: string = "__webrtc_value__";
   export let button_labels: { start: string; stop: string; waiting: string };
 
   export let label: string;
@@ -24,6 +23,8 @@
   export let server: {
     offer: (body: any) => Promise<any>;
     turn: () => Promise<any>;
+    trigger_response: (body: any) => Promise<any>;
+    quit_output_stream: (body: any) => Promise<any>;
   };
 
   export let container = false;
@@ -40,8 +41,19 @@
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
+  export let variant: "textbox" | "wave" = "wave";
+
+  export let value: WebRTCValue | string =
+    variant === "textbox" ||
+    ((mode === "send-receive" || mode == "send") && modality === "audio")
+      ? {
+          textbox: "",
+          webrtc_id: "__webrtc_value__",
+        }
+      : "__webrtc_value__";
 
   const on_change_cb = (msg: "change" | "tick" | any) => {
+    console.log("on_change_cb in index.svelte", msg);
     if (
       msg?.type === "info" ||
       msg?.type === "warning" ||
@@ -57,6 +69,9 @@
       gradio.dispatch("state_change");
     } else if (msg?.type === "send_input") {
       gradio.dispatch("tick");
+    } else if (msg?.type === "submit") {
+      console.log("submit in index.svelte", msg.data);
+      gradio.dispatch("submit", msg.data);
     } else if (msg?.type === "connection_timeout") {
       gradio.dispatch(
         "warning",
@@ -192,6 +207,7 @@
       {icon_radius}
       {pulse_color}
       {button_labels}
+      {variant}
       on:tick={() => gradio.dispatch("tick")}
       on:error={({ detail }) => gradio.dispatch("error", detail)}
       on:warning={({ detail }) => gradio.dispatch("warning", detail)}

@@ -398,7 +398,7 @@ class StreamHandlerBase(ABC):
             args: A list of arguments.
         """
         logger.debug("setting args in audio callback %s", args)
-        self.latest_args = ["__webrtc_value__"] + list(args)
+        self.latest_args = list(args)
         self.args_set.set()
 
     def reset(self):
@@ -927,7 +927,7 @@ class ServerToClientVideo(VideoStreamTrack):
             current_context.set(self.context)
             if self.generator is None:
                 self.generator = cast(
-                    Generator[Any, None, Any], self.event_handler(*self.latest_args)
+                    Generator[Any, None, Any], self.event_handler(*self.latest_args[1:])
                 )
             try:
                 next_array, outputs = split_output(next(self.generator))
@@ -1004,7 +1004,7 @@ class ServerToClientAudio(AudioStreamTrack):
         self.args_set.wait()
         current_channel.set(self.channel)
         if self.generator is None:
-            self.generator = self.event_handler(*self.latest_args)
+            self.generator = self.event_handler(*self.latest_args[1:])
         if self.generator is not None:
             try:
                 frame = next(self.generator)

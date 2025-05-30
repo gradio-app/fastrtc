@@ -2,10 +2,10 @@
   import { createEventDispatcher, onMount } from "svelte";
   import { BlockLabel, Empty } from "@gradio/atoms";
   import { Video } from "@gradio/icons";
-
+  import type { WebRTCValue } from "./utils";
   import { start, stop } from "./webrtc_utils";
 
-  export let value: string | null = null;
+  export let value: string | WebRTCValue | null = null;
   export let label: string | undefined = undefined;
   export let show_label = true;
   export let rtc_configuration: Object | null = null;

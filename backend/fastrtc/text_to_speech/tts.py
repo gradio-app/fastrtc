@@ -51,7 +51,6 @@ def get_tts_model(
         return m
     elif model == "cartesia":
         m = CartesiaTTSModel(api_key=kwargs.get("cartesia_api_key", ""))
-        m.tts("Hello, world!")
         return m
     else:
         raise ValueError(f"Invalid model: {model}")
