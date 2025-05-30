@@ -53,7 +53,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     ---
 
     Description: 
-    [Distil-whisper](https://github.com/huggingface/distil-whisper) from Hugging Face wraped in a pypi package for plug and play!
+    [Distil-whisper](https://github.com/huggingface/distil-whisper) from Hugging Face wrapped in a pypi package for plug and play!
 
     Install Instructions
     ```python
@@ -82,6 +82,21 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-code-16: Repository](https://github.com/sgarg26/fastrtc-kroko)
 
+-   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } fastrtc-whisper-cpp 
+{: data-tags="whisper-cpp"}
+
+    ---
+
+    Description:
+    [whisper.cpp](https://huggingface.co/ggerganov/whisper.cpp) is the ggml version of OpenAI's Whisper model. 
+
+    Install Instructions
+    ```python
+    pip install fastrtc-whisper-cpp
+    ```
+    Check out the fastrtc-whisper-cpp docs for examples!
+
+    [:octicons-code-16: Repository](https://github.com/mahimairaja/fastrtc-whisper-cpp)
 
 -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Your STT Model__
 {: data-tags="pytorch"}
@@ -131,4 +146,4 @@ document.querySelectorAll('.tag-button').forEach(button => {
     stream.ui.launch()
     ```
 
-3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/speech_to_text_gallery.md) to add your model to the gallery! Ideally you model package should be pip installable so other can try it out easily.
+3. Open a [PR](https://github.com/freddyaboulton/fastrtc/edit/main/docs/speech_to_text_gallery.md) to add your model to the gallery! Ideally your model package should be pip installable so others can try it out easily.

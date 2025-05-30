@@ -17,6 +17,7 @@ import av
 import librosa
 import numpy as np
 from gradio.data_classes import GradioModel
+from fastapi import WebSocket
 from numpy.typing import NDArray
 from pydub import AudioSegment
 
@@ -74,6 +75,7 @@ current_channel: ContextVar[DataChannel | None] = ContextVar(
 @dataclass
 class Context:
     webrtc_id: str
+    websocket: WebSocket | None = None
 
 
 current_context: ContextVar[Context | None] = ContextVar(

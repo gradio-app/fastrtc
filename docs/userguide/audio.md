@@ -78,7 +78,7 @@ stream = Stream(
 
 ### Startup Function
 
-You can pass in a `startup_fn` to the `ReplyOnPause` class. This function will be called when the connection is first established. It is helpful for generating intial responses.
+You can pass in a `startup_fn` to the `ReplyOnPause` class. This function will be called when the connection is first established. It is helpful for generating initial responses.
 
 ```python
 from fastrtc import get_tts_model, Stream, ReplyOnPause
@@ -138,7 +138,7 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
     1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
 
 !!! tip "Extra Dependencies"
-    The `ReplyOnStopWords` class requires the the `stopword` extra. Run `pip install fastrtc[stopword]` to install it.
+    The `ReplyOnStopWords` class requires the `stopword` extra. Run `pip install fastrtc[stopword]` to install it.
 
 !!! warning "English Only"
     The `ReplyOnStopWords` class is currently only supported for English.
@@ -200,7 +200,7 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
 
 It is also possible to create asynchronous stream handlers. This is very convenient for accessing async APIs from major LLM developers, like Google and OpenAI. The main difference is that `receive`, `emit`, and `start_up` are now defined with `async def`.
 
-Here is aa simple example of using `AsyncStreamHandler`:
+Here is a simple example of using `AsyncStreamHandler`:
 
 === "Code"
     ``` py
@@ -262,7 +262,7 @@ audio = model.tts("Hello, world!")
 ```
 
 !!! tip
-    You can customize the audio by passing in an instace of `KokoroTTSOptions` to the method.
+    You can customize the audio by passing in an instance of `KokoroTTSOptions` to the method.
     See [here](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md) for a list of available voices.
     ```python
     from fastrtc import KokoroTTSOptions, get_tts_model

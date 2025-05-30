@@ -18,11 +18,20 @@ logger = getLogger(__name__)
 
 @dataclass
 class AlgoOptions:
-    """Algorithm options."""
+    """
+    Algorithm options.
+
+    Attributes:
+    - audio_chunk_duration: Duration in seconds of audio chunks passed to the VAD model.
+    - started_talking_threshold: If the chunk has more than started_talking_threshold seconds of speech, the user started talking.
+    - speech_threshold: If, after the user started speaking, there is a chunk with less than speech_threshold seconds of speech, the user stopped speaking.
+    - max_continuous_speech_s: Max duration of speech chunks before the handler is triggered, even if a pause is not detected by the VAD model.
+    """
 
     audio_chunk_duration: float = 0.6
     started_talking_threshold: float = 0.2
     speech_threshold: float = 0.1
+    max_continuous_speech_s: float = float("inf")
 
 
 @dataclass
@@ -228,7 +237,14 @@ class ReplyOnPause(StreamHandler):
                     state.stream = audio
                 else:
                     state.stream = np.concatenate((state.stream, audio))
+
+                # Check if continuous speech limit has been reached
+                current_duration = len(state.stream) / sampling_rate
+                if current_duration >= self.algo_options.max_continuous_speech_s:
+                    return True
             state.buffer = None
+
+            # Check if a pause has been detected by the VAD model
             if dur_vad < self.algo_options.speech_threshold and state.started_talking:
                 return True
         return False

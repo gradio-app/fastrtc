@@ -121,7 +121,7 @@ stream = Stream(
     handler=GeminiHandler(),
     modality="audio-video",
     mode="send-receive",
-    rtc_configuration=get_cloudflare_turn_credentials_async,
+    rtc_configuration=get_cloudflare_turn_credentials_async if get_space() else None,
     time_limit=180 if get_space() else None,
     additional_inputs=[
         gr.Image(label="Image", type="numpy", sources=["upload", "clipboard"])
@@ -161,7 +161,9 @@ with gr.Blocks(css=css) as demo:
                 modality="audio-video",
                 mode="send-receive",
                 elem_id="video-source",
-                rtc_configuration=get_cloudflare_turn_credentials_async,
+                rtc_configuration=get_cloudflare_turn_credentials_async
+                if get_space()
+                else None,
                 icon="https://www.gstatic.com/lamda/images/gemini_favicon_f069958c85030456e93de685481c559f160ea06b.png",
                 pulse_color="rgb(255, 255, 255)",
                 icon_button_color="rgb(255, 255, 255)",
