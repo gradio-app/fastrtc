@@ -158,7 +158,6 @@ class WebSocketHandler:
 
                     self.start_up_task = asyncio.create_task(start_up)
 
-                    print("Set context")
                     self.set_additional_outputs = self.set_additional_outputs_factory(
                         self.stream_id
                     )
