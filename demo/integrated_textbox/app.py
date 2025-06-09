@@ -14,8 +14,10 @@ from fastrtc import (
     WebRTC,
     WebRTCData,
     WebRTCError,
+    get_hf_turn_credentials,
     get_stt_model,
 )
+from gradio.utils import get_space
 from openai import OpenAI
 
 stt_model = get_stt_model()
@@ -118,9 +120,17 @@ with gr.Blocks(css=css) as demo:
         )
     provider.change(hide_token, inputs=[provider], outputs=[token])
     cb = gr.Chatbot(type="messages", height=600)
-    webrtc = WebRTC(modality="audio", mode="send", variant="textbox")
+    webrtc = WebRTC(
+        modality="audio",
+        mode="send",
+        variant="textbox",
+        rtc_configuration=get_hf_turn_credentials if get_space() else None,
+        server_rtc_configuration=get_hf_turn_credentials(ttl=3_600 * 24 * 30)
+        if get_space()
+        else None,
+    )
     webrtc.stream(
-        ReplyOnPause(response),
+        ReplyOnPause(response),  # type: ignore
         inputs=[webrtc, cb, token, model, provider],
         outputs=[cb],
         concurrency_limit=100,

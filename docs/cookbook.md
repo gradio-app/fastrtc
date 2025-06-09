@@ -23,6 +23,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="audio"><code>Audio</code></button>
   <button class="tag-button" data-tag="video"><code>Video</code></button>
   <button class="tag-button" data-tag="llm"><code>LLM</code></button>
+  <button class="tag-button" data-tag="text"><code>Text</code></button>
   <button class="tag-button" data-tag="computer-vision"><code>Computer Vision</code></button>
   <button class="tag-button" data-tag="real-time-api"><code>Real-time API</code></button>
   <button class="tag-button" data-tag="voice-chat"><code>Voice Chat</code></button>
@@ -73,6 +74,19 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-llama4)
 
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-llama4/blob/main/app.py)
+
+-   :speaking_head:{ .lg .middle }:llama:{ .lg .middle } __Integrated Textbox__
+{: data-tags="audio,llm,text,voice-chat"}
+
+    ---
+
+    Talk or type to any LLM with FastRTC's integrated audio + text textbox.
+
+    <video width=98% src="https://github.com/user-attachments/assets/35c982a1-4a58-4947-af89-7ff287070ef5" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/integrated-textbox)
+
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/integrated-textbox/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Gemini Audio Video Chat__
 {: data-tags="audio,video,real-time-api"}

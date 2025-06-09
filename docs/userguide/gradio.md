@@ -94,3 +94,23 @@ This is common for displaying a multimodal text/audio conversation in a Chatbot 
     1. Pass your data to `AdditionalOutputs` and yield it.
     2. In this case, no audio is being returned, so we set `mode="send"`. However, if we set `mode="send-receive"`, we could also yield generated audio and `AdditionalOutputs`.
     3. The `on_additional_outputs` event does not take `inputs`. It's common practice to not run this event on the queue since it is just a quick UI update.
+
+
+## Integrated Textbox
+
+For audio usecases, you may want to allow your users to type or speak. You can set the `variant="textbox"` argument in the WebRTC component to place a Textbox with a microphone input in the UI. See the `Integrated Textbox` demo in the cookbook or in the `demo` directory of the github repository.
+
+ ``` py
+webrtc = WebRTC(
+    modality="audio",
+    mode="send-receive",
+    variant="textbox",
+)
+ ```
+
+
+!!! tip "Stream Class"
+    To use the "textbox" variant via the `Stream` class, set it in the `UIArgs` class and pass it to the stream via the `ui_args` parameter.
+
+
+<video width=98% src="https://github.com/user-attachments/assets/35c982a1-4a58-4947-af89-7ff287070ef5" controls style="text-align: center"></video>
