@@ -104,6 +104,8 @@
     error: string;
     play: undefined;
     stop: undefined;
+    start_recording: undefined;
+    stop_recording: undefined;
   }>();
 
   async function access_mic(): Promise<void> {
@@ -147,6 +149,7 @@
 
   async function start_stream(): Promise<void> {
     if (stream_state === "open") {
+      dispatch("stop_recording");
       stop(pc);
       stream_state = "closed";
       _time_limit = null;
@@ -154,6 +157,8 @@
       await server.quit_output_stream({ webrtc_id: _webrtc_id });
       return;
     }
+
+    dispatch("start_recording");
     _webrtc_id = Math.random().toString(36).substring(2);
     value.webrtc_id = _webrtc_id;
     stream_state = "waiting";
@@ -325,6 +330,8 @@
     bind:this={audio_player}
     on:ended={() => dispatch("stop")}
     on:play={() => dispatch("play")}
+    on:start_recording
+    on:stop_recording
   />
   {#if variant === "textbox"}
     <TextboxWithMic

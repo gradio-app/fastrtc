@@ -208,6 +208,8 @@
       {pulse_color}
       {button_labels}
       {variant}
+      on:start_recording={() => gradio.dispatch("start_recording")}
+      on:stop_recording={() => gradio.dispatch("stop_recording")}
       on:tick={() => gradio.dispatch("tick")}
       on:error={({ detail }) => gradio.dispatch("error", detail)}
       on:warning={({ detail }) => gradio.dispatch("warning", detail)}

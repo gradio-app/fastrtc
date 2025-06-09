@@ -57,7 +57,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
     Demos: video_identity_2
     """
 
-    EVENTS = ["tick", "state_change", "submit"]
+    EVENTS = ["tick", "state_change", "submit", "start_recording", "stop_recording"]
     data_model = WebRTCModel
 
     def __init__(

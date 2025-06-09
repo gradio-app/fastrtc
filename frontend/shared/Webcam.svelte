@@ -146,6 +146,7 @@
 
   async function start_webrtc(): Promise<void> {
     if (stream_state === "closed") {
+      dispatch("start_recording");
       await server.turn().then((rtc_configuration_) => {
         if (rtc_configuration_.error) {
           dispatch("error", rtc_configuration_.error);
@@ -207,6 +208,7 @@
           stream_state = "closed";
         });
     } else {
+      dispatch("stop_recording");
       stop(pc);
       stream_state = "closed";
       _time_limit = null;
