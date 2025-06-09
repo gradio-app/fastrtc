@@ -1,6 +1,6 @@
 # /// script
 # dependencies = [
-#   "fastrtc[vad, stt]==0.0.26.rc1",
+#   "fastrtc[vad, stt]">=0.0.26",
 #   "openai",
 # ]
 # ///
@@ -140,4 +140,4 @@ with gr.Blocks(css=css) as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(server_port=6980)
+    demo.launch(server_port=7860)
