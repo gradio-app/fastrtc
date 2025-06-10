@@ -17458,7 +17458,7 @@ var $y = /* @__PURE__ */ function() {
       gn(t, t, [s, o]), _s(t, t, [a.w, a.h]);
     }
     /**
-     * Adjusts a node or label BB to accomodate padding and split for wrapped textures.
+     * Adjusts a node or label BB to accommodate padding and split for wrapped textures.
      * @param bb - the original bounding box
      * @param padding - the padding to add to the bounding box
      * @param first - whether this is the first part of a wrapped texture
