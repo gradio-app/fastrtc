@@ -17061,7 +17061,7 @@ var $y = /* @__PURE__ */ function() {
       // instanced
       in vec2 aPosition; // a vertex from the unit square
       
-      in mat3 aTransform; // used to transform verticies, eg into a bounding box
+      in mat3 aTransform; // used to transform vertices, eg into a bounding box
       in int aVertType; // the type of thing we are rendering
 
       // the z-index that is output when using picking mode
