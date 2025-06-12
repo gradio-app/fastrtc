@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.26"
+version = "0.0.27"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "MIT"
