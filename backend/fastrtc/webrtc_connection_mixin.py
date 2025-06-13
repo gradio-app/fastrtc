@@ -156,7 +156,6 @@ class WebRTCConnectionMixin:
         webrtc_id = webrtc_data
         if isinstance(webrtc_data, WebRTCData):
             webrtc_id = webrtc_data.webrtc_id
-        print("*** SET INPUT GRADIO", webrtc_id, args)
         self.set_input(cast(str, webrtc_id), webrtc_data, *args)
 
     def set_input_on_submit(self, webrtc_data: WebRTCData | str, *args):

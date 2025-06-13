@@ -114,7 +114,6 @@ class VideoCallback(VideoStreamTrack):
         self.channel_set.set()
 
     def set_args(self, args: list[Any]):
-        print("*** SET ARGS", args)
         self.latest_args = list(args)
 
     def add_frame_to_payload(
