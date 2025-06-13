@@ -114,14 +114,15 @@ class VideoCallback(VideoStreamTrack):
         self.channel_set.set()
 
     def set_args(self, args: list[Any]):
-        self.latest_args = ["__webrtc_value__"] + list(args)
+        print("*** SET ARGS", args)
+        self.latest_args = list(args)
 
     def add_frame_to_payload(
         self, args: list[Any], frame: np.ndarray | None
     ) -> list[Any]:
         new_args = []
-        for val in args:
-            if isinstance(val, str) and val == "__webrtc_value__":
+        for i, val in enumerate(args):
+            if i == 0:
                 new_args.append(frame)
             else:
                 new_args.append(val)

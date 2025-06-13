@@ -45,12 +45,11 @@
     upload: FileData;
     start_recording?: never;
     stop_recording?: never;
-    tick: never;
+    tick: undefined;
   }>();
 
   let dragging = false;
   $: dispatch("drag", dragging);
-  $: webrtc_id = typeof value === "string" ? value : value.webrtc_id;
 </script>
 
 <BlockLabel {show_label} Icon={Video} label={label || "Video"} />
@@ -75,7 +74,7 @@
     {i18n}
     stream_every={0.5}
     {server}
-    bind:webrtc_id
+    bind:webrtc_id={value}
     {reject_cb}
   />
 
