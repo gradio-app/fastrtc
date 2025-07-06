@@ -40,6 +40,7 @@
   export let icon_radius: number = 50;
   export let button_labels: { start: string; stop: string; waiting: string };
   export let variant: "textbox" | "wave" = "wave";
+  export let connection_state: "open" | "closed" | "unset" = "unset";
 
   let pending = false;
 
@@ -92,6 +93,7 @@
   let mic_accessed = false;
   let is_muted = false;
   let is_mic_muted = false;
+  let start_button;
 
   const audio_source_callback = () => {
     if (mode === "send") return stream;
@@ -309,6 +311,24 @@
     notification_sound.play();
   }
 
+  $: if (
+    connection_state === "open" &&
+    mic_accessed &&
+    stream_state === "closed"
+  ) {
+    console.log("opening connection");
+    start_stream();
+    connection_state = "unset";
+  } else if (
+    connection_state === "closed" &&
+    mic_accessed &&
+    stream_state === "open"
+  ) {
+    console.log("closing connection");
+    start_stream();
+    connection_state = "unset";
+  }
+
   function input_audio_source_callback(): MediaStream {
     return stream;
   }
@@ -374,7 +394,11 @@
     />
     <StreamingBar time_limit={_time_limit} />
     <div class="button-wrap" class:pulse={stopword_recognized}>
-      <button on:click={start_stream} aria-label={"start stream"}>
+      <button
+        on:click={start_stream}
+        aria-label={"start stream"}
+        bind:this={start_button}
+      >
         {#if stream_state === "waiting"}
           <div class="icon-with-text">
             <div class="icon color-primary" title="spinner">

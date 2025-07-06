@@ -42,6 +42,7 @@
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
   export let variant: "textbox" | "wave" = "wave";
+  export let connection_state: "open" | "closed" | "unset" = "unset";
 
   export let value: WebRTCValue | string =
     variant === "textbox" ||
@@ -77,6 +78,9 @@
         "warning",
         "Taking a while to connect. Are you on a VPN?",
       );
+    } else if (msg?.type === "update_connection") {
+      console.log("update_connection in index.svelte", msg.data);
+      connection_state = msg.data;
     }
     if (msg.type === "state_change") {
       gradio.dispatch(msg === "change" ? "state_change" : "tick");
@@ -173,6 +177,7 @@
       {pulse_color}
       {icon_radius}
       {button_labels}
+      {connection_state}
       on:clear={() => gradio.dispatch("clear")}
       on:play={() => gradio.dispatch("play")}
       on:pause={() => gradio.dispatch("pause")}
@@ -208,6 +213,7 @@
       {pulse_color}
       {button_labels}
       {variant}
+      {connection_state}
       on:start_recording={() => gradio.dispatch("start_recording")}
       on:stop_recording={() => gradio.dispatch("stop_recording")}
       on:tick={() => gradio.dispatch("tick")}

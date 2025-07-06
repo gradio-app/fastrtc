@@ -65,6 +65,7 @@ def create_message(
         "error",
         "warning",
         "log",
+        "update_connection",
     ],
     data: list[Any] | str,
 ) -> str:

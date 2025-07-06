@@ -36,6 +36,7 @@
   export let icon_radius: number = 50;
   export let pulse_color: string = "var(--color-accent)";
   export let button_labels: { start: string; stop: string; waiting: string };
+  export let connection_state: "open" | "closed" | "unset" = "unset";
 
   export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
     state: "open" | "closed" | "waiting",
@@ -215,6 +216,28 @@
       await access_webcam();
     }
   }
+
+  async function close_connection(
+    connection_state: "open" | "closed" | "unset",
+  ) {
+    if (
+      connection_state === "open" &&
+      webcam_accessed &&
+      stream_state === "closed"
+    ) {
+      await start_webrtc();
+      connection_state = "unset";
+    } else if (
+      connection_state === "closed" &&
+      webcam_accessed &&
+      stream_state === "open"
+    ) {
+      await start_webrtc();
+      connection_state = "unset";
+    }
+  }
+
+  $: close_connection(connection_state);
 
   let options_open = false;
 

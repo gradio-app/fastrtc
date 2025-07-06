@@ -81,7 +81,8 @@ export async function start(
       event_json?.type === "send_input" ||
       event_json?.type === "fetch_output" ||
       event_json?.type === "stopword" ||
-      event_json?.type === "end_stream"
+      event_json?.type === "end_stream" ||
+      event_json?.type === "update_connection"
     ) {
       on_change_cb(event_json ?? event.data);
     }

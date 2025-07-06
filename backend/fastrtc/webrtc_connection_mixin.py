@@ -147,6 +147,17 @@ class WebRTCConnectionMixin:
         self.data_channels.pop(webrtc_id, None)
         return connection
 
+    async def update_connection(
+        self, webrtc_data: str | WebRTCData, desired_state: Literal["open", "closed"]
+    ):
+        webrtc_id = webrtc_data
+        if isinstance(webrtc_data, WebRTCData):
+            webrtc_id = webrtc_data.webrtc_id
+        if webrtc_id in self.connections:
+            self.data_channels[webrtc_id].send(
+                create_message("update_connection", desired_state)
+            )
+
     def set_input(self, webrtc_id: str, *args):
         if webrtc_id in self.connections:
             for conn in self.connections[webrtc_id]:
