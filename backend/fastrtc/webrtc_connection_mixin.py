@@ -148,7 +148,7 @@ class WebRTCConnectionMixin:
         return connection
 
     async def update_connection(
-        self, webrtc_data: str | WebRTCData, desired_state: Literal["open", "closed"]
+        self, webrtc_data: str | WebRTCData, desired_state: Literal["closed"]
     ):
         webrtc_id = webrtc_data
         if isinstance(webrtc_data, WebRTCData):
