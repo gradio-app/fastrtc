@@ -22,8 +22,8 @@ export async function get_video_stream(
   track_constraints?: MediaTrackConstraints,
 ): Promise<MediaStream> {
   const fallback_constraints = track_constraints || {
-    width: { ideal: 500 },
-    height: { ideal: 500 },
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
   };
 
   const constraints = {

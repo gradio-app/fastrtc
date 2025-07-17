@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Webcam } from "@gradio/icons";
+  import { Video } from "@gradio/icons";
   import { createEventDispatcher } from "svelte";
 
-  export let icon = Webcam;
+  export let icon = Video;
   $: text =
-    icon === Webcam ? "Click to Access Webcam" : "Click to Access Microphone";
+    icon === Video ? "Click to Access Webcam" : "Click to Access Microphone";
 
   const dispatch = createEventDispatcher<{
     click: undefined;
@@ -32,13 +32,14 @@
     justify-content: center;
     align-items: center;
     min-height: var(--size-60);
-    color: var(--block-label-text-color);
+    color: var(--button-secondary-background-fill);
     height: 100%;
     padding-top: var(--size-3);
+    font-size: 1.5rem;
   }
 
   .icon-wrap {
-    width: 30px;
+    width: 150px;
     margin-bottom: var(--spacing-lg);
   }
 

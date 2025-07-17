@@ -34,6 +34,7 @@
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
   export let connection_state: "open" | "closed" | "unset" = "unset";
+  export let full_screen: boolean = true;
 
   const dispatch = createEventDispatcher<{
     change: FileData | null;
@@ -53,7 +54,7 @@
   $: dispatch("drag", dragging);
 </script>
 
-<BlockLabel {show_label} Icon={Video} label={label || "Video"} />
+<BlockLabel show_label={show_label && !full_screen} Icon={Video} label={label || "Video"} />
 <div data-testid="video" class="video-container">
   <Webcam
     {rtc_configuration}
@@ -78,6 +79,7 @@
     bind:webrtc_id={value}
     {reject_cb}
     {connection_state}
+    {full_screen}
   />
 
   <!-- <SelectSource {sources} bind:active_source /> -->

@@ -3,7 +3,6 @@
   import type { I18nFormatter } from "@gradio/utils";
   import { createEventDispatcher } from "svelte";
   import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
   import { StreamingBar } from "@gradio/statustracker";
   import {
     Circle,
@@ -21,7 +20,6 @@
   import { get_devices, set_available_devices } from "./stream_utils";
   import AudioWave from "./AudioWave.svelte";
   import TextboxWithMic from "./TextboxWithMic.svelte";
-  import WebcamPermissions from "./WebcamPermissions.svelte";
   import PulsingIcon from "./PulsingIcon.svelte";
   export let mode: "send-receive" | "send";
   export let value: WebRTCValue | null = null;
@@ -41,6 +39,7 @@
   export let button_labels: { start: string; stop: string; waiting: string };
   export let variant: "textbox" | "wave" = "wave";
   export let connection_state: "open" | "closed" | "unset" = "unset";
+  export let full_screen: boolean = true;
 
   let pending = false;
 
@@ -54,6 +53,7 @@
         "https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/pop-sounds.mp3",
       );
     }
+    access_mic();
   });
 
   let _on_change_cb = (msg: "change" | "tick" | "stopword" | any) => {
@@ -336,7 +336,7 @@
 
 {#if variant !== "textbox"}
   <BlockLabel
-    {show_label}
+    show_label={show_label && !full_screen}
     Icon={Music}
     float={false}
     label={label || i18n("audio.audio")}
@@ -371,17 +371,6 @@
       bind:is_mic_muted
       {pending}
     />
-  {:else if !mic_accessed}
-    <div
-      in:fade={{ delay: 100, duration: 200 }}
-      title="grant webcam access"
-      style="height: 100%"
-    >
-      <WebcamPermissions
-        icon={Microphone}
-        on:click={async () => access_mic()}
-      />
-    </div>
   {:else}
     <AudioWave
       {audio_source_callback}

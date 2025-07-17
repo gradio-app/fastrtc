@@ -37,7 +37,7 @@
   export let pulse_color: string = "var(--color-accent)";
   export let button_labels: { start: string; stop: string; waiting: string };
   export let connection_state: "open" | "closed" | "unset" = "unset";
-
+  export let full_screen: boolean = true;
   export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
     state: "open" | "closed" | "waiting",
   ) => {
@@ -270,7 +270,7 @@
   const audio_source_callback = () => video_source.srcObject as MediaStream;
 </script>
 
-<div class="wrap">
+<div class="wrap" class:full-screen={full_screen}>
   <StreamingBar time_limit={_time_limit} />
   {#if stream_state === "open" && include_audio}
     <div class="audio-indicator">
@@ -284,16 +284,16 @@
       />
     </div>
   {/if}
-  <!-- svelte-ignore a11y-media-has-caption -->
-  <!-- need to suppress for video streaming https://github.com/sveltejs/svelte/issues/5967 -->
-  <video
-    bind:this={video_source}
-    class:hide={!webcam_accessed}
-    class:flip={stream_state != "open" ||
-      (stream_state === "open" && include_audio)}
-    autoplay={true}
-    playsinline={true}
-  />
+    <!-- svelte-ignore a11y-media-has-caption -->
+    <!-- need to suppress for video streaming https://github.com/sveltejs/svelte/issues/5967 -->
+    <video
+      bind:this={video_source}
+      class:hide={!webcam_accessed}
+      class:flip={stream_state != "open" ||
+        (stream_state === "open" && include_audio)}
+      autoplay={true}
+      playsinline={true}
+    />
   <!-- svelte-ignore a11y-missing-attribute -->
   {#if !webcam_accessed}
     <div
@@ -304,67 +304,67 @@
       <WebcamPermissions on:click={async () => access_webcam()} />
     </div>
   {:else}
-    <div class="button-wrap">
-      <button on:click={start_webrtc} aria-label={"start stream"}>
-        {#if stream_state === "waiting"}
-          <div class="icon-with-text">
-            <div class="icon color-primary" title="spinner">
-              <Spinner />
-            </div>
-            {button_labels.waiting || i18n("audio.waiting")}
+  <div class="button-wrap">
+    <button on:click={start_webrtc} aria-label={"start stream"}>
+      {#if stream_state === "waiting"}
+        <div class="icon-with-text">
+          <div class="icon color-primary" title="spinner">
+            <Spinner />
           </div>
-        {:else if stream_state === "open"}
-          <div class="icon-with-text">
-            <div class="icon color-primary" title="stop recording">
-              <Square />
-            </div>
-            {button_labels.stop || i18n("audio.stop")}
+          {button_labels.waiting || i18n("audio.waiting")}
+        </div>
+      {:else if stream_state === "open"}
+        <div class="icon-with-text">
+          <div class="icon color-primary" title="stop recording">
+            <Square />
           </div>
-        {:else}
-          <div class="icon-with-text">
-            <div class="icon color-primary" title="start recording">
-              <Circle />
-            </div>
-            {button_labels.start || i18n("audio.record")}
+          {button_labels.stop || i18n("audio.stop")}
+        </div>
+      {:else}
+        <div class="icon-with-text">
+          <div class="icon color-primary" title="start recording">
+            <Circle />
           </div>
-        {/if}
-      </button>
-      {#if !recording}
-        <button
-          class="icon"
-          on:click={() => (options_open = true)}
-          aria-label="select input source"
-        >
-          <DropdownArrow />
-        </button>
+          {button_labels.start || i18n("audio.record")}
+        </div>
       {/if}
-    </div>
-    {#if options_open && selected_device}
-      <select
-        class="select-wrap"
-        aria-label="select source"
-        use:click_outside={handle_click_outside}
-        on:change={handle_device_change}
+    </button>
+    {#if !recording}
+      <button
+        class="icon"
+        on:click={() => (options_open = true)}
+        aria-label="select input source"
       >
+        <DropdownArrow />
+      </button>
+    {/if}
+  </div>
+  {#if options_open && selected_device}
+    <select
+      class="select-wrap"
+      aria-label="select source"
+      use:click_outside={handle_click_outside}
+      on:change={handle_device_change}
+    >
         <button
           class="inset-icon"
           on:click|stopPropagation={() => (options_open = false)}
         >
           <DropdownArrow />
         </button>
-        {#if available_video_devices.length === 0}
-          <option value="">{i18n("common.no_devices")}</option>
-        {:else}
-          {#each available_video_devices as device}
-            <option
-              value={device.deviceId}
-              selected={selected_device.deviceId === device.deviceId}
-            >
-              {device.label}
-            </option>
-          {/each}
-        {/if}
-      </select>
+      {#if available_video_devices.length === 0}
+        <option value="">{i18n("common.no_devices")}</option>
+      {:else}
+        {#each available_video_devices as device}
+          <option
+            value={device.deviceId}
+            selected={selected_device.deviceId === device.deviceId}
+          >
+            {device.label}
+          </option>
+        {/each}
+      {/if}
+    </select>
     {/if}
   {/if}
 </div>
@@ -376,6 +376,14 @@
     height: var(--size-full);
   }
 
+  .wrap.full-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
   .hide {
     display: none;
   }
@@ -383,7 +391,14 @@
   video {
     width: var(--size-full);
     height: var(--size-full);
+    object-fit: contain;
+  }
+
+  .full-screen video {
+    width: 100vw;
+    height: 100vh;
     object-fit: cover;
+    position: absolute;
   }
 
   .button-wrap {

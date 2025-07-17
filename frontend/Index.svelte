@@ -43,6 +43,7 @@
   export let icon_radius: number = 50;
   export let variant: "textbox" | "wave" = "wave";
   export let connection_state: "open" | "closed" | "unset" = "unset";
+  export let full_screen: boolean = true;
 
   export let value: WebRTCValue | string =
     variant === "textbox" ||
@@ -178,6 +179,7 @@
       {icon_radius}
       {button_labels}
       {connection_state}
+      {full_screen}
       on:clear={() => gradio.dispatch("clear")}
       on:play={() => gradio.dispatch("play")}
       on:pause={() => gradio.dispatch("pause")}
@@ -214,6 +216,7 @@
       {button_labels}
       {variant}
       {connection_state}
+      {full_screen}
       on:start_recording={() => gradio.dispatch("start_recording")}
       on:stop_recording={() => gradio.dispatch("stop_recording")}
       on:tick={() => gradio.dispatch("tick")}
@@ -222,3 +225,13 @@
     />
   {/if}
 </Block>
+
+<style>
+  :global(.gradio-component footer) {
+      display: none !important;
+  }
+
+  :global(.gradio-component footer) {
+      display: none !important;
+  }
+</style>
