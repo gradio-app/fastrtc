@@ -71,7 +71,12 @@
     close_stream: undefined;
   }>();
 
-  onMount(() => (canvas = document.createElement("canvas")));
+  onMount(() => {
+    (canvas = document.createElement("canvas"));
+    if (full_screen) {
+      access_webcam();
+    }
+  });
 
   const handle_device_change = async (event: InputEvent): Promise<void> => {
     const target = event.target as HTMLInputElement;
@@ -295,7 +300,7 @@
       playsinline={true}
     />
   <!-- svelte-ignore a11y-missing-attribute -->
-  {#if !webcam_accessed}
+  {#if !webcam_accessed && !full_screen}
     <div
       in:fade={{ delay: 100, duration: 200 }}
       title="grant webcam access"

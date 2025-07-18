@@ -342,7 +342,7 @@
     label={label || i18n("audio.audio")}
   />
 {/if}
-<div class="audio-container">
+<div class="audio-container" class:full-screen={full_screen}>
   <audio
     class="standard-player"
     class:hidden={true}
@@ -380,9 +380,10 @@
       {pulse_color}
       {pending}
       {icon_radius}
+      {full_screen}
     />
     <StreamingBar time_limit={_time_limit} />
-    <div class="button-wrap" class:pulse={stopword_recognized}>
+    <div class="button-wrap" class:pulse={stopword_recognized} class:full-screen={full_screen}>
       <button
         on:click={start_stream}
         aria-label={"start stream"}
@@ -512,6 +513,14 @@
     align-items: center;
   }
 
+  .audio-container.full-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+  }
+
   :global(::part(wrapper)) {
     margin-bottom: var(--size-2);
   }
@@ -538,6 +547,15 @@
     border-radius: var(--radius-xl);
     line-height: var(--size-3);
     color: var(--button-secondary-text-color);
+  }
+
+  .button-wrap.full-screen {
+    padding: var(--size-4);
+    margin-top: var(--size-4);
+    margin-bottom: var(--size-4);
+    font-size: var(--text-lg);
+    min-height: var(--size-12);
+    box-shadow: var(--shadow-drop-lg), 0 0 30px rgba(var(--color-accent-rgb, 59, 130, 246), 0.2);
   }
 
   @keyframes pulse {

@@ -639,6 +639,12 @@ class Stream(WebRTCConnectionMixin):
                         concurrency_limit=self.concurrency_limit_gradio,  # type: ignore
                     )
         elif self.modality == "audio" and self.mode == "send-receive":
+            if ui_args.get("full_screen") is False:
+                css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
+                      .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
+            else:
+                css = """.gradio-container .sidebar {background-color: rgba(255, 255, 255, 0.5) !important;}
+                body.dark .gradio-container .sidebar {background-color: rgba(32, 32, 32, 0.5) !important;}"""
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
                     title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
@@ -690,12 +696,23 @@ class Stream(WebRTCConnectionMixin):
                                     icon_radius=ui_args.get("icon_radius"),
                                     full_screen=ui_args.get("full_screen")
                                 )
-                                for component in additional_input_components:
-                                    if component not in same_components:
+                                if ui_args.get("full_screen") is False:
+                                    for component in additional_input_components:
+                                        if component not in same_components:
+                                            component.render()
+                                else:
+                                    with gr.Sidebar(position="left"):
+                                        for component in additional_input_components:
+                                            if component not in same_components:
+                                                component.render()
+                            if ui_args.get("full_screen") is False:
+                                with gr.Column():
+                                    for component in additional_output_components:
                                         component.render()
-                            with gr.Column():
-                                for component in additional_output_components:
-                                    component.render()
+                            else:
+                                with gr.Sidebar(position="right"):
+                                    for component in additional_output_components:
+                                        component.render()
                     else:
                         with gr.Row():
                             with gr.Column():
@@ -711,9 +728,15 @@ class Stream(WebRTCConnectionMixin):
                                     icon_radius=ui_args.get("icon_radius"),
                                     full_screen=ui_args.get("full_screen")
                                 )
-                                for component in additional_input_components:
-                                    if component not in same_components:
-                                        component.render()
+                                if ui_args.get("full_screen") is False:
+                                    for component in additional_input_components:
+                                        if component not in same_components:
+                                            component.render()
+                                else:
+                                    with gr.Sidebar(position="left"):
+                                        for component in additional_input_components:
+                                            if component not in same_components:
+                                                component.render()
                 self.webrtc_component = image
                 image.stream(
                     fn=self.event_handler,
@@ -756,13 +779,24 @@ class Stream(WebRTCConnectionMixin):
                                 full_screen=ui_args.get("full_screen")
                             )
                             self.webrtc_component = image
-                            for component in additional_input_components:
-                                if component not in same_components:
-                                    component.render()
+                            if ui_args.get("full_screen") is False:
+                                for component in additional_input_components:
+                                    if component not in same_components:
+                                        component.render()
+                            else:
+                                with gr.Sidebar(position="left"):
+                                    for component in additional_input_components:
+                                        if component not in same_components:
+                                            component.render()
                     if additional_output_components:
-                        with gr.Column():
-                            for component in additional_output_components:
-                                component.render()
+                        if ui_args.get("full_screen") is False:
+                            with gr.Column():
+                                for component in additional_output_components:
+                                    component.render()
+                        else:
+                            with gr.Sidebar(position="right"):
+                                for component in additional_output_components:
+                                    component.render()
 
                     image.stream(
                         fn=self.event_handler,

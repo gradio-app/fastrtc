@@ -12,6 +12,7 @@
   export let pulse_color: string = "var(--color-accent)";
   export let pending: boolean = false;
   export let icon_radius: number = 50;
+  export let full_screen: boolean = true;
 
   let audioContext: AudioContext;
   let analyser: AnalyserNode;
@@ -19,9 +20,14 @@
   let animationId: number;
   export let pulseScale = 1;
 
+  // Increase number of bars for full screen mode for better visualization
+  $: effectiveNumBars = full_screen && !icon ? Math.max(32, numBars * 2) : numBars;
+
   $: containerWidth = icon
     ? "128px"
-    : `calc((var(--boxSize) + var(--gutter)) * ${numBars})`;
+    : full_screen
+    ? "80vw"
+    : `calc((var(--boxSize) + var(--gutter)) * ${effectiveNumBars})`;
 
   $: if (stream_state === "open") setupAudioContext();
 
@@ -68,9 +74,9 @@
   }
 </script>
 
-<div class="gradio-webrtc-waveContainer">
+<div class="gradio-webrtc-waveContainer" class:full-screen={full_screen}>
   {#if icon && !pending}
-    <div class="gradio-webrtc-icon-container">
+    <div class="gradio-webrtc-icon-container" class:full-screen={full_screen}>
       <div
         class="gradio-webrtc-icon"
         style:transform={`scale(${pulseScale})`}
@@ -87,15 +93,15 @@
       </div>
     </div>
   {:else if pending}
-    <div class="dots">
+    <div class="dots" class:full-screen={full_screen}>
       <div class="dot" style:background-color={pulse_color} />
       <div class="dot" style:background-color={pulse_color} />
       <div class="dot" style:background-color={pulse_color} />
     </div>
   {:else}
-    <div class="gradio-webrtc-boxContainer" style:width={containerWidth}>
-      {#each Array(numBars) as _}
-        <div class="gradio-webrtc-box"></div>
+    <div class="gradio-webrtc-boxContainer" class:full-screen={full_screen} style:width={containerWidth}>
+      {#each Array(effectiveNumBars) as _}
+        <div class="gradio-webrtc-box" class:full-screen={full_screen}></div>
       {/each}
     </div>
   {/if}
@@ -111,12 +117,26 @@
     align-items: center;
   }
 
+  .gradio-webrtc-waveContainer.full-screen {
+    min-height: 40vh;
+    max-height: 60vh;
+    width: 100%;
+  }
+
   .gradio-webrtc-boxContainer {
     display: flex;
     justify-content: space-between;
     height: 64px;
     --boxSize: 8px;
     --gutter: 4px;
+  }
+
+  .gradio-webrtc-boxContainer.full-screen {
+    height: 300px;
+    --boxSize: 16px;
+    --gutter: 8px;
+    justify-content: center;
+    gap: var(--gutter);
   }
 
   .gradio-webrtc-box {
@@ -127,6 +147,11 @@
     transition: transform 0.05s ease;
   }
 
+  .gradio-webrtc-box.full-screen {
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(var(--color-accent-rgb, 59, 130, 246), 0.3);
+  }
+
   .gradio-webrtc-icon-container {
     position: relative;
     width: 128px;
@@ -134,6 +159,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
+  }
+
+  .gradio-webrtc-icon-container.full-screen {
+    width: 256px;
+    height: 256px;
   }
 
   .gradio-webrtc-icon {
@@ -185,12 +215,22 @@
     height: 64px;
   }
 
+  .dots.full-screen {
+    gap: 16px;
+    height: 120px;
+  }
+
   .dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
     opacity: 0.5;
     animation: pulse 1.5s infinite;
+  }
+
+  .dots.full-screen .dot {
+    width: 24px;
+    height: 24px;
   }
 
   .dot:nth-child(2) {

@@ -119,7 +119,7 @@
   {elem_classes}
   {height}
   {width}
-  {container}
+  container={full_screen ? false : true}
   {scale}
   {min_width}
   allow_overflow={false}
