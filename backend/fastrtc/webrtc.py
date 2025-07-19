@@ -93,7 +93,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         icon_radius: int | None = None,
         button_labels: dict | None = None,
         variant: Literal["textbox", "wave"] = "wave",
-        full_screen: bool | None = None,
+        full_screen: bool | None = True,
     ):
         """
         Parameters:
@@ -149,12 +149,12 @@ class WebRTC(Component, WebRTCConnectionMixin):
         self.icon_radius = icon_radius
         self.pulse_color = pulse_color
         self.rtp_params = rtp_params or {}
-        if full_screen:
-            width = 1280
-            height = 720
-        else:
+        if full_screen is False:
             width = 500
             height = 500
+        else:
+            width = 1280
+            height = 720
         self.button_labels = {
             "start": "",
             "stop": "",
