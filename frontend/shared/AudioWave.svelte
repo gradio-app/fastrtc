@@ -21,13 +21,14 @@
   export let pulseScale = 1;
 
   // Increase number of bars for full screen mode for better visualization
-  $: effectiveNumBars = full_screen && !icon ? Math.max(32, numBars * 2) : numBars;
+  $: effectiveNumBars =
+    full_screen && !icon ? Math.max(32, numBars * 2) : numBars;
 
   $: containerWidth = icon
     ? "128px"
     : full_screen
-    ? "80vw"
-    : `calc((var(--boxSize) + var(--gutter)) * ${effectiveNumBars})`;
+      ? "80vw"
+      : `calc((var(--boxSize) + var(--gutter)) * ${effectiveNumBars})`;
 
   $: if (stream_state === "open") setupAudioContext();
 
@@ -99,7 +100,11 @@
       <div class="dot" style:background-color={pulse_color} />
     </div>
   {:else}
-    <div class="gradio-webrtc-boxContainer" class:full-screen={full_screen} style:width={containerWidth}>
+    <div
+      class="gradio-webrtc-boxContainer"
+      class:full-screen={full_screen}
+      style:width={containerWidth}
+    >
       {#each Array(effectiveNumBars) as _}
         <div class="gradio-webrtc-box" class:full-screen={full_screen}></div>
       {/each}

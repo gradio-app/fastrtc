@@ -228,10 +228,10 @@
 
 <style>
   :global(.gradio-component footer) {
-      display: none !important;
+    display: none !important;
   }
 
   :global(.gradio-component footer) {
-      display: none !important;
+    display: none !important;
   }
 </style>

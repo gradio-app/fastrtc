@@ -383,7 +383,11 @@
       {full_screen}
     />
     <StreamingBar time_limit={_time_limit} />
-    <div class="button-wrap" class:pulse={stopword_recognized} class:full-screen={full_screen}>
+    <div
+      class="button-wrap"
+      class:pulse={stopword_recognized}
+      class:full-screen={full_screen}
+    >
       <button
         on:click={start_stream}
         aria-label={"start stream"}
@@ -555,7 +559,9 @@
     margin-bottom: var(--size-4);
     font-size: var(--text-lg);
     min-height: var(--size-12);
-    box-shadow: var(--shadow-drop-lg), 0 0 30px rgba(var(--color-accent-rgb, 59, 130, 246), 0.2);
+    box-shadow:
+      var(--shadow-drop-lg),
+      0 0 30px rgba(var(--color-accent-rgb, 59, 130, 246), 0.2);
   }
 
   @keyframes pulse {

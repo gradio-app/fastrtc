@@ -72,7 +72,7 @@
   }>();
 
   onMount(() => {
-    (canvas = document.createElement("canvas"));
+    canvas = document.createElement("canvas");
     if (full_screen) {
       access_webcam();
     }
@@ -289,16 +289,16 @@
       />
     </div>
   {/if}
-    <!-- svelte-ignore a11y-media-has-caption -->
-    <!-- need to suppress for video streaming https://github.com/sveltejs/svelte/issues/5967 -->
-    <video
-      bind:this={video_source}
-      class:hide={!webcam_accessed}
-      class:flip={stream_state != "open" ||
-        (stream_state === "open" && include_audio)}
-      autoplay={true}
-      playsinline={true}
-    />
+  <!-- svelte-ignore a11y-media-has-caption -->
+  <!-- need to suppress for video streaming https://github.com/sveltejs/svelte/issues/5967 -->
+  <video
+    bind:this={video_source}
+    class:hide={!webcam_accessed}
+    class:flip={stream_state != "open" ||
+      (stream_state === "open" && include_audio)}
+    autoplay={true}
+    playsinline={true}
+  />
   <!-- svelte-ignore a11y-missing-attribute -->
   {#if !webcam_accessed && !full_screen}
     <div
@@ -309,67 +309,67 @@
       <WebcamPermissions on:click={async () => access_webcam()} />
     </div>
   {:else}
-  <div class="button-wrap">
-    <button on:click={start_webrtc} aria-label={"start stream"}>
-      {#if stream_state === "waiting"}
-        <div class="icon-with-text">
-          <div class="icon color-primary" title="spinner">
-            <Spinner />
+    <div class="button-wrap">
+      <button on:click={start_webrtc} aria-label={"start stream"}>
+        {#if stream_state === "waiting"}
+          <div class="icon-with-text">
+            <div class="icon color-primary" title="spinner">
+              <Spinner />
+            </div>
+            {button_labels.waiting || i18n("audio.waiting")}
           </div>
-          {button_labels.waiting || i18n("audio.waiting")}
-        </div>
-      {:else if stream_state === "open"}
-        <div class="icon-with-text">
-          <div class="icon color-primary" title="stop recording">
-            <Square />
+        {:else if stream_state === "open"}
+          <div class="icon-with-text">
+            <div class="icon color-primary" title="stop recording">
+              <Square />
+            </div>
+            {button_labels.stop || i18n("audio.stop")}
           </div>
-          {button_labels.stop || i18n("audio.stop")}
-        </div>
-      {:else}
-        <div class="icon-with-text">
-          <div class="icon color-primary" title="start recording">
-            <Circle />
+        {:else}
+          <div class="icon-with-text">
+            <div class="icon color-primary" title="start recording">
+              <Circle />
+            </div>
+            {button_labels.start || i18n("audio.record")}
           </div>
-          {button_labels.start || i18n("audio.record")}
-        </div>
-      {/if}
-    </button>
-    {#if !recording}
-      <button
-        class="icon"
-        on:click={() => (options_open = true)}
-        aria-label="select input source"
-      >
-        <DropdownArrow />
+        {/if}
       </button>
-    {/if}
-  </div>
-  {#if options_open && selected_device}
-    <select
-      class="select-wrap"
-      aria-label="select source"
-      use:click_outside={handle_click_outside}
-      on:change={handle_device_change}
-    >
+      {#if !recording}
+        <button
+          class="icon"
+          on:click={() => (options_open = true)}
+          aria-label="select input source"
+        >
+          <DropdownArrow />
+        </button>
+      {/if}
+    </div>
+    {#if options_open && selected_device}
+      <select
+        class="select-wrap"
+        aria-label="select source"
+        use:click_outside={handle_click_outside}
+        on:change={handle_device_change}
+      >
         <button
           class="inset-icon"
           on:click|stopPropagation={() => (options_open = false)}
         >
           <DropdownArrow />
         </button>
-      {#if available_video_devices.length === 0}
-        <option value="">{i18n("common.no_devices")}</option>
-      {:else}
-        {#each available_video_devices as device}
-          <option
-            value={device.deviceId}
-            selected={selected_device.deviceId === device.deviceId}
-          >
-            {device.label}
-          </option>
-        {/each}
-      {/if}
-    </select>
+        {#if available_video_devices.length === 0}
+          <option value="">{i18n("common.no_devices")}</option>
+        {:else}
+          {#each available_video_devices as device}
+            <option
+              value={device.deviceId}
+              selected={selected_device.deviceId === device.deviceId}
+            >
+              {device.label}
+            </option>
+          {/each}
+        {/if}
+      </select>
     {/if}
   {/if}
 </div>

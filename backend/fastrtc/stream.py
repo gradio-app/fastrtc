@@ -65,6 +65,7 @@ class UIArgs(TypedDict):
     full_screen: NotRequired[bool]
     """If False, the component will be contained within its parent instead of full screen. Default is True."""
 
+
 class Stream(WebRTCConnectionMixin):
     """
     Define an audio or video stream with a built-in UI, mountable on a FastAPI app.
@@ -315,16 +316,14 @@ class Stream(WebRTCConnectionMixin):
         return new_lifespan
 
     def _is_html_string(self, text: str) -> bool:
-        html_pattern = re.compile(r'<[^<>]+>')
+        html_pattern = re.compile(r"<[^<>]+>")
         return bool(html_pattern.search(text))
-
 
     def _format_title(self, title: str) -> str:
         if self._is_html_string(title):
             return title
         else:
             return f"<h1 style='text-align: center'>{title}</h1>"
-
 
     def _format_subtitle(self, subtitle: str | None) -> str:
         if subtitle:
@@ -374,7 +373,9 @@ class Stream(WebRTCConnectionMixin):
         if self.modality == "video" and self.mode == "receive":
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
-                    title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
+                    title = ui_args.get(
+                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                    )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
                         gr.Markdown(self._format_subtitle(ui_args.get("subtitle")))
@@ -391,7 +392,7 @@ class Stream(WebRTCConnectionMixin):
                             track_constraints=self.track_constraints,
                             mode="receive",
                             modality="video",
-                            full_screen=ui_args.get("full_screen")
+                            full_screen=ui_args.get("full_screen"),
                         )
                         self.webrtc_component = output_video
                         for component in additional_output_components:
@@ -417,7 +418,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "video" and self.mode == "send":
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
-                    title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
+                    title = ui_args.get(
+                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                    )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
                         gr.Markdown(self._format_subtitle(ui_args.get("subtitle")))
@@ -433,7 +436,7 @@ class Stream(WebRTCConnectionMixin):
                             track_constraints=self.track_constraints,
                             mode="send",
                             modality="video",
-                            full_screen=ui_args.get("full_screen")
+                            full_screen=ui_args.get("full_screen"),
                         )
                         self.webrtc_component = output_video
                         for component in additional_output_components:
@@ -476,7 +479,7 @@ class Stream(WebRTCConnectionMixin):
                             track_constraints=self.track_constraints,
                             mode="send-receive",
                             modality="video",
-                            full_screen=ui_args.get("full_screen")
+                            full_screen=ui_args.get("full_screen"),
                         )
                         if ui_args.get("full_screen") is False:
                             for component in additional_input_components:
@@ -518,7 +521,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "receive":
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
-                    title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
+                    title = ui_args.get(
+                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                    )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
                         gr.Markdown(self._format_subtitle(ui_args.get("subtitle")))
@@ -538,7 +543,7 @@ class Stream(WebRTCConnectionMixin):
                             icon_button_color=ui_args.get("icon_button_color"),
                             pulse_color=ui_args.get("pulse_color"),
                             icon_radius=ui_args.get("icon_radius"),
-                            full_screen=ui_args.get("full_screen")
+                            full_screen=ui_args.get("full_screen"),
                         )
                         self.webrtc_component = output_video
                         for component in additional_output_components:
@@ -564,7 +569,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "send":
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
-                    title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
+                    title = ui_args.get(
+                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                    )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
                         gr.Markdown(self._format_subtitle(ui_args.get("subtitle")))
@@ -595,7 +602,7 @@ class Stream(WebRTCConnectionMixin):
                             pulse_color=ui_args.get("pulse_color"),
                             icon_radius=ui_args.get("icon_radius"),
                             variant=ui_args.get("variant", "wave"),
-                            full_screen=ui_args.get("full_screen")
+                            full_screen=ui_args.get("full_screen"),
                         )
                 else:
                     with gr.Row():
@@ -612,7 +619,7 @@ class Stream(WebRTCConnectionMixin):
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
                                     variant=ui_args.get("variant", "wave"),
-                                    full_screen=ui_args.get("full_screen")
+                                    full_screen=ui_args.get("full_screen"),
                                 )
                                 for component in additional_input_components:
                                     if component not in same_components:
@@ -647,7 +654,9 @@ class Stream(WebRTCConnectionMixin):
                 body.dark .gradio-container .sidebar {background-color: rgba(32, 32, 32, 0.5) !important;}"""
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
-                    title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
+                    title = ui_args.get(
+                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                    )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
                         gr.Markdown(self._format_subtitle(ui_args.get("subtitle")))
@@ -678,7 +687,7 @@ class Stream(WebRTCConnectionMixin):
                             pulse_color=ui_args.get("pulse_color"),
                             icon_radius=ui_args.get("icon_radius"),
                             variant=ui_args.get("variant", "wave"),
-                            full_screen=ui_args.get("full_screen")
+                            full_screen=ui_args.get("full_screen"),
                         )
                 else:
                     if additional_output_components:
@@ -694,7 +703,7 @@ class Stream(WebRTCConnectionMixin):
                                     icon_button_color=ui_args.get("icon_button_color"),
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
-                                    full_screen=ui_args.get("full_screen")
+                                    full_screen=ui_args.get("full_screen"),
                                 )
                                 if ui_args.get("full_screen") is False:
                                     for component in additional_input_components:
@@ -726,7 +735,7 @@ class Stream(WebRTCConnectionMixin):
                                     icon_button_color=ui_args.get("icon_button_color"),
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
-                                    full_screen=ui_args.get("full_screen")
+                                    full_screen=ui_args.get("full_screen"),
                                 )
                                 if ui_args.get("full_screen") is False:
                                     for component in additional_input_components:
@@ -759,7 +768,9 @@ class Stream(WebRTCConnectionMixin):
             .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
             with gr.Blocks(css=css) as demo:
                 if not ui_args.get("hide_title"):
-                    title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
+                    title = ui_args.get(
+                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                    )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
                         gr.HTML(self._format_subtitle(ui_args.get("subtitle")))
@@ -776,7 +787,7 @@ class Stream(WebRTCConnectionMixin):
                                 icon_button_color=ui_args.get("icon_button_color"),
                                 pulse_color=ui_args.get("pulse_color"),
                                 icon_radius=ui_args.get("icon_radius"),
-                                full_screen=ui_args.get("full_screen")
+                                full_screen=ui_args.get("full_screen"),
                             )
                             self.webrtc_component = image
                             if ui_args.get("full_screen") is False:

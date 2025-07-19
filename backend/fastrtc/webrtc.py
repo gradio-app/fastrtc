@@ -149,6 +149,12 @@ class WebRTC(Component, WebRTCConnectionMixin):
         self.icon_radius = icon_radius
         self.pulse_color = pulse_color
         self.rtp_params = rtp_params or {}
+        if full_screen:
+            width = 1280
+            height = 720
+        else:
+            width = 500
+            height = 500
         self.button_labels = {
             "start": "",
             "stop": "",
@@ -167,16 +173,16 @@ class WebRTC(Component, WebRTCConnectionMixin):
         if track_constraints is None and modality == "video":
             track_constraints = {
                 "facingMode": "user",
-                "width": {"ideal": 1280},
-                "height": {"ideal": 720},
+                "width": {"ideal": width},
+                "height": {"ideal": height},
                 "frameRate": {"ideal": 30},
             }
         if track_constraints is None and modality == "audio-video":
             track_constraints = {
                 "video": {
                     "facingMode": "user",
-                    "width": {"ideal": 1280},
-                    "height": {"ideal": 720},
+                    "width": {"ideal": width},
+                    "height": {"ideal": height},
                     "frameRate": {"ideal": 30},
                 },
                 "audio": {

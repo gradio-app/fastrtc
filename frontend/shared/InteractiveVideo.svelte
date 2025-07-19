@@ -54,7 +54,11 @@
   $: dispatch("drag", dragging);
 </script>
 
-<BlockLabel show_label={show_label && !full_screen} Icon={Video} label={label || "Video"} />
+<BlockLabel
+  show_label={show_label && !full_screen}
+  Icon={Video}
+  label={label || "Video"}
+/>
 <div data-testid="video" class="video-container">
   <Webcam
     {rtc_configuration}
