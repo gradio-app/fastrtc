@@ -480,16 +480,11 @@
       {#if options_open && selected_device}
         <select
           class="select-wrap"
+          class:full-screen={full_screen}
           aria-label="select source"
           use:click_outside={handle_click_outside}
           on:change={handle_device_change}
         >
-          <button
-            class="inset-icon"
-            on:click|stopPropagation={() => (options_open = false)}
-          >
-            <DropdownArrow />
-          </button>
           {#if available_audio_devices.length === 0}
             <option value="">{i18n("common.no_devices")}</option>
           {:else}
@@ -629,7 +624,7 @@
     width: 95%;
     font-size: var(--text-md);
     position: absolute;
-    bottom: var(--size-2);
+    /* bottom: var(--size-2); */
     background-color: var(--block-background-fill);
     box-shadow: var(--shadow-drop-lg);
     border-radius: var(--radius-xl);
@@ -642,6 +637,16 @@
     left: 50%;
     transform: translate(-50%, 0);
     max-width: var(--size-52);
+  }
+
+  .select-wrap.full-screen {
+    padding: var(--size-4);
+    margin-top: calc(var(--size-4) * -1);
+    font-size: var(--text-lg);
+    min-height: var(--size-12);
+    box-shadow:
+      var(--shadow-drop-lg),
+      0 0 30px rgba(var(--color-accent-rgb, 59, 130, 246), 0.2);
   }
 
   .select-wrap > option {

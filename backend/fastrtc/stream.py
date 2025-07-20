@@ -764,8 +764,12 @@ class Stream(WebRTCConnectionMixin):
                         concurrency_limit=self.concurrency_limit_gradio,  # type: ignore
                     )
         elif self.modality == "audio-video" and self.mode == "send-receive":
-            css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
-            .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
+            if ui_args.get("full_screen") is False:
+                css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
+                      .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
+            else:
+                css = """.gradio-container .sidebar {background-color: rgba(255, 255, 255, 0.5) !important;}
+                body.dark .gradio-container .sidebar {background-color: rgba(32, 32, 32, 0.5) !important;}"""
             with gr.Blocks(css=css) as demo:
                 if not ui_args.get("hide_title"):
                     title = ui_args.get(
