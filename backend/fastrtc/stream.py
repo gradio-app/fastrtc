@@ -485,11 +485,18 @@ class Stream(WebRTCConnectionMixin):
                             for component in additional_input_components:
                                 component.render()
                 if additional_input_components:
-                    if ui_args.get("full_screen") is not False:
+                    input_components_to_render = [
+                        component
+                        for component in additional_input_components
+                        if component not in same_components
+                    ]
+                    if (
+                        input_components_to_render
+                        and ui_args.get("full_screen") is not False
+                    ):
                         with gr.Sidebar(position="left"):
-                            for component in additional_input_components:
-                                if component not in same_components:
-                                    component.render()
+                            for component in input_components_to_render:
+                                component.render()
                 if additional_output_components:
                     if ui_args.get("full_screen") is False:
                         with gr.Group():
@@ -705,14 +712,18 @@ class Stream(WebRTCConnectionMixin):
                                     icon_radius=ui_args.get("icon_radius"),
                                     full_screen=ui_args.get("full_screen"),
                                 )
-                                if ui_args.get("full_screen") is False:
-                                    for component in additional_input_components:
-                                        if component not in same_components:
+                                input_components_to_render = [
+                                    component
+                                    for component in additional_input_components
+                                    if component not in same_components
+                                ]
+                                if input_components_to_render:
+                                    if ui_args.get("full_screen") is False:
+                                        for component in input_components_to_render:
                                             component.render()
-                                else:
-                                    with gr.Sidebar(position="left"):
-                                        for component in additional_input_components:
-                                            if component not in same_components:
+                                    else:
+                                        with gr.Sidebar(position="left"):
+                                            for component in input_components_to_render:
                                                 component.render()
                             if ui_args.get("full_screen") is False:
                                 with gr.Column():
@@ -737,14 +748,18 @@ class Stream(WebRTCConnectionMixin):
                                     icon_radius=ui_args.get("icon_radius"),
                                     full_screen=ui_args.get("full_screen"),
                                 )
-                                if ui_args.get("full_screen") is False:
-                                    for component in additional_input_components:
-                                        if component not in same_components:
+                                input_components_to_render = [
+                                    component
+                                    for component in additional_input_components
+                                    if component not in same_components
+                                ]
+                                if input_components_to_render:
+                                    if ui_args.get("full_screen") is False:
+                                        for component in input_components_to_render:
                                             component.render()
-                                else:
-                                    with gr.Sidebar(position="left"):
-                                        for component in additional_input_components:
-                                            if component not in same_components:
+                                    else:
+                                        with gr.Sidebar(position="left"):
+                                            for component in input_components_to_render:
                                                 component.render()
                 self.webrtc_component = image
                 image.stream(
@@ -794,14 +809,18 @@ class Stream(WebRTCConnectionMixin):
                                 full_screen=ui_args.get("full_screen"),
                             )
                             self.webrtc_component = image
-                            if ui_args.get("full_screen") is False:
-                                for component in additional_input_components:
-                                    if component not in same_components:
+                            input_components_to_render = [
+                                component
+                                for component in additional_input_components
+                                if component not in same_components
+                            ]
+                            if input_components_to_render:
+                                if ui_args.get("full_screen") is False:
+                                    for component in input_components_to_render:
                                         component.render()
-                            else:
-                                with gr.Sidebar(position="left"):
-                                    for component in additional_input_components:
-                                        if component not in same_components:
+                                else:
+                                    with gr.Sidebar(position="left"):
+                                        for component in input_components_to_render:
                                             component.render()
                     if additional_output_components:
                         if ui_args.get("full_screen") is False:
