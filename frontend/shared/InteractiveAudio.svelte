@@ -342,7 +342,10 @@
     label={label || i18n("audio.audio")}
   />
 {/if}
-<div class="audio-container" class:full-screen={full_screen || full_screen === null}>
+<div
+  class="audio-container"
+  class:full-screen={full_screen || full_screen === null}
+>
   <audio
     class="standard-player"
     class:hidden={true}
