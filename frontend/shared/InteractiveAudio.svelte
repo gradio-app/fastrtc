@@ -552,14 +552,12 @@
   }
 
   .button-wrap.full-screen {
+    position: relative;
     padding: var(--size-4);
     margin-top: var(--size-4);
     margin-bottom: var(--size-4);
     font-size: var(--text-lg);
     min-height: var(--size-12);
-    box-shadow:
-      var(--shadow-drop-lg),
-      0 0 30px rgba(var(--color-accent-rgb, 59, 130, 246), 0.2);
   }
 
   @keyframes pulse {
@@ -644,12 +642,14 @@
 
   .select-wrap.full-screen {
     padding: var(--size-4);
-    margin-top: calc(var(--size-4) * -1);
     font-size: var(--text-lg);
-    min-height: var(--size-12);
-    box-shadow:
-      var(--shadow-drop-lg),
-      0 0 30px rgba(var(--color-accent-rgb, 59, 130, 246), 0.2);
+    min-height: var(--size-14);
+    width: 150%;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   .select-wrap > option {

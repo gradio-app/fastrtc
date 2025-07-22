@@ -37,13 +37,13 @@ stream = Stream(
     modality="video",
     mode="send-receive",
     additional_inputs=[gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)],
-     additional_outputs=[
+    additional_outputs=[
         gr.Markdown(
             """
             # Real-Time Video Processing
             **Powered by FastRTC**
             """,
-            elem_classes=["title-section"]
+            elem_classes=["title-section"],
         ),
         gr.HTML(
             """
@@ -102,7 +102,7 @@ stream = Stream(
                 }
             </style>
             """
-        )
+        ),
     ],
     additional_outputs_handler=lambda _: _,
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
