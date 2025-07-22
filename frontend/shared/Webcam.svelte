@@ -275,7 +275,7 @@
   const audio_source_callback = () => video_source.srcObject as MediaStream;
 </script>
 
-<div class="wrap" class:full-screen={full_screen}>
+<div class="wrap" class:full-screen={full_screen || full_screen === null}>
   <StreamingBar time_limit={_time_limit} />
   {#if stream_state === "open" && include_audio}
     <div class="audio-indicator">

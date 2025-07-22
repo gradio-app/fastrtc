@@ -342,7 +342,7 @@
     label={label || i18n("audio.audio")}
   />
 {/if}
-<div class="audio-container" class:full-screen={full_screen}>
+<div class="audio-container" class:full-screen={full_screen || full_screen === null}>
   <audio
     class="standard-player"
     class:hidden={true}
@@ -386,7 +386,7 @@
     <div
       class="button-wrap"
       class:pulse={stopword_recognized}
-      class:full-screen={full_screen}
+      class:full-screen={full_screen || full_screen === null}
     >
       <button
         on:click={start_stream}
@@ -480,7 +480,7 @@
       {#if options_open && selected_device}
         <select
           class="select-wrap"
-          class:full-screen={full_screen}
+          class:full-screen={full_screen || full_screen === null}
           aria-label="select source"
           use:click_outside={handle_click_outside}
           on:change={handle_device_change}
@@ -624,7 +624,7 @@
     width: 95%;
     font-size: var(--text-md);
     position: absolute;
-    /* bottom: var(--size-2); */
+    bottom: var(--size-2);
     background-color: var(--block-background-fill);
     box-shadow: var(--shadow-drop-lg);
     border-radius: var(--radius-xl);

@@ -149,6 +149,9 @@ class WebRTC(Component, WebRTCConnectionMixin):
         self.icon_radius = icon_radius
         self.pulse_color = pulse_color
         self.rtp_params = rtp_params or {}
+        if full_screen is None:
+            full_screen = True
+        self.full_screen = full_screen
         if full_screen is False:
             width = 500
             height = 500
