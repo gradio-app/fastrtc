@@ -20,29 +20,64 @@
   let animationId: number;
   export let pulseScale = 1;
 
-  // Increase number of bars for full screen mode for better visualization
-  $: effectiveNumBars =
-    full_screen && !icon ? Math.max(32, numBars * 2) : numBars;
+  let waveContainer: HTMLDivElement;
+  let waveAmplitudes: number[] = [];
+  let waveOffsets: number[] = [];
+  let time = 0;
+  let idleAnimationId: number;
 
-  $: containerWidth = icon
-    ? "128px"
-    : full_screen
-      ? "80vw"
-      : `calc((var(--boxSize) + var(--gutter)) * ${effectiveNumBars})`;
+  $: effectiveNumBands = full_screen && !icon ? 32 : 16;
+
+  $: containerWidth = icon ? "128px" : full_screen ? "100%" : "400px";
 
   $: if (stream_state === "open") setupAudioContext();
+  $: if (stream_state === "closed" || stream_state === "waiting")
+    startIdleAnimation();
 
   onDestroy(() => {
     if (animationId) {
       cancelAnimationFrame(animationId);
+    }
+    if (idleAnimationId) {
+      cancelAnimationFrame(idleAnimationId);
     }
     if (audioContext) {
       audioContext.close();
     }
   });
 
+  function startIdleAnimation() {
+    if (idleAnimationId) {
+      cancelAnimationFrame(idleAnimationId);
+    }
+
+    waveAmplitudes = new Array(effectiveNumBands).fill(0.1);
+    waveOffsets = new Array(effectiveNumBands).fill(0);
+
+    updateIdleVisualization();
+  }
+
+  function updateIdleVisualization() {
+    time += 0.012;
+
+    for (let i = 0; i < effectiveNumBands; i++) {
+      const baseAmplitude = 0.15 + Math.sin(time * 0.5 + i * 0.3) * 0.05;
+      waveAmplitudes[i] = baseAmplitude;
+      waveOffsets[i] = time * (0.3 + i * 0.05);
+    }
+
+    updateWavePaths();
+
+    if (stream_state === "closed" || stream_state === "waiting") {
+      idleAnimationId = requestAnimationFrame(updateIdleVisualization);
+    }
+  }
+
   function setupAudioContext() {
-    // @ts-ignore
+    if (idleAnimationId) {
+      cancelAnimationFrame(idleAnimationId);
+    }
+
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     const source = audioContext.createMediaStreamSource(
@@ -51,27 +86,79 @@
 
     source.connect(analyser);
 
-    analyser.fftSize = 64;
-    analyser.smoothingTimeConstant = 0.8;
+    analyser.fftSize = 128;
+    analyser.smoothingTimeConstant = 0.85;
     dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    waveAmplitudes = new Array(effectiveNumBands).fill(0);
+    waveOffsets = new Array(effectiveNumBands).fill(0);
 
     updateVisualization();
   }
 
   function updateVisualization() {
     analyser.getByteFrequencyData(dataArray);
+    time += 0.016;
 
-    // Update bars
-    const bars = document.querySelectorAll(
-      ".gradio-webrtc-waveContainer .gradio-webrtc-box",
-    );
-    for (let i = 0; i < bars.length; i++) {
-      const barHeight = (dataArray[i] / 255) * 2;
-      // @ts-ignore
-      bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
+    for (let i = 0; i < effectiveNumBands; i++) {
+      const freqIndex = Math.floor((i / effectiveNumBands) * dataArray.length);
+      const amplitude = (dataArray[freqIndex] / 255) * 0.8 + 0.2;
+      waveAmplitudes[i] = amplitude;
+      waveOffsets[i] = time * (0.5 + i * 0.1);
     }
 
+    updateWavePaths();
+
     animationId = requestAnimationFrame(updateVisualization);
+  }
+
+  function updateWavePaths() {
+    if (!waveContainer) return;
+
+    const waves = waveContainer.querySelectorAll(".wave-path");
+    waves.forEach((wave, waveIndex) => {
+      const path = generateWavePath(waveIndex);
+      (wave as SVGPathElement).setAttribute("d", path);
+    });
+  }
+
+  function generateWavePath(waveIndex: number): string {
+    const width = waveContainer?.clientWidth || 400;
+    const height = full_screen ? 300 : 64;
+    const centerY = height / 2;
+    const points = 100;
+
+    let path = `M 0 ${centerY}`;
+
+    for (let i = 0; i <= points; i++) {
+      const x = (i / points) * width;
+      const normalizedX = (i / points) * Math.PI * 4;
+
+      const frequency = 1 + waveIndex * 0.3;
+      const phase = waveOffsets[waveIndex] || 0;
+      const baseAmplitude = full_screen ? 60 : 20;
+
+      let amplitude = 0;
+      for (let j = 0; j < Math.min(4, waveAmplitudes.length); j++) {
+        const weight = 1 / (j + 1);
+        amplitude += (waveAmplitudes[j] || 0) * weight;
+      }
+      amplitude = amplitude * baseAmplitude * (0.6 + waveIndex * 0.1);
+
+      const sineWave = Math.sin(normalizedX * frequency + phase) * amplitude;
+      const cosineWave =
+        Math.cos(normalizedX * frequency * 1.3 + phase * 0.7) * amplitude * 0.3;
+
+      const y = centerY + sineWave + cosineWave;
+
+      if (i === 0) {
+        path = `M ${x} ${y}`;
+      } else {
+        path += ` L ${x} ${y}`;
+      }
+    }
+
+    return path;
   }
 </script>
 
@@ -101,13 +188,59 @@
     </div>
   {:else}
     <div
-      class="gradio-webrtc-boxContainer"
+      class="wave-container"
       class:full-screen={full_screen}
       style:width={containerWidth}
+      bind:this={waveContainer}
     >
-      {#each Array(effectiveNumBars) as _}
-        <div class="gradio-webrtc-box" class:full-screen={full_screen}></div>
-      {/each}
+      <svg class="wave-svg" class:full-screen={full_screen}>
+        <defs>
+          <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:0.8" />
+            <stop offset="50%" style="stop-color:#7C3AED;stop-opacity:0.9" />
+            <stop offset="100%" style="stop-color:#A855F7;stop-opacity:0.8" />
+          </linearGradient>
+          <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.6" />
+            <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:0.7" />
+            <stop offset="100%" style="stop-color:#C084FC;stop-opacity:0.6" />
+          </linearGradient>
+          <linearGradient id="waveGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#1E40AF;stop-opacity:0.4" />
+            <stop offset="50%" style="stop-color:#6366F1;stop-opacity:0.5" />
+            <stop offset="100%" style="stop-color:#9333EA;stop-opacity:0.4" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <path
+          class="wave-path wave-layer-3"
+          stroke="url(#waveGradient3)"
+          stroke-width="1.5"
+          fill="none"
+          filter="url(#glow)"
+        />
+        <path
+          class="wave-path wave-layer-2"
+          stroke="url(#waveGradient2)"
+          stroke-width="2"
+          fill="none"
+          filter="url(#glow)"
+        />
+        <path
+          class="wave-path wave-layer-1"
+          stroke="url(#waveGradient1)"
+          stroke-width="2.5"
+          fill="none"
+          filter="url(#glow)"
+        />
+      </svg>
     </div>
   {/if}
 </div>
@@ -120,6 +253,7 @@
     max-height: 128px;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
   }
 
   .gradio-webrtc-waveContainer.full-screen {
@@ -128,33 +262,48 @@
     width: 100%;
   }
 
-  .gradio-webrtc-boxContainer {
+  .wave-container {
     display: flex;
-    justify-content: space-between;
-    height: 64px;
-    --boxSize: 8px;
-    --gutter: 4px;
-  }
-
-  .gradio-webrtc-boxContainer.full-screen {
-    height: 300px;
-    --boxSize: 16px;
-    --gutter: 8px;
     justify-content: center;
-    gap: var(--gutter);
+    align-items: center;
+    height: 64px;
+    width: 100%;
+    position: relative;
   }
 
-  .gradio-webrtc-box {
+  .wave-container.full-screen {
+    height: 300px;
+  }
+
+  .wave-svg {
+    width: 100%;
     height: 100%;
-    width: var(--boxSize);
-    background: var(--color-accent);
-    border-radius: 8px;
-    transition: transform 0.05s ease;
+    overflow: visible;
   }
 
-  .gradio-webrtc-box.full-screen {
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(var(--color-accent-rgb, 59, 130, 246), 0.3);
+  .wave-svg.full-screen {
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+  }
+
+  .wave-path {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: opacity 0.2s ease;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .wave-layer-1 {
+    opacity: 1;
+  }
+
+  .wave-layer-2 {
+    opacity: 0.8;
+    transform: translateX(10px);
+  }
+
+  .wave-layer-3 {
+    opacity: 0.6;
+    transform: translateX(-8px);
   }
 
   .gradio-webrtc-icon-container {
