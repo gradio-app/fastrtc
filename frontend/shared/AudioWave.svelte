@@ -1,13 +1,11 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import type { ComponentType } from "svelte";
 
   import PulsingIcon from "./PulsingIcon.svelte";
 
-  export let numBars = 16;
   export let stream_state: "open" | "closed" | "waiting" = "closed";
   export let audio_source_callback: () => MediaStream;
-  export let icon: string | undefined | ComponentType = undefined;
+  export let icon: string | undefined = undefined;
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let pending: boolean = false;
@@ -28,7 +26,7 @@
 
   $: effectiveNumBands = full_screen && !icon ? 32 : 16;
 
-  $: containerWidth = icon ? "128px" : full_screen ? "100%" : "400px";
+  $: containerWidth = icon ? "128px" : "100%";
 
   $: if (stream_state === "open") setupAudioContext();
   $: if (stream_state === "closed" || stream_state === "waiting")
@@ -78,7 +76,8 @@
       cancelAnimationFrame(idleAnimationId);
     }
 
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioContext = new ((window as any).AudioContext ||
+      (window as any).webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     const source = audioContext.createMediaStreamSource(
       audio_source_callback(),
@@ -180,12 +179,6 @@
         />
       </div>
     </div>
-  {:else if pending}
-    <div class="dots" class:full-screen={full_screen}>
-      <div class="dot" style:background-color={pulse_color} />
-      <div class="dot" style:background-color={pulse_color} />
-      <div class="dot" style:background-color={pulse_color} />
-    </div>
   {:else}
     <div
       class="wave-container"
@@ -196,19 +189,46 @@
       <svg class="wave-svg" class:full-screen={full_screen}>
         <defs>
           <linearGradient id="waveGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:0.8" />
-            <stop offset="50%" style="stop-color:#7C3AED;stop-opacity:0.9" />
-            <stop offset="100%" style="stop-color:#A855F7;stop-opacity:0.8" />
+            <stop
+              offset="0%"
+              style="stop-color:var(--color-accent);stop-opacity:0.8"
+            />
+            <stop
+              offset="50%"
+              style="stop-color:var(--color-accent);stop-opacity:0.9"
+            />
+            <stop
+              offset="100%"
+              style="stop-color:var(--color-accent);stop-opacity:0.8"
+            />
           </linearGradient>
           <linearGradient id="waveGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.6" />
-            <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:0.7" />
-            <stop offset="100%" style="stop-color:#C084FC;stop-opacity:0.6" />
+            <stop
+              offset="0%"
+              style="stop-color:var(--color-accent);stop-opacity:0.6"
+            />
+            <stop
+              offset="50%"
+              style="stop-color:var(--color-accent);stop-opacity:0.7"
+            />
+            <stop
+              offset="100%"
+              style="stop-color:var(--color-accent);stop-opacity:0.6"
+            />
           </linearGradient>
           <linearGradient id="waveGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#1E40AF;stop-opacity:0.4" />
-            <stop offset="50%" style="stop-color:#6366F1;stop-opacity:0.5" />
-            <stop offset="100%" style="stop-color:#9333EA;stop-opacity:0.4" />
+            <stop
+              offset="0%"
+              style="stop-color:var(--color-accent);stop-opacity:0.4"
+            />
+            <stop
+              offset="50%"
+              style="stop-color:var(--color-accent);stop-opacity:0.5"
+            />
+            <stop
+              offset="100%"
+              style="stop-color:var(--color-accent);stop-opacity:0.4"
+            />
           </linearGradient>
           <filter id="glow">
             <feGaussianBlur stdDeviation="2" result="coloredBlur" />
@@ -254,6 +274,7 @@
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    width: 100%;
   }
 
   .gradio-webrtc-waveContainer.full-screen {
@@ -282,7 +303,7 @@
   }
 
   .wave-svg.full-screen {
-    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+    filter: drop-shadow(0 0 10px var(--color-accent));
   }
 
   .wave-path {
@@ -332,25 +353,6 @@
     z-index: 2;
   }
 
-  .icon-image {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-  }
-
-  .pulse-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    opacity: 0.5;
-  }
-
   @keyframes pulse {
     0% {
       transform: translate(-50%, -50%) scale(1);
@@ -360,39 +362,6 @@
       transform: translate(-50%, -50%) scale(var(--max-scale, 3));
       opacity: 0;
     }
-  }
-
-  .dots {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    height: 64px;
-  }
-
-  .dots.full-screen {
-    gap: 16px;
-    height: 120px;
-  }
-
-  .dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    opacity: 0.5;
-    animation: pulse 1.5s infinite;
-  }
-
-  .dots.full-screen .dot {
-    width: 24px;
-    height: 24px;
-  }
-
-  .dot:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  .dot:nth-child(3) {
-    animation-delay: 0.4s;
   }
 
   @keyframes pulse {
