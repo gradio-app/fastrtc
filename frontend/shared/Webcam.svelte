@@ -408,7 +408,11 @@
 
   .button-wrap {
     position: absolute;
-    background-color: color-mix(in srgb, var(--block-background-fill) 50%, transparent);
+    background-color: color-mix(
+      in srgb,
+      var(--block-background-fill) 50%,
+      transparent
+    );
     border: 1px solid var(--border-color-primary);
     border-radius: var(--radius-xl);
     padding: var(--size-1-5);
