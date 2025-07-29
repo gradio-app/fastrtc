@@ -460,11 +460,10 @@ class Stream(WebRTCConnectionMixin):
                     )
         elif self.modality == "video" and self.mode == "send-receive":
             if ui_args.get("full_screen") is False:
-                css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
-                      .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
+                css = """.my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
             else:
-                css = """.gradio-container .sidebar {background-color: rgba(255, 255, 255, 0.5) !important;}
-                body.dark .gradio-container .sidebar {background-color: rgba(32, 32, 32, 0.5) !important;}"""
+                css = """.gradio-container .sidebar {background-color: var(--block-background-fill) !important;}
+                body.dark .gradio-container .sidebar {background-color: var(--block-background-fill) !important;}"""
 
             with gr.Blocks(css=css) as demo:
                 title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")
@@ -529,7 +528,7 @@ class Stream(WebRTCConnectionMixin):
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
                     title = ui_args.get(
-                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                        "title", "Audio Streaming (Powered by FastRTC ⚡️)"
                     )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
