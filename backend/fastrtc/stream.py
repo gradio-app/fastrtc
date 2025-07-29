@@ -462,8 +462,8 @@ class Stream(WebRTCConnectionMixin):
             if ui_args.get("full_screen") is False:
                 css = """.my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
             else:
-                css = """.gradio-container .sidebar {background-color: var(--block-background-fill) !important;}
-                body.dark .gradio-container .sidebar {background-color: var(--block-background-fill) !important;}"""
+                css = """.gradio-container .sidebar {background-color: color-mix(in srgb, var(--block-background-fill) 50%, transparent) !important;}
+                body.dark .gradio-container .sidebar {background-color: color-mix(in srgb, var(--block-background-fill) 50%, transparent) !important;}"""
 
             with gr.Blocks(css=css) as demo:
                 title = ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")

@@ -161,9 +161,10 @@ def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3):
     det_img = image.copy()
 
     img_height, img_width = image.shape[:2]
-    font_size = min([img_height, img_width]) * 0.0006
-    text_thickness = int(min([img_height, img_width]) * 0.001)
-
+    font_size = min([img_height, img_width]) * 0.001
+    font_size = max(font_size, 0.5)
+    text_thickness = int(min([img_height, img_width]) * 0.003)
+    text_thickness = max(text_thickness, 1)
     # det_img = draw_masks(det_img, boxes, class_ids, mask_alpha)
 
     # Draw bounding boxes and labels of detections

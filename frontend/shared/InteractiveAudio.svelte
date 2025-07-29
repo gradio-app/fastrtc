@@ -539,7 +539,7 @@
   .button-wrap {
     margin-top: var(--size-2);
     margin-bottom: var(--size-2);
-    background-color: var(--block-background-fill);
+    background-color: color-mix(in srgb, var(--block-background-fill) 50%, transparent);
     border: 1px solid var(--border-color-primary);
     border-radius: var(--radius-xl);
     padding: var(--size-1-5);
@@ -549,6 +549,10 @@
     border-radius: var(--radius-xl);
     line-height: var(--size-3);
     color: var(--button-secondary-text-color);
+  }
+
+  .button-wrap:hover {
+    background-color: var(--block-background-fill);
   }
 
   .button-wrap.full-screen {

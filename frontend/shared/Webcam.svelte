@@ -408,7 +408,7 @@
 
   .button-wrap {
     position: absolute;
-    background-color: var(--block-background-fill);
+    background-color: color-mix(in srgb, var(--block-background-fill) 50%, transparent);
     border: 1px solid var(--border-color-primary);
     border-radius: var(--radius-xl);
     padding: var(--size-1-5);
@@ -422,13 +422,16 @@
     color: var(--button-secondary-text-color);
   }
 
+  .button-wrap:hover {
+    background-color: var(--block-background-fill);
+  }
+
   .icon-with-text {
     min-width: var(--size-16);
     align-items: center;
     margin: 0 var(--spacing-xl);
     display: flex;
     justify-content: space-evenly;
-    /* Add gap between icon and text */
     gap: var(--size-2);
   }
 
