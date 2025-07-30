@@ -652,13 +652,22 @@ class Stream(WebRTCConnectionMixin):
                         concurrency_limit=self.concurrency_limit_gradio,  # type: ignore
                     )
         elif self.modality == "audio" and self.mode == "send-receive":
-            if ui_args.get("full_screen") is False:
+            has_chatbot = False
+            chatbot_component = None
+            for component in additional_input_components + additional_output_components:
+                if component.get_block_name() == "chatbot":
+                    has_chatbot = True
+                    chatbot_component = component
+                    break
+
+            use_component_layout = ui_args.get("full_screen") is False or has_chatbot
+            if use_component_layout:
                 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
                       .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
             else:
                 css = """.gradio-container .sidebar {background-color: rgba(255, 255, 255, 0.5) !important;}
                 body.dark .gradio-container .sidebar {background-color: rgba(32, 32, 32, 0.5) !important;}"""
-            with gr.Blocks() as demo:
+            with gr.Blocks(css=css) as demo:
                 if not ui_args.get("hide_title"):
                     title = ui_args.get(
                         "title", "Video Streaming (Powered by FastRTC ⚡️)"
@@ -693,12 +702,14 @@ class Stream(WebRTCConnectionMixin):
                             pulse_color=ui_args.get("pulse_color"),
                             icon_radius=ui_args.get("icon_radius"),
                             variant=ui_args.get("variant", "wave"),
-                            full_screen=ui_args.get("full_screen"),
+                            full_screen=not use_component_layout,
                         )
                 else:
                     if additional_output_components:
                         with gr.Row():
                             with gr.Column():
+                                if chatbot_component:
+                                    chatbot_component.render()
                                 image = WebRTC(
                                     label="Stream",
                                     rtc_configuration=self.rtc_configuration,
@@ -709,7 +720,7 @@ class Stream(WebRTCConnectionMixin):
                                     icon_button_color=ui_args.get("icon_button_color"),
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
-                                    full_screen=ui_args.get("full_screen"),
+                                    full_screen=not use_component_layout,
                                 )
                                 input_components_to_render = [
                                     component
@@ -717,17 +728,19 @@ class Stream(WebRTCConnectionMixin):
                                     if component not in same_components
                                 ]
                                 if input_components_to_render:
-                                    if ui_args.get("full_screen") is False:
+                                    if use_component_layout:
                                         for component in input_components_to_render:
                                             component.render()
                                     else:
                                         with gr.Sidebar(position="left"):
                                             for component in input_components_to_render:
                                                 component.render()
-                            if ui_args.get("full_screen") is False:
-                                with gr.Column():
-                                    for component in additional_output_components:
-                                        component.render()
+                            if use_component_layout:
+                                if len(additional_output_components) > 1:
+                                    with gr.Column():
+                                        for component in additional_output_components:
+                                            if component.get_block_name() != "chatbot":
+                                                component.render()
                             else:
                                 with gr.Sidebar(position="right"):
                                     for component in additional_output_components:
@@ -745,7 +758,7 @@ class Stream(WebRTCConnectionMixin):
                                     icon_button_color=ui_args.get("icon_button_color"),
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
-                                    full_screen=ui_args.get("full_screen"),
+                                    full_screen=not use_component_layout,
                                 )
                                 input_components_to_render = [
                                     component
@@ -753,7 +766,7 @@ class Stream(WebRTCConnectionMixin):
                                     if component not in same_components
                                 ]
                                 if input_components_to_render:
-                                    if ui_args.get("full_screen") is False:
+                                    if use_component_layout:
                                         for component in input_components_to_render:
                                             component.render()
                                     else:
