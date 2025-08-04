@@ -9,6 +9,7 @@
   export let pulse_color: string = "var(--color-accent)";
   export let icon_radius: number = 50;
   export let pulse_intensity_threshold: number = 0;
+  export let full_screen: boolean = true;
 
   let audioContext: AudioContext;
   let analyser: AnalyserNode;
@@ -84,6 +85,7 @@
           src={icon}
           alt="Audio visualization icon"
           class="icon-image"
+          class:full-screen={full_screen || full_screen === null}
           style:border-radius={`${icon_radius}%`}
         />
       {:else if icon === undefined}
@@ -127,10 +129,22 @@
     z-index: 2;
   }
 
+  .gradio-webrtc-pulsing-icon-container:has(.icon-image.full-screen) {
+    width: 300px;
+    height: 300px;
+    aspect-ratio: 1;
+  }
+
   .icon-image {
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  .icon-image.full-screen {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
   }
 
   .pulse-ring {

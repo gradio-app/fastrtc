@@ -576,7 +576,7 @@ class Stream(WebRTCConnectionMixin):
             with gr.Blocks() as demo:
                 if not ui_args.get("hide_title"):
                     title = ui_args.get(
-                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                        "title", "Audio Streaming (Powered by FastRTC ⚡️)"
                     )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):
@@ -670,7 +670,7 @@ class Stream(WebRTCConnectionMixin):
             with gr.Blocks(css=css) as demo:
                 if not ui_args.get("hide_title"):
                     title = ui_args.get(
-                        "title", "Video Streaming (Powered by FastRTC ⚡️)"
+                        "title", "Audio Streaming (Powered by FastRTC ⚡️)"
                     )
                     gr.HTML(self._format_title(title))
                     if ui_args.get("subtitle"):

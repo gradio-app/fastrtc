@@ -417,6 +417,7 @@
                   icon={Circle}
                   {icon_button_color}
                   {pulse_color}
+                  {full_screen}
                 />
               </div>
             {:else}
