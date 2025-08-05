@@ -1,4 +1,4 @@
-import { E as s, a as t, I as l, l as d, d as o, b as p } from "./index-DCFy4siO.js";
+import { E as s, a as t, I as l, l as d, d as o, b as p } from "./index-XMaphynx.js";
 export {
   s as BaseExample,
   t as BaseInteractiveVideo,
