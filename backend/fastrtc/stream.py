@@ -728,13 +728,9 @@ class Stream(WebRTCConnectionMixin):
                                     if component not in same_components
                                 ]
                                 if input_components_to_render:
-                                    if use_component_layout:
+                                    with gr.Sidebar(position="left"):
                                         for component in input_components_to_render:
                                             component.render()
-                                    else:
-                                        with gr.Sidebar(position="left"):
-                                            for component in input_components_to_render:
-                                                component.render()
                             if use_component_layout:
                                 if len(additional_output_components) > 1:
                                     with gr.Column():
