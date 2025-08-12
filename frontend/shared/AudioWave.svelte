@@ -165,7 +165,7 @@
   {#if icon && !pending}
     <div class="gradio-webrtc-icon-container" class:full-screen={full_screen}>
       <div
-        class="gradio-webrtc-icon"
+        class="gradio-webrtc-icon" class:full-screen={full_screen}
         style:transform={`scale(${pulseScale})`}
         style:background={icon_button_color}
       >
@@ -351,6 +351,11 @@
     justify-content: center;
     align-items: center;
     z-index: 2;
+  }
+
+  .gradio-webrtc-icon.full-screen {
+    width: 100%;
+    height: 100%;
   }
 
   @keyframes pulse {
