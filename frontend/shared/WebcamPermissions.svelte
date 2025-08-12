@@ -32,14 +32,14 @@
     justify-content: center;
     align-items: center;
     min-height: var(--size-60);
-    color: var(--button-secondary-background-fill);
+    color: var(--block-label-text-color);
     height: 100%;
     padding-top: var(--size-3);
-    font-size: 1.5rem;
+    font-size: 1rem;
   }
 
   .icon-wrap {
-    width: 150px;
+    width: 30px;
     margin-bottom: var(--spacing-lg);
   }
 

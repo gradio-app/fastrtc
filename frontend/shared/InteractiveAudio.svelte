@@ -15,6 +15,8 @@
   } from "@gradio/icons";
   import MicrophoneMuted from "./MicrophoneMuted.svelte";
   import type { WebRTCValue } from "./utils";
+  import WebcamPermissions from "./WebcamPermissions.svelte";
+  import { fade } from "svelte/transition";
 
   import { start, stop } from "./webrtc_utils";
   import { get_devices, set_available_devices } from "./stream_utils";
@@ -53,7 +55,6 @@
         "https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/pop-sounds.mp3",
       );
     }
-    access_mic();
   });
 
   let _on_change_cb = (msg: "change" | "tick" | "stopword" | any) => {
@@ -374,6 +375,17 @@
       bind:is_mic_muted
       {pending}
     />
+  {:else if !mic_accessed && !(full_screen || full_screen === null)}
+    <div
+      in:fade={{ delay: 100, duration: 200 }}
+      title="grant webcam access"
+      style="height: 100%; background-color: var(--block-background-fill)"
+    >
+      <WebcamPermissions
+        icon={Microphone}
+        on:click={async () => access_mic()}
+      />
+    </div>
   {:else}
     <AudioWave
       {audio_source_callback}
