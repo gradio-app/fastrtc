@@ -165,7 +165,8 @@
   {#if icon && !pending}
     <div class="gradio-webrtc-icon-container" class:full-screen={full_screen}>
       <div
-        class="gradio-webrtc-icon" class:full-screen={full_screen}
+        class="gradio-webrtc-icon"
+        class:full-screen={full_screen}
         style:transform={`scale(${pulseScale})`}
         style:background={icon_button_color}
       >
