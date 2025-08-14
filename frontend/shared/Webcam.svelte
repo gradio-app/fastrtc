@@ -278,7 +278,10 @@
 <div class="wrap" class:full-screen={full_screen || full_screen === null}>
   <StreamingBar time_limit={_time_limit} />
   {#if stream_state === "open" && include_audio}
-    <div class="audio-indicator">
+    <div
+      class="audio-indicator"
+      class:full-screen={full_screen || full_screen === null}
+    >
       <PulsingIcon
         {stream_state}
         {audio_source_callback}
@@ -446,6 +449,11 @@
     z-index: var(--layer-2);
     height: var(--size-5);
     width: var(--size-5);
+  }
+
+  .audio-indicator.full-screen {
+    height: var(--size-12);
+    width: var(--size-12);
   }
 
   @media (--screen-md) {

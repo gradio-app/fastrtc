@@ -130,8 +130,8 @@
   }
 
   .gradio-webrtc-pulsing-icon-container:has(.icon-image.full-screen) {
-    width: 300px;
-    height: 300px;
+    width: 100%;
+    height: 100%;
     aspect-ratio: 1;
   }
 
@@ -142,8 +142,8 @@
   }
 
   .icon-image.full-screen {
-    width: 300px;
-    height: 300px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
   }
 
