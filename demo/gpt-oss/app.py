@@ -1,6 +1,5 @@
 import gradio as gr
 import numpy as np
-import torch
 from dotenv import load_dotenv
 from fastrtc import (
     AdditionalOutputs,
@@ -9,7 +8,6 @@ from fastrtc import (
     WebRTCError,
     get_current_context,
     get_hf_turn_credentials,
-    get_hf_turn_credentials_async,
     get_stt_model,
     get_tts_model,
 )
