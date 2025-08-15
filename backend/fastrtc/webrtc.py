@@ -433,7 +433,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         print("oauth_token", oauth_token)
 
         return await self.handle_offer(
-            body, self.set_additional_outputs(body["webrtc_id"])
+            body, self.set_additional_outputs(body["webrtc_id"]), request, oauth_token
         )
 
     @server

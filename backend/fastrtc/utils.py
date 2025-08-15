@@ -18,8 +18,10 @@ import librosa
 import numpy as np
 from fastapi import WebSocket
 from gradio.data_classes import GradioModel, GradioRootModel
+from gradio.oauth import OAuthToken
 from numpy.typing import NDArray
 from pydub import AudioSegment
+from starlette.requests import Request
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +83,8 @@ current_channel: ContextVar[DataChannel | None] = ContextVar(
 class Context:
     webrtc_id: str
     websocket: WebSocket | None = None
+    request: Request | None = None
+    oauth_token: OAuthToken | None = None
 
 
 current_context: ContextVar[Context | None] = ContextVar(
