@@ -406,31 +406,30 @@ class WebRTC(Component, WebRTCConnectionMixin):
     async def offer(
         self,
         body,
-        request: Request,
+        request: Request | None = None,
     ):
         from gradio import oauth
 
-        print("offer", body)
-        print("request", request)
-        try:
-            session = request.session
-            oauth_info = session.get("oauth_info", None)
-            oauth_token = (
-                oauth.OAuthToken(
-                    token=oauth_info["access_token"],
-                    scope=oauth_info["scope"],
-                    expires_at=oauth_info["expires_at"],
+        oauth_token = None
+
+        if request is not None:
+            try:
+                session = request.session
+                oauth_info = session.get("oauth_info", None)
+                oauth_token = (
+                    oauth.OAuthToken(
+                        token=oauth_info["access_token"],
+                        scope=oauth_info["scope"],
+                        expires_at=oauth_info["expires_at"],
+                    )
+                    if oauth_info is not None
+                    else None
                 )
-                if oauth_info is not None
-                else None
-            )
-        except Exception:
-            import traceback
+            except Exception:
+                import traceback
 
-            traceback.print_exc()
-            oauth_token = None
-
-        print("oauth_token", oauth_token)
+                traceback.print_exc()
+                oauth_token = None
 
         return await self.handle_offer(
             body, self.set_additional_outputs(body["webrtc_id"]), request, oauth_token
