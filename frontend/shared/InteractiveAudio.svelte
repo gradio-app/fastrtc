@@ -345,7 +345,8 @@
 {/if}
 <div
   class="audio-container"
-  class:full-screen={full_screen || full_screen === null}
+  class:full-screen={(full_screen || full_screen === null) &&
+    variant !== "textbox"}
 >
   <audio
     class="standard-player"

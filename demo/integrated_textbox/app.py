@@ -114,7 +114,7 @@ with gr.Blocks(css=css) as demo:
         provider = gr.Dropdown(
             label="Provider",
             choices=providers,
-            value="sambanova",
+            value="auto",
             info="Select a hf-compatible provider or type the url of your server, e.g. http://127.0.0.1:11434/v1 for ollama",
             allow_custom_value=True,
         )
