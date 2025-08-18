@@ -14,6 +14,7 @@ from fastrtc import (
     WebRTC,
     WebRTCData,
     WebRTCError,
+    get_current_context,
     get_hf_turn_credentials,
     get_stt_model,
 )
@@ -28,13 +29,13 @@ conversations = {}
 def response(
     data: WebRTCData,
     conversation: list[dict],
-    token: str | None = None,
     model: str = "meta-llama/Llama-3.2-3B-Instruct",
     provider: str = "sambanova",
 ):
+    context = get_current_context()
     print("conversation before", conversation)
-    if not provider.startswith("http") and not token:
-        raise WebRTCError("Please add your HF token.")
+    if not provider.startswith("http") and not context.oauth_token:
+        raise WebRTCError("Please Sign in to use this demo.")
 
     if data.audio is not None and data.audio[1].size > 0:
         user_audio_text = stt_model.stt(data.audio)
@@ -48,7 +49,7 @@ def response(
         client = OpenAI(base_url=provider, api_key="ollama")
     else:
         client = huggingface_hub.InferenceClient(
-            api_key=token,
+            api_key=context.oauth_token.access_token,  # type: ignore
             provider=provider,  # type: ignore
         )
 
@@ -103,9 +104,6 @@ with gr.Blocks(css=css) as demo:
         """
     )
     with gr.Sidebar():
-        token = gr.Textbox(
-            placeholder="Place your HF token here", type="password", label="HF Token"
-        )
         model = gr.Dropdown(
             choices=["meta-llama/Llama-3.2-3B-Instruct"],
             allow_custom_value=True,
@@ -118,7 +116,6 @@ with gr.Blocks(css=css) as demo:
             info="Select a hf-compatible provider or type the url of your server, e.g. http://127.0.0.1:11434/v1 for ollama",
             allow_custom_value=True,
         )
-    provider.change(hide_token, inputs=[provider], outputs=[token])
     cb = gr.Chatbot(type="messages", height=600)
     webrtc = WebRTC(
         modality="audio",
@@ -131,7 +128,7 @@ with gr.Blocks(css=css) as demo:
     )
     webrtc.stream(
         ReplyOnPause(response),  # type: ignore
-        inputs=[webrtc, cb, token, model, provider],
+        inputs=[webrtc, cb, model, provider],
         outputs=[cb],
         concurrency_limit=100,
     )
