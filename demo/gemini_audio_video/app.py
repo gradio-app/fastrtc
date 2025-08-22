@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 from fastrtc import (
     AsyncAudioVideoStreamHandler,
     Stream,
-    WebRTC,
     get_cloudflare_turn_credentials_async,
     wait_for_item,
 )
@@ -135,9 +134,4 @@ stream = Stream(
 )
 
 if __name__ == "__main__":
-    if (mode := os.getenv("MODE")) == "UI":
-        stream.ui.launch(server_port=7860)
-    elif mode == "PHONE":
-        raise ValueError("Phone mode not supported for this demo")
-    else:
-        stream.ui.launch(server_port=7860)
+    stream.ui.launch()
