@@ -38,6 +38,7 @@ from fastrtc.utils import (
     CloseStream,
     Context,
     DataChannel,
+    WebRTCData,
     WebRTCError,
     create_message,
     current_channel,
@@ -398,7 +399,15 @@ class StreamHandlerBase(ABC):
             args: A list of arguments.
         """
         logger.debug("setting args in audio callback %s", args)
-        self.latest_args = list(args)
+        if not isinstance(args, list):
+            raise TypeError("args must be a list")
+        if not args:
+            raise ValueError("args cannot be empty")
+        if isinstance(args[0], WebRTCData):
+            self.latest_args = list(args)
+        else:
+            self.latest_args = ["__webrtc_value__"] + list(args)
+        print("set args", self.latest_args)
         self.args_set.set()
 
     def reset(self):

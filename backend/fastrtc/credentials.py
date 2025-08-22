@@ -97,13 +97,12 @@ async def get_hf_turn_credentials_async(
         raise ValueError(
             "HF_TOKEN environment variable must be set or token must be provided to use get_hf_turn_credentials"
         )
-    async with client:
-        response = await client.get(
-            "https://turn.fastrtc.org/credentials",
-            headers={"Authorization": f"Bearer {token}"},
-            params={"ttl": ttl},
-        )
-        return _format_response(response)
+    response = await client.get(
+        "https://turn.fastrtc.org/credentials",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"ttl": ttl},
+    )
+    return _format_response(response)
 
 
 def get_cloudflare_turn_credentials(

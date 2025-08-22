@@ -40,6 +40,7 @@ def response(
     gradio_chatbot = gradio_chatbot or []
     conversation_state = conversation_state or []
     print("chatbot", gradio_chatbot)
+    print("state", conversation_state)
 
     text = stt_model.stt(audio)
     sample_rate, array = audio
@@ -50,7 +51,7 @@ def response(
 
     conversation_state.append({"role": "user", "content": text})
     request = client.chat.completions.create(
-        model="meta-llama/Llama-3.2-3B-Instruct",
+        model="meta-llama/Llama-3.1-8B-Instruct",
         messages=conversation_state,  # type: ignore
         temperature=0.1,
         top_p=0.1,
