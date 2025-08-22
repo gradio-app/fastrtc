@@ -15,6 +15,8 @@
   } from "@gradio/icons";
   import MicrophoneMuted from "./MicrophoneMuted.svelte";
   import type { WebRTCValue } from "./utils";
+  import WebcamPermissions from "./WebcamPermissions.svelte";
+  import { fade } from "svelte/transition";
 
   import { start, stop } from "./webrtc_utils";
   import { get_devices, set_available_devices } from "./stream_utils";
@@ -344,7 +346,8 @@
 {/if}
 <div
   class="audio-container"
-  class:full-screen={full_screen || full_screen === null}
+  class:full-screen={(full_screen || full_screen === null) &&
+    variant !== "textbox"}
 >
   <audio
     class="standard-player"
@@ -374,6 +377,17 @@
       bind:is_mic_muted
       {pending}
     />
+  {:else if !mic_accessed && !(full_screen || full_screen === null)}
+    <div
+      in:fade={{ delay: 100, duration: 200 }}
+      title="grant webcam access"
+      style="height: 100%; background-color: var(--block-background-fill)"
+    >
+      <WebcamPermissions
+        icon={Microphone}
+        on:click={async () => access_mic()}
+      />
+    </div>
   {:else}
     <AudioWave
       {audio_source_callback}

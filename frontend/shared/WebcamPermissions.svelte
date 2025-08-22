@@ -35,7 +35,7 @@
     color: var(--button-secondary-background-fill);
     height: 100%;
     padding-top: var(--size-3);
-    font-size: 1.5rem;
+    font-size: 1rem;
   }
 
   .icon-wrap {
