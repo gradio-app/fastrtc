@@ -221,7 +221,7 @@ class WebRTCConnectionMixin:
         else:
             return {"status": "failed", "meta": {"error": "not_a_reply_on_pause"}}
 
-    async def handle_offer(self, body, set_outputs):
+    async def handle_offer(self, body, set_outputs, request=None, oauth_token=None):
         logger.debug("Starting to handle offer")
         logger.debug("Offer body %s", body)
 
@@ -372,7 +372,9 @@ class WebRTCConnectionMixin:
         def _(track):
             relay = MediaRelay()
             handler = self.handlers[body["webrtc_id"]]
-            context = Context(webrtc_id=body["webrtc_id"])
+            context = Context(
+                webrtc_id=body["webrtc_id"], oauth_token=oauth_token, request=request
+            )
             if self.modality == "video" and track.kind == "video":
                 args = {}
                 handler_ = handler
@@ -426,7 +428,9 @@ class WebRTCConnectionMixin:
             elif self.mode == "send":
                 asyncio.create_task(cast(AudioCallback | VideoCallback, cb).start())
 
-        context = Context(webrtc_id=body["webrtc_id"])
+        context = Context(
+            webrtc_id=body["webrtc_id"], oauth_token=oauth_token, request=request
+        )
         if self.mode == "receive":
             if self.modality == "video":
                 if isinstance(self.event_handler, VideoStreamHandler):

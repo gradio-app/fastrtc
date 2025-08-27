@@ -14,7 +14,7 @@ from typing import (
     cast,
 )
 
-from gradio import wasm_utils
+from gradio import Request, wasm_utils
 from gradio.components.base import Component, server
 from gradio_client import handle_file
 
@@ -403,9 +403,36 @@ class WebRTC(Component, WebRTCConnectionMixin):
             return {"error": str(e)}
 
     @server
-    async def offer(self, body):
+    async def offer(
+        self,
+        body,
+        request: Request | None = None,
+    ):
+        from gradio import oauth
+
+        oauth_token = None
+
+        if request is not None:
+            try:
+                session = request.session
+                oauth_info = session.get("oauth_info", None)
+                oauth_token = (
+                    oauth.OAuthToken(
+                        token=oauth_info["access_token"],
+                        scope=oauth_info["scope"],
+                        expires_at=oauth_info["expires_at"],
+                    )
+                    if oauth_info is not None
+                    else None
+                )
+            except Exception:
+                import traceback
+
+                traceback.print_exc()
+                oauth_token = None
+
         return await self.handle_offer(
-            body, self.set_additional_outputs(body["webrtc_id"])
+            body, self.set_additional_outputs(body["webrtc_id"]), request, oauth_token
         )
 
     @server
