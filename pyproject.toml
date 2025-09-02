@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.31"
+version = "0.0.32"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "MIT"
@@ -77,7 +77,11 @@ stopword = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
 stt = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
 
 [tool.hatch.build]
-artifacts = ["/backend/fastrtc/templates", "*.pyi"]
+artifacts = [
+  "/backend/fastrtc/templates",
+  "*.pyi",
+  "/Users/freddyboulton/sources/.venv/lib/python3.12/site-packages/fastrtc/templates",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["/backend/fastrtc"]
