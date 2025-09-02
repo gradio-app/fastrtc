@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.30"
+version = "0.0.31"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "MIT"
@@ -34,7 +34,7 @@ dependencies = [
   "aioice>=0.10.1",
   "audioop-lts;python_version>='3.13'",
   "librosa",
-  "numpy>=2.0.2",                          # because of librosa
+  "numpy",
   "numba>=0.60.0",
   "standard-aifc;python_version>='3.13'",
   "standard-sunau;python_version>='3.13'",
