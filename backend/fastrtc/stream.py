@@ -3,6 +3,7 @@ import logging
 import re
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
+from enum import Enum
 from pathlib import Path
 from typing import (
     Any,
@@ -175,7 +176,7 @@ class Stream(WebRTCConnectionMixin):
         self._ui = self._generate_default_ui(ui_args)
         self._ui.launch = self._wrap_gradio_launch(self._ui.launch)
 
-    def mount(self, app: FastAPI, path: str = ""):
+    def mount(self, app: FastAPI, path: str = "", tags: list[str | Enum] | None = None) -> None:
         """
         Mount the stream's API endpoints onto a FastAPI application.
 
@@ -187,13 +188,14 @@ class Stream(WebRTCConnectionMixin):
         Args:
             app: The FastAPI application instance.
             path: An optional URL prefix for the mounted routes.
+            tags: Optional tags to FastAPI endpoints.
         """
         from fastapi import APIRouter
 
         router = APIRouter(prefix=path)
-        router.post("/webrtc/offer")(self.offer)
+        router.post("/webrtc/offer", tags=tags)(self.offer)
         router.websocket("/telephone/handler")(self.telephone_handler)
-        router.post("/telephone/incoming")(self.handle_incoming_call)
+        router.post("/telephone/incoming", tags=tags)(self.handle_incoming_call)
         router.websocket("/websocket/offer")(self.websocket_offer)
         lifespan = self._inject_startup_message(app.router.lifespan_context)
         app.router.lifespan_context = lifespan
