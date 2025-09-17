@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from gradio.components import Timer
 
 if version("gradio") < "5.46.0":
-    from gradio import wasm_utils
+    from gradio import wasm_utils  # type: ignore
 
     if wasm_utils.IS_WASM:
         raise ValueError("Not supported in gradio-lite!")
