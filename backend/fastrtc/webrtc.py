@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 
 if version("gradio") < "5.46.0":
     from gradio import wasm_utils
+
     if wasm_utils.IS_WASM:
         raise ValueError("Not supported in gradio-lite!")
 
