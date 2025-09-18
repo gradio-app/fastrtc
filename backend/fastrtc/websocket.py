@@ -136,7 +136,7 @@ class WebSocketHandler:
                                 (self.stream_handler.input_sample_rate, audio_array),
                             )
                     except Exception as e:
-                        print(e)
+                        logger.error(e)
                         import traceback
 
                         traceback.print_exc()

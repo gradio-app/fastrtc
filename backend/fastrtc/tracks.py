@@ -407,7 +407,7 @@ class StreamHandlerBase(ABC):
             self.latest_args = list(args)
         else:
             self.latest_args = ["__webrtc_value__"] + list(args)
-        print("set args", self.latest_args)
+        logger.debug("set args", self.latest_args)
         self.args_set.set()
 
     def reset(self):

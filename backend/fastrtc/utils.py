@@ -261,8 +261,8 @@ async def player_worker_decode(
             import traceback
 
             exec = traceback.format_exc()
-            print("traceback %s", exec)
-            print("Error processing frame: %s", str(e))
+            logger.error("traceback %s", exec)
+            logger.error("Error processing frame: %s", str(e))
             if isinstance(e, WebRTCError):
                 raise e
             else:
