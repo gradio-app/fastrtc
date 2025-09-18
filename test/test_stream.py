@@ -1,14 +1,11 @@
 import numpy as np
 from fastapi import FastAPI, testclient
-from numpy import typing as npt
-
 from fastrtc import Stream, StreamHandler
-
 from fastrtc.tracks import EmitType
+from numpy import typing as npt
 
 
 class MockStreamHandler(StreamHandler):
-
     def receive(self, frame: tuple[int, npt.NDArray[np.int16]]) -> None:
         pass
 
@@ -20,10 +17,12 @@ class MockStreamHandler(StreamHandler):
 
 
 def test_tags_are_correctly_mounted():
-    tags = [{
-        "name": "fastrtc",
-        "description": "awesome fastrtc endpoints",
-    }]
+    tags = [
+        {
+            "name": "fastrtc",
+            "description": "awesome fastrtc endpoints",
+        }
+    ]
     app = FastAPI(openapi_tags=tags)
     client = testclient.TestClient(app=app)
 

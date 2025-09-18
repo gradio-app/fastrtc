@@ -176,7 +176,9 @@ class Stream(WebRTCConnectionMixin):
         self._ui = self._generate_default_ui(ui_args)
         self._ui.launch = self._wrap_gradio_launch(self._ui.launch)
 
-    def mount(self, app: FastAPI, path: str = "", tags: list[str | Enum] | None = None) -> None:
+    def mount(
+        self, app: FastAPI, path: str = "", tags: list[str | Enum] | None = None
+    ) -> None:
         """
         Mount the stream's API endpoints onto a FastAPI application.
 
