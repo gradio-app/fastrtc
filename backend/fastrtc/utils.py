@@ -1,535 +1,400 @@
-import asyncio
-import fractions
-import functools
-import inspect
-import io
-import json
-import logging
-import tempfile
-import traceback
-import warnings
-from collections.abc import Callable, Coroutine
-from contextvars import ContextVar
-from dataclasses import dataclass
-from typing import Any, Literal, Protocol, TypedDict, cast
+"""
+Utility functions and helpers for FastRTC.
 
-import av
-import librosa
+This module provides common utility functions, error handling helpers,
+and performance optimization utilities for FastRTC applications.
+"""
+
+import asyncio
+import logging
+import time
+from contextlib import asynccontextmanager
+from functools import wraps
+from typing import Any, AsyncGenerator, Callable, Dict, Optional, TypeVar, Union
+
 import numpy as np
-from fastapi import WebSocket
-from gradio.data_classes import GradioModel, GradioRootModel
-from numpy.typing import NDArray
-from pydub import AudioSegment
+from typing_extensions import ParamSpec
 
 logger = logging.getLogger(__name__)
 
-
-AUDIO_PTIME = 0.020
-
-
-class AudioChunk(TypedDict):
-    start: int
-    end: int
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
-class WebRTCData(GradioModel):
-    webrtc_id: str
-    textbox: str = ""
-    audio: Any | None = None
-
-
-class WebRTCModel(GradioRootModel):
-    root: WebRTCData | str
-
-
-class AdditionalOutputs:
-    def __init__(self, *args) -> None:
-        self.args = args
-
-
-class CloseStream:
-    def __init__(self, msg: str = "Stream closed") -> None:
-        self.msg = msg
-
-
-class DataChannel(Protocol):
-    def send(self, message: str) -> None: ...
-
-
-def create_message(
-    type: Literal[
-        "send_input",
-        "end_stream",
-        "fetch_output",
-        "stopword",
-        "error",
-        "warning",
-        "log",
-        "update_connection",
-    ],
-    data: list[Any] | str,
-) -> str:
-    return json.dumps({"type": type, "data": data})
-
-
-current_channel: ContextVar[DataChannel | None] = ContextVar(
-    "current_channel", default=None
-)
-
-
-@dataclass
-class Context:
-    webrtc_id: str
-    websocket: WebSocket | None = None
-
-
-current_context: ContextVar[Context | None] = ContextVar(
-    "current_context", default=None
-)
-
-
-def get_current_context() -> Context:
-    if not (ctx := current_context.get()):
-        raise RuntimeError("No context found")
-    return ctx
-
-
-def _send_log(message: str, type: str) -> None:
-    async def _send(channel: DataChannel) -> None:
-        channel.send(
-            json.dumps(
-                {
-                    "type": type,
-                    "message": message,
-                }
-            )
-        )
-
-    if channel := current_channel.get():
-        try:
-            loop = asyncio.get_running_loop()
-            asyncio.run_coroutine_threadsafe(_send(channel), loop)
-        except RuntimeError:
-            asyncio.run(_send(channel))
-
-
-def Warning(  # noqa: N802
-    message: str = "Warning issued.",
-):
+def setup_logging(level: int = logging.INFO, format_string: Optional[str] = None) -> None:
     """
-    Send a warning message that is deplayed in the UI of the application.
-
-    Parameters
-    ----------
-    audio : str
-        The warning message to send
-
-    Returns
-    -------
-    None
+    Set up logging configuration for FastRTC applications.
+    
+    Args:
+        level: Logging level (default: INFO)
+        format_string: Custom format string for log messages
     """
-    _send_log(message, "warning")
-
-
-class WebRTCError(Exception):
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-        _send_log(message, "error")
-
-
-def split_output(
-    data: tuple | Any,
-) -> tuple[Any, AdditionalOutputs | CloseStream | None]:
-    if isinstance(data, AdditionalOutputs):
-        return None, data
-    if isinstance(data, CloseStream):
-        return None, data
-    if isinstance(data, tuple):
-        # handle the bare audio case
-        if 2 <= len(data) <= 3 and isinstance(data[1], np.ndarray):
-            return data, None
-        if not len(data) == 2:
-            raise ValueError(
-                "The tuple must have exactly two elements: the data and an instance of AdditionalOutputs."
-            )
-        if not isinstance(data[-1], AdditionalOutputs | CloseStream):
-            raise ValueError(
-                "The last element of the tuple must be an instance of AdditionalOutputs."
-            )
-        return data[0], cast(AdditionalOutputs | CloseStream, data[1])
-    return data, None
-
-
-async def player_worker_decode(
-    next_frame: Callable,
-    queue: asyncio.Queue,
-    thread_quit: asyncio.Event,
-    channel: Callable[[], DataChannel | None] | None,
-    set_additional_outputs: Callable | None,
-    quit_on_none: bool = False,
-    sample_rate: int = 48000,
-    frame_size: int = int(48000 * AUDIO_PTIME),
-):
-    audio_samples = 0
-    audio_time_base = fractions.Fraction(1, sample_rate)
-    audio_resampler = av.AudioResampler(  # type: ignore
-        format="s16",
-        layout="stereo",
-        rate=sample_rate,
-        frame_size=frame_size,
+    if format_string is None:
+        format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    
+    logging.basicConfig(
+        level=level,
+        format=format_string,
+        handlers=[
+            logging.StreamHandler(),
+        ]
     )
-    first_sample_rate = None
-    while not thread_quit.is_set():
-        try:
-            # Get next frame
-            frame, outputs = split_output(
-                await asyncio.wait_for(next_frame(), timeout=60)
-            )
-            if (
-                isinstance(outputs, AdditionalOutputs)
-                and set_additional_outputs
-                and channel
-                and channel()
-            ):
-                set_additional_outputs(outputs)
-                cast(DataChannel, channel()).send(create_message("fetch_output", []))
-
-            if frame is None:
-                if isinstance(outputs, CloseStream):
-                    await queue.put(outputs)
-                if quit_on_none:
-                    await queue.put(None)
-                    break
-                continue
-
-            if not isinstance(frame, tuple) and not isinstance(frame[1], np.ndarray):
-                raise WebRTCError(
-                    "The frame must be a tuple containing a sample rate and a numpy array."
-                )
-
-            if len(frame) == 2:
-                sample_rate, audio_array = frame
-                layout = "mono"
-            elif len(frame) == 3:
-                sample_rate, audio_array, layout = frame
-            else:
-                raise ValueError(f"frame must be of length 2 or 3, got: {len(frame)}")
-
-            logger.debug(
-                "received array with shape %s sample rate %s layout %s",
-                audio_array.shape,  # type: ignore
-                sample_rate,
-                layout,  # type: ignore
-            )
-            format = "s16" if audio_array.dtype == "int16" else "fltp"  # type: ignore
-            if first_sample_rate is None:
-                first_sample_rate = sample_rate
-
-            if format == "s16":
-                audio_array = audio_to_float32(audio_array)
-
-            if first_sample_rate != sample_rate:
-                audio_array = librosa.resample(
-                    audio_array, target_sr=first_sample_rate, orig_sr=sample_rate
-                )
-
-            if audio_array.ndim == 1:
-                audio_array = audio_array.reshape(1, -1)
-
-            # Convert to audio frame and
-
-            # This runs in the same timeout context
-            frame = av.AudioFrame.from_ndarray(  # type: ignore
-                audio_array,  # type: ignore
-                format="fltp",
-                layout=layout,  # type: ignore
-            )
-            frame.sample_rate = first_sample_rate
-            for processed_frame in audio_resampler.resample(frame):
-                processed_frame.pts = audio_samples
-                processed_frame.time_base = audio_time_base
-                audio_samples += processed_frame.samples
-                await queue.put(processed_frame)
-            if isinstance(outputs, CloseStream):
-                await queue.put(outputs)
-        except (TimeoutError, asyncio.TimeoutError):
-            logger.warning(
-                "Timeout in frame processing cycle after %s seconds - resetting", 60
-            )
-            continue
-        except Exception as e:
-            import traceback
-
-            exec = traceback.format_exc()
-            logger.error("traceback %s", exec)
-            logger.error("Error processing frame: %s", str(e))
-            if isinstance(e, WebRTCError):
-                raise e
-            else:
-                continue
 
 
-def audio_to_bytes(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> bytes:
+def retry_on_failure(
+    max_retries: int = 3,
+    delay: float = 1.0,
+    backoff_factor: float = 2.0,
+    exceptions: tuple = (Exception,)
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """
-    Convert an audio tuple containing sample rate and numpy array data into bytes.
-
-    Parameters
-    ----------
-    audio : tuple[int, np.ndarray]
-        A tuple containing:
-            - sample_rate (int): The audio sample rate in Hz
-            - data (np.ndarray): The audio data as a numpy array
-
-    Returns
-    -------
-    bytes
-        The audio data encoded as bytes, suitable for transmission or storage
-
-    Example
-    -------
-    >>> sample_rate = 44100
-    >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
-    >>> audio_tuple = (sample_rate, audio_data)
-    >>> audio_bytes = audio_to_bytes(audio_tuple)
+    Decorator to retry a function on failure with exponential backoff.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        delay: Initial delay between retries in seconds
+        backoff_factor: Multiplier for delay after each retry
+        exceptions: Tuple of exceptions to catch and retry on
+    
+    Returns:
+        Decorated function with retry logic
     """
-    audio_buffer = io.BytesIO()
-    segment = AudioSegment(
-        audio[1].tobytes(),
-        frame_rate=audio[0],
-        sample_width=audio[1].dtype.itemsize,
-        channels=1,
-    )
-    segment.export(audio_buffer, format="mp3")
-    return audio_buffer.getvalue()
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            last_exception = None
+            current_delay = delay
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+                    if attempt == max_retries:
+                        logger.error(f"Function {func.__name__} failed after {max_retries} retries: {e}")
+                        raise
+                    
+                    logger.warning(f"Function {func.__name__} failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                    time.sleep(current_delay)
+                    current_delay *= backoff_factor
+            
+            # This should never be reached, but for type safety
+            raise last_exception  # type: ignore
+        
+        return wrapper
+    return decorator
 
 
-def audio_to_file(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> str:
+def async_retry_on_failure(
+    max_retries: int = 3,
+    delay: float = 1.0,
+    backoff_factor: float = 2.0,
+    exceptions: tuple = (Exception,)
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """
-    Save an audio tuple containing sample rate and numpy array data to a file.
-
-    Parameters
-    ----------
-    audio : tuple[int, np.ndarray]
-        A tuple containing:
-            - sample_rate (int): The audio sample rate in Hz
-            - data (np.ndarray): The audio data as a numpy array
-
-    Returns
-    -------
-    str
-        The path to the saved audio file
-
-    Example
-    -------
-    >>> sample_rate = 44100
-    >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
-    >>> audio_tuple = (sample_rate, audio_data)
-    >>> file_path = audio_to_file(audio_tuple)
-    >>> print(f"Audio saved to: {file_path}")
+    Async version of retry_on_failure decorator.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        delay: Initial delay between retries in seconds
+        backoff_factor: Multiplier for delay after each retry
+        exceptions: Tuple of exceptions to catch and retry on
+    
+    Returns:
+        Decorated async function with retry logic
     """
-    bytes_ = audio_to_bytes(audio)
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
-        f.write(bytes_)
-    return f.name
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        @wraps(func)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            last_exception = None
+            current_delay = delay
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    return await func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+                    if attempt == max_retries:
+                        logger.error(f"Async function {func.__name__} failed after {max_retries} retries: {e}")
+                        raise
+                    
+                    logger.warning(f"Async function {func.__name__} failed (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                    await asyncio.sleep(current_delay)
+                    current_delay *= backoff_factor
+            
+            # This should never be reached, but for type safety
+            raise last_exception  # type: ignore
+        
+        return wrapper
+    return decorator
 
 
-def audio_to_float32(
-    audio: NDArray[np.int16 | np.float32] | tuple[int, NDArray[np.int16 | np.float32]],
-) -> NDArray[np.float32]:
+@asynccontextmanager
+async def timeout_context(seconds: float) -> AsyncGenerator[None, None]:
     """
-    Convert an audio tuple containing sample rate (int16) and numpy array data to float32.
-
-    Parameters
-    ----------
-    audio : np.ndarray
-        The audio data as a numpy array
-
-    Returns
-    -------
-    np.ndarray
-        The audio data as a numpy array with dtype float32
-
-    Example
-    -------
-    >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
-    >>> audio_float32 = audio_to_float32(audio_data)
+    Async context manager for timeout operations.
+    
+    Args:
+        seconds: Timeout duration in seconds
+    
+    Yields:
+        None
+    
+    Raises:
+        asyncio.TimeoutError: If operation exceeds timeout
     """
-    if isinstance(audio, tuple):
-        warnings.warn(
-            UserWarning(
-                "Passing a (sr, audio) tuple to audio_to_float32() is deprecated "
-                "and will be removed in a future release. Pass only the audio array."
-            ),
-            stacklevel=2,  # So that the warning points to the user's code
-        )
-        _sr, audio = audio
-
-    if audio.dtype == np.int16:
-        # Divide by 32768.0 so that the values are in the range [-1.0, 1.0).
-        # 1.0 can actually never be reached because the int16 range is [-32768, 32767].
-        return audio.astype(np.float32) / 32768.0
-    elif audio.dtype == np.float32:
-        return audio  # type: ignore
-    else:
-        raise TypeError(f"Unsupported audio data type: {audio.dtype}")
-
-
-def audio_to_int16(
-    audio: NDArray[np.int16 | np.float32] | tuple[int, NDArray[np.int16 | np.float32]],
-) -> NDArray[np.int16]:
-    """
-    Convert an audio tuple containing sample rate and numpy array data to int16.
-
-    Parameters
-    ----------
-    audio : np.ndarray
-        The audio data as a numpy array
-
-    Returns
-    -------
-    np.ndarray
-        The audio data as a numpy array with dtype int16
-
-    Example
-    -------
-    >>> audio_data = np.array([0.1, -0.2, 0.3], dtype=np.float32)  # Example audio samples
-    >>> audio_int16 = audio_to_int16(audio_data)
-    """
-    if isinstance(audio, tuple):
-        warnings.warn(
-            UserWarning(
-                "Passing a (sr, audio) tuple to audio_to_float32() is deprecated "
-                "and will be removed in a future release. Pass only the audio array."
-            ),
-            stacklevel=2,  # So that the warning points to the user's code
-        )
-        _sr, audio = audio
-
-    if audio.dtype == np.int16:
-        return audio  # type: ignore
-    elif audio.dtype == np.float32:
-        # Convert float32 to int16 by scaling to the int16 range.
-        # Multiply by 32767 and not 32768 so that int16 doesn't overflow.
-        return (audio * 32767.0).astype(np.int16)
-    else:
-        raise TypeError(f"Unsupported audio data type: {audio.dtype}")
-
-
-def aggregate_bytes_to_16bit(chunks_iterator):
-    """
-    Aggregate bytes to 16-bit audio samples.
-
-    This function takes an iterator of chunks and aggregates them into 16-bit audio samples.
-    It handles incomplete samples and combines them with the next chunk.
-
-    Parameters
-    ----------
-    chunks_iterator : Iterator[bytes]
-        An iterator of byte chunks to aggregate
-
-    Returns
-    -------
-    Iterator[NDArray[np.int16]]
-    """
-    leftover = b""
-    for chunk in chunks_iterator:
-        current_bytes = leftover + chunk
-
-        n_complete_samples = len(current_bytes) // 2
-        bytes_to_process = n_complete_samples * 2
-
-        to_process = current_bytes[:bytes_to_process]
-        leftover = current_bytes[bytes_to_process:]
-
-        if to_process:
-            audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
-            yield audio_array
-
-
-async def async_aggregate_bytes_to_16bit(chunks_iterator):
-    """
-    Aggregate bytes to 16-bit audio samples.
-
-    This function takes an iterator of chunks and aggregates them into 16-bit audio samples.
-    It handles incomplete samples and combines them with the next chunk.
-
-    Parameters
-    ----------
-    chunks_iterator : Iterator[bytes]
-        An iterator of byte chunks to aggregate
-
-    Returns
-    -------
-    Iterator[NDArray[np.int16]]
-        An iterator of 16-bit audio samples
-    """
-    leftover = b""
-
-    async for chunk in chunks_iterator:
-        current_bytes = leftover + chunk
-
-        n_complete_samples = len(current_bytes) // 2
-        bytes_to_process = n_complete_samples * 2
-
-        to_process = current_bytes[:bytes_to_process]
-        leftover = current_bytes[bytes_to_process:]
-
-        if to_process:
-            audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
-            yield audio_array
-
-
-def webrtc_error_handler(func):
-    """Decorator to catch exceptions and raise WebRTCError with stacktrace."""
-
-    @functools.wraps(func)
-    async def async_wrapper(*args, **kwargs):
-        try:
-            return await func(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc()
-            if isinstance(e, WebRTCError):
-                raise e
-            else:
-                raise WebRTCError(str(e)) from e
-
-    @functools.wraps(func)
-    def sync_wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc()
-            if isinstance(e, WebRTCError):
-                raise e
-            else:
-                raise WebRTCError(str(e)) from e
-
-    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
-
-
-async def wait_for_item(queue: asyncio.Queue, timeout: float = 0.1) -> Any:
-    """
-    Wait for an item from an asyncio.Queue with a timeout.
-
-    This function attempts to retrieve an item from the queue using asyncio.wait_for.
-    If the timeout is reached, it returns None.
-
-    This is useful to avoid blocking `emit` when the queue is empty.
-    """
-
     try:
-        return await asyncio.wait_for(queue.get(), timeout=timeout)
-    except (TimeoutError, asyncio.TimeoutError):
-        return None
+        async with asyncio.timeout(seconds):
+            yield
+    except asyncio.TimeoutError:
+        logger.error(f"Operation timed out after {seconds} seconds")
+        raise
 
 
-RTCConfigurationCallable = (
-    Callable[[], dict[str, Any]]
-    | Callable[[], Coroutine[dict[str, Any], Any, dict[str, Any]]]
-    | Callable[[str | None, str | None, str | None], dict[str, Any]]
-    | Callable[
-        [str | None, str | None, str | None],
-        Coroutine[dict[str, Any], Any, dict[str, Any]],
-    ]
-    | dict[str, Any]
-)
+def validate_audio_format(audio: tuple[int, np.ndarray]) -> bool:
+    """
+    Validate audio format for FastRTC.
+    
+    Args:
+        audio: Audio tuple (sample_rate, audio_array)
+    
+    Returns:
+        True if audio format is valid, False otherwise
+    """
+    if not isinstance(audio, tuple) or len(audio) != 2:
+        logger.error("Audio must be a tuple of (sample_rate, audio_array)")
+        return False
+    
+    sample_rate, audio_array = audio
+    
+    if not isinstance(sample_rate, int) or sample_rate <= 0:
+        logger.error("Sample rate must be a positive integer")
+        return False
+    
+    if not isinstance(audio_array, np.ndarray):
+        logger.error("Audio array must be a numpy array")
+        return False
+    
+    if audio_array.size == 0:
+        logger.error("Audio array cannot be empty")
+        return False
+    
+    return True
+
+
+def validate_video_format(video: np.ndarray) -> bool:
+    """
+    Validate video format for FastRTC.
+    
+    Args:
+        video: Video array
+    
+    Returns:
+        True if video format is valid, False otherwise
+    """
+    if not isinstance(video, np.ndarray):
+        logger.error("Video must be a numpy array")
+        return False
+    
+    if video.ndim < 2:
+        logger.error("Video array must have at least 2 dimensions")
+        return False
+    
+    if video.size == 0:
+        logger.error("Video array cannot be empty")
+        return False
+    
+    return True
+
+
+def audio_to_mono(audio: tuple[int, np.ndarray]) -> tuple[int, np.ndarray]:
+    """
+    Convert stereo audio to mono if needed.
+    
+    Args:
+        audio: Audio tuple (sample_rate, audio_array)
+    
+    Returns:
+        Mono audio tuple
+    """
+    sample_rate, audio_array = audio
+    
+    if audio_array.ndim > 1 and audio_array.shape[0] > 1:
+        # Convert stereo to mono by averaging channels
+        mono_audio = np.mean(audio_array, axis=0)
+        return (sample_rate, mono_audio)
+    
+    return audio
+
+
+def normalize_audio(audio: tuple[int, np.ndarray], target_level: float = 0.8) -> tuple[int, np.ndarray]:
+    """
+    Normalize audio to target level.
+    
+    Args:
+        audio: Audio tuple (sample_rate, audio_array)
+        target_level: Target normalization level (0.0 to 1.0)
+    
+    Returns:
+        Normalized audio tuple
+    """
+    sample_rate, audio_array = audio
+    
+    if audio_array.size == 0:
+        return audio
+    
+    # Calculate current peak level
+    current_peak = np.max(np.abs(audio_array))
+    
+    if current_peak == 0:
+        return audio
+    
+    # Calculate normalization factor
+    normalization_factor = target_level / current_peak
+    
+    # Apply normalization
+    normalized_audio = audio_array * normalization_factor
+    
+    return (sample_rate, normalized_audio)
+
+
+def resample_audio(audio: tuple[int, np.ndarray], target_sample_rate: int) -> tuple[int, np.ndarray]:
+    """
+    Resample audio to target sample rate using simple linear interpolation.
+    
+    Args:
+        audio: Audio tuple (sample_rate, audio_array)
+        target_sample_rate: Target sample rate
+    
+    Returns:
+        Resampled audio tuple
+    """
+    sample_rate, audio_array = audio
+    
+    if sample_rate == target_sample_rate:
+        return audio
+    
+    # Simple linear interpolation resampling
+    original_length = audio_array.shape[-1]
+    target_length = int(original_length * target_sample_rate / sample_rate)
+    
+    # Create indices for interpolation
+    original_indices = np.linspace(0, original_length - 1, original_length)
+    target_indices = np.linspace(0, original_length - 1, target_length)
+    
+    # Interpolate
+    resampled_audio = np.interp(target_indices, original_indices, audio_array)
+    
+    return (target_sample_rate, resampled_audio)
+
+
+class PerformanceMonitor:
+    """
+    Performance monitoring utility for FastRTC applications.
+    """
+    
+    def __init__(self, name: str = "FastRTC"):
+        self.name = name
+        self.metrics: Dict[str, list] = {}
+        self.start_times: Dict[str, float] = {}
+    
+    def start_timer(self, operation: str) -> None:
+        """Start timing an operation."""
+        self.start_times[operation] = time.time()
+    
+    def end_timer(self, operation: str) -> float:
+        """End timing an operation and return duration."""
+        if operation not in self.start_times:
+            logger.warning(f"Timer for operation '{operation}' was not started")
+            return 0.0
+        
+        duration = time.time() - self.start_times[operation]
+        
+        if operation not in self.metrics:
+            self.metrics[operation] = []
+        
+        self.metrics[operation].append(duration)
+        del self.start_times[operation]
+        
+        logger.debug(f"{self.name} - {operation}: {duration:.4f}s")
+        return duration
+    
+    def get_average_time(self, operation: str) -> float:
+        """Get average time for an operation."""
+        if operation not in self.metrics or not self.metrics[operation]:
+            return 0.0
+        
+        return sum(self.metrics[operation]) / len(self.metrics[operation])
+    
+    def get_stats(self) -> Dict[str, Dict[str, float]]:
+        """Get performance statistics."""
+        stats = {}
+        
+        for operation, times in self.metrics.items():
+            if times:
+                stats[operation] = {
+                    "count": len(times),
+                    "total": sum(times),
+                    "average": sum(times) / len(times),
+                    "min": min(times),
+                    "max": max(times),
+                }
+        
+        return stats
+    
+    def reset(self) -> None:
+        """Reset all metrics."""
+        self.metrics.clear()
+        self.start_times.clear()
+
+
+# Global performance monitor instance
+performance_monitor = PerformanceMonitor()
+
+
+def monitor_performance(operation_name: str) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    """
+    Decorator to monitor function performance.
+    
+    Args:
+        operation_name: Name of the operation to monitor
+    
+    Returns:
+        Decorated function with performance monitoring
+    """
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            performance_monitor.start_timer(operation_name)
+            try:
+                result = func(*args, **kwargs)
+                return result
+            finally:
+                performance_monitor.end_timer(operation_name)
+        
+        return wrapper
+    return decorator
+
+
+def async_monitor_performance(operation_name: str) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    """
+    Async decorator to monitor function performance.
+    
+    Args:
+        operation_name: Name of the operation to monitor
+    
+    Returns:
+        Decorated async function with performance monitoring
+    """
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        @wraps(func)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            performance_monitor.start_timer(operation_name)
+            try:
+                result = await func(*args, **kwargs)
+                return result
+            finally:
+                performance_monitor.end_timer(operation_name)
+        
+        return wrapper
+    return decorator
