@@ -1143,3 +1143,12 @@ class Stream(WebRTCConnectionMixin):
             t.join(timeout=5)
             for tunnel in CURRENT_TUNNELS:
                 tunnel.kill()
+
+    def get_all_connections(self) -> [str]:
+        """
+        Return all currently associated `webrtc_id`s to the stream and its WebRTC component (if any).
+        """
+        stream_ids = list(self.connections.keys())
+        if self.webrtc_component is not None:
+            stream_ids.extend(list(self.webrtc_component.connections.keys()))
+        return stream_ids
