@@ -43,7 +43,7 @@
   export let icon_radius: number = 50;
   export let variant: "textbox" | "wave" = "wave";
   export let connection_state: "open" | "closed" | "unset" = "unset";
-  export let full_screen: boolean | null = null;
+  export let full_screen: boolean | null = false;
 
   export let value: WebRTCValue | string =
     variant === "textbox" ||

@@ -396,7 +396,7 @@ class Stream(WebRTCConnectionMixin):
                             track_constraints=self.track_constraints,
                             mode="receive",
                             modality="video",
-                            full_screen=ui_args.get("full_screen"),
+                            full_screen=ui_args.get("full_screen", False),
                         )
                         self.webrtc_component = output_video
                         for component in additional_output_components:
@@ -440,7 +440,7 @@ class Stream(WebRTCConnectionMixin):
                             track_constraints=self.track_constraints,
                             mode="send",
                             modality="video",
-                            full_screen=ui_args.get("full_screen"),
+                            full_screen=ui_args.get("full_screen", False),
                         )
                         self.webrtc_component = output_video
                         for component in additional_output_components:
@@ -463,7 +463,7 @@ class Stream(WebRTCConnectionMixin):
                         outputs=additional_output_components,
                     )
         elif self.modality == "video" and self.mode == "send-receive":
-            if ui_args.get("full_screen") is False:
+            if ui_args.get("full_screen", False) is False:
                 css = """.my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
             else:
                 css = """.gradio-container .sidebar {background-color: color-mix(in srgb, var(--block-background-fill) 50%, transparent) !important;}
@@ -482,9 +482,9 @@ class Stream(WebRTCConnectionMixin):
                             track_constraints=self.track_constraints,
                             mode="send-receive",
                             modality="video",
-                            full_screen=ui_args.get("full_screen"),
+                            full_screen=ui_args.get("full_screen", False),
                         )
-                        if ui_args.get("full_screen") is False:
+                        if ui_args.get("full_screen", False) is False:
                             for component in additional_input_components:
                                 component.render()
                 if additional_input_components:
@@ -495,13 +495,13 @@ class Stream(WebRTCConnectionMixin):
                     ]
                     if (
                         input_components_to_render
-                        and ui_args.get("full_screen") is not False
+                        and ui_args.get("full_screen", False) is not False
                     ):
                         with gr.Sidebar(position="left"):
                             for component in input_components_to_render:
                                 component.render()
                 if additional_output_components:
-                    if ui_args.get("full_screen") is False:
+                    if ui_args.get("full_screen", False) is False:
                         with gr.Group():
                             for component in additional_output_components:
                                 if component not in same_components:
@@ -553,7 +553,7 @@ class Stream(WebRTCConnectionMixin):
                             icon_button_color=ui_args.get("icon_button_color"),
                             pulse_color=ui_args.get("pulse_color"),
                             icon_radius=ui_args.get("icon_radius"),
-                            full_screen=ui_args.get("full_screen"),
+                            full_screen=ui_args.get("full_screen", False),
                         )
                         self.webrtc_component = output_video
                         for component in additional_output_components:
@@ -612,7 +612,7 @@ class Stream(WebRTCConnectionMixin):
                             pulse_color=ui_args.get("pulse_color"),
                             icon_radius=ui_args.get("icon_radius"),
                             variant=ui_args.get("variant", "wave"),
-                            full_screen=ui_args.get("full_screen"),
+                            full_screen=ui_args.get("full_screen", False),
                         )
                 else:
                     with gr.Row():
@@ -629,7 +629,7 @@ class Stream(WebRTCConnectionMixin):
                                     pulse_color=ui_args.get("pulse_color"),
                                     icon_radius=ui_args.get("icon_radius"),
                                     variant=ui_args.get("variant", "wave"),
-                                    full_screen=ui_args.get("full_screen"),
+                                    full_screen=ui_args.get("full_screen", False),
                                 )
                                 for component in additional_input_components:
                                     if component not in same_components:
@@ -664,7 +664,9 @@ class Stream(WebRTCConnectionMixin):
                     chatbot_component = component
                     break
 
-            use_component_layout = ui_args.get("full_screen") is False or has_chatbot
+            use_component_layout = (
+                ui_args.get("full_screen", False) is False or has_chatbot
+            )
             if use_component_layout:
                 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
                       .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
@@ -791,7 +793,7 @@ class Stream(WebRTCConnectionMixin):
                         concurrency_limit=self.concurrency_limit_gradio,  # type: ignore
                     )
         elif self.modality == "audio-video" and self.mode == "send-receive":
-            if ui_args.get("full_screen") is False:
+            if ui_args.get("full_screen", False) is False:
                 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
                       .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
             else:
@@ -818,7 +820,7 @@ class Stream(WebRTCConnectionMixin):
                                 icon_button_color=ui_args.get("icon_button_color"),
                                 pulse_color=ui_args.get("pulse_color"),
                                 icon_radius=ui_args.get("icon_radius"),
-                                full_screen=ui_args.get("full_screen"),
+                                full_screen=ui_args.get("full_screen", False),
                             )
                             self.webrtc_component = image
                             input_components_to_render = [
@@ -827,7 +829,7 @@ class Stream(WebRTCConnectionMixin):
                                 if component not in same_components
                             ]
                             if input_components_to_render:
-                                if ui_args.get("full_screen") is False:
+                                if ui_args.get("full_screen", False) is False:
                                     for component in input_components_to_render:
                                         component.render()
                                 else:
@@ -835,7 +837,7 @@ class Stream(WebRTCConnectionMixin):
                                         for component in input_components_to_render:
                                             component.render()
                     if additional_output_components:
-                        if ui_args.get("full_screen") is False:
+                        if ui_args.get("full_screen", False) is False:
                             with gr.Column():
                                 for component in additional_output_components:
                                     component.render()

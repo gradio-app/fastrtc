@@ -96,7 +96,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         icon_radius: int | None = None,
         button_labels: dict | None = None,
         variant: Literal["textbox", "wave"] = "wave",
-        full_screen: bool | None = True,
+        full_screen: bool | None = False,
     ):
         """
         Parameters:
