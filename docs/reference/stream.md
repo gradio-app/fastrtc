@@ -48,7 +48,7 @@ This class encapsulates the logic for handling real-time communication (WebRTC) 
 ### `mount`
 
 ```python
-mount(app: FastAPI, path: str = "")
+mount(app: FastAPI, path: str = "", tags: list[str | Enum] | None = None)
 ```
 
 Mount the stream's API endpoints onto a FastAPI application.
@@ -57,10 +57,26 @@ This method adds the necessary routes (`/webrtc/offer`, `/telephone/handler`, `/
 
 **Args:**
 
-| Name   | Type      | Description                                      |
-| :----- | :-------- | :----------------------------------------------- |
-| `app`  | `FastAPI` | The FastAPI application instance.                |
-| `path` | `str`     | An optional URL prefix for the mounted routes. |
+| Name   | Type                        | Description                                                                                      |
+| :----- | :-------------------------- | :----------------------------------------------------------------------------------------------- |
+| `app`  | `FastAPI`                   | The FastAPI application instance.                                                                |
+| `path` | `str`                       | An optional URL prefix for the mounted routes.                                                   |
+| `tags` | `list[str \| Enum] \| None` | Optional OpenAPI tags to organize the mounted endpoints in the API documentation. |
+
+**Example:**
+
+```python
+from fastapi import FastAPI
+from fastrtc import Stream
+
+app = FastAPI(openapi_tags=[{
+    "name": "fastrtc",
+    "description": "Real-time communication endpoints"
+}])
+
+stream = Stream(handler=my_handler, mode="send-receive", modality="audio")
+stream.mount(app, path="/api/v1/llm", tags=["fastrtc"])
+```
 
 ---
 
