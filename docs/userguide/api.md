@@ -64,9 +64,7 @@ The `ReplyOnPause` handler can also send the following `log` messages.
 
 ### Additional Inputs
 
-When the `send_input` message is received, update the inputs of your handler however you like by using the `set_input` method of the `Stream` object.
-
-A common pattern is to use a `POST` request to send the updated data. The first argument to the `set_input` method is the `webrtc_id` of the handler.
+When the `send_input` message is received, update the inputs of your handler using the `set_input` method. The first argument is the `webrtc_id`, followed by your custom arguments.
 
 ```python
 from pydantic import BaseModel, Field
@@ -79,6 +77,20 @@ class InputData(BaseModel):
 @app.post("/input_hook")
 async def _(data: InputData):
     stream.set_input(data.webrtc_id, data.conf_threshold)
+```
+
+**Accessing inputs in handler startup:**
+
+In your handler's `start_up()` method, use `wait_for_args()` to wait for inputs, then access them via `latest_args[1:]` (the first element is metadata):
+
+```python
+from fastrtc import AsyncStreamHandler
+
+class CustomHandler(AsyncStreamHandler):
+    async def start_up(self) -> None:
+        await self.wait_for_args()
+        conf_threshold = self.latest_args[1]
+        # Use conf_threshold for initialization
 ```
 
 The updated data will be passed to the handler on the **next** call.
