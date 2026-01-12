@@ -172,10 +172,19 @@ class Stream(WebRTCConnectionMixin):
         self.server_rtc_configuration = self.convert_to_aiortc_format(
             server_rtc_configuration
         )
+
         self.verbose = verbose
         self._ui = self._generate_default_ui(ui_args)
         self._ui.launch = self._wrap_gradio_launch(self._ui.launch)
 
+        def get_all_connections(self) -> list[str]:
+            """Return all connection IDs from both API and UI WebRTC components."""
+            all_ids = list(self.connections.keys())
+            if self.webrtc_component:
+                all_ids += list(self.webrtc_component.connections.keys())
+            return all_ids
+
+        
     def mount(
         self, app: FastAPI, path: str = "", tags: list[str | Enum] | None = None
     ) -> None:
