@@ -53,6 +53,8 @@ class CloseStream:
 
 
 class DataChannel(Protocol):
+    @property
+    def readyState(self) -> str: ...
     def send(self, message: str) -> None: ...
 
 
@@ -192,7 +194,9 @@ async def player_worker_decode(
                 and channel()
             ):
                 set_additional_outputs(outputs)
-                cast(DataChannel, channel()).send(create_message("fetch_output", []))
+                dc = cast(DataChannel, channel())
+                if dc.readyState == "open":
+                    dc.send(create_message("fetch_output", []))
 
             if frame is None:
                 if isinstance(outputs, CloseStream):
