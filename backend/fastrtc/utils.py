@@ -53,6 +53,8 @@ class CloseStream:
 
 
 class DataChannel(Protocol):
+    @property
+    def readyState(self) -> str: ...
     def send(self, message: str) -> None: ...
 
 
