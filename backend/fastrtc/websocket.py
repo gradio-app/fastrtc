@@ -76,6 +76,7 @@ class WebSocketHandler:
         self.playing_durations = []  # Track durations of frames being played
         self._frame_cleanup_task: asyncio.Task | None = None
         self._graceful_shutdown_task: asyncio.Task | None = None
+        self.start_up_task: asyncio.Task | None = None
 
     def _clear_queue(self):
         i = 0
