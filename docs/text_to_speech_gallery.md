@@ -64,6 +64,23 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Repository](https://github.com/freddyaboulton/orpheus-cpp)
 
+-   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } fastrtc-pocket-tts
+{: data-tags="pocket-tts"}
+
+    ---
+
+    Description:
+    [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) is a lightweight ultra-low latency TTS model by Kyutai.
+
+    Install Instructions
+    ```python
+    pip install fastrtc-pocket-tts
+    ```
+    Check out the fastrtc-pocket-tts repo for examples!
+
+    [:octicons-code-16: Repository](https://github.com/rohanprichard/fastrtc-pocket-tts)
+
+
 -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Your TTS Model__
 {: data-tags="pytorch"}
 
