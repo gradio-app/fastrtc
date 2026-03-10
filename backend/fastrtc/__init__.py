@@ -18,6 +18,7 @@ from .reply_on_stopwords import ReplyOnStopWords
 from .speech_to_text import MoonshineSTT, get_stt_model
 from .stream import Stream, UIArgs
 from .text_to_speech import (
+    CambTTSOptions,
     CartesiaTTSOptions,
     KokoroTTSOptions,
     get_tts_model,
@@ -92,6 +93,7 @@ __all__ = [
     "VideoStreamHandler",
     "CloseStream",
     "get_current_context",
+    "CambTTSOptions",
     "CartesiaTTSOptions",
     "WebRTCData",
 ]
