@@ -1,12 +1,26 @@
+from __future__ import annotations
+
+import json
 import os
 import warnings
-from typing import Literal
+from typing import Any, Literal
 
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None  # type: ignore[assignment]
 
 CLOUDFLARE_FASTRTC_TURN_URL = "https://turn.fastrtc.org/credentials"
 
-async_httpx_client = httpx.AsyncClient()
+async_httpx_client = httpx.AsyncClient() if httpx is not None else None
+
+CredentialProvider = Literal["hf", "twilio", "cloudflare", "local"]
+
+
+def _require_httpx():
+    if httpx is None:
+        raise ImportError("Please install httpx to fetch hosted TURN credentials")
+    return httpx
 
 
 def _format_response(response):
@@ -48,7 +62,8 @@ def get_hf_turn_credentials(token=None, ttl=600):
         raise ValueError(
             "HF_TOKEN environment variable must be set or token must be provided to use get_hf_turn_credentials"
         )
-    response = httpx.get(
+    httpx_module = _require_httpx()
+    response = httpx_module.get(
         CLOUDFLARE_FASTRTC_TURN_URL,
         headers={
             "Authorization": f"Bearer {token}",
@@ -90,6 +105,8 @@ async def get_hf_turn_credentials_async(
     )
     if client is None:
         client = async_httpx_client
+    if client is None:
+        _require_httpx()
 
     if token is None:
         token = os.getenv("HF_TOKEN")
@@ -136,8 +153,9 @@ def get_cloudflare_turn_credentials(
     """
     if hf_token is None:
         hf_token = os.getenv("HF_TOKEN")
+    httpx_module = _require_httpx()
     if hf_token:
-        return httpx.get(
+        return httpx_module.get(
             CLOUDFLARE_FASTRTC_TURN_URL,
             headers={"Authorization": f"Bearer {hf_token}"},
             params={"ttl": ttl},
@@ -150,7 +168,7 @@ def get_cloudflare_turn_credentials(
             raise ValueError(
                 "HF_TOKEN or CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN must be set to use get_cloudflare_turn_credentials_sync"
             )
-        response = httpx.post(
+        response = httpx_module.post(
             f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate-ice-servers",
             headers={
                 "Authorization": f"Bearer {turn_key_api_token}",
@@ -204,11 +222,14 @@ async def get_cloudflare_turn_credentials_async(
     """
     if client is None:
         client = async_httpx_client
+    if client is None:
+        _require_httpx()
 
     if hf_token is None:
         hf_token = os.getenv("HF_TOKEN", "").strip()
     if hf_token:
-        async with httpx.AsyncClient() as client:
+        httpx_module = _require_httpx()
+        async with httpx_module.AsyncClient() as client:
             response = await client.get(
                 CLOUDFLARE_FASTRTC_TURN_URL,
                 headers={"Authorization": f"Bearer {hf_token}"},
@@ -223,7 +244,8 @@ async def get_cloudflare_turn_credentials_async(
             raise ValueError(
                 "HF_TOKEN or CLOUDFLARE_TURN_KEY_ID and CLOUDFLARE_TURN_KEY_API_TOKEN must be set to use get_cloudflare_turn_credentials"
             )
-        async with httpx.AsyncClient() as client:
+        httpx_module = _require_httpx()
+        async with httpx_module.AsyncClient() as client:
             response = await client.post(
                 f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate-ice-servers",
                 headers={
@@ -281,23 +303,113 @@ def get_twilio_turn_credentials(twilio_sid=None, twilio_token=None):
     }
 
 
+def get_local_rtc_configuration(
+    ice_servers: list[dict[str, Any]] | dict[str, Any] | None = None,
+    host: str | None = None,
+    port: int | str | None = None,
+    username: str | None = None,
+    credential: str | None = None,
+    scheme: str | None = None,
+    transport: str | None = None,
+    ice_transport_policy: str | None = None,
+) -> dict[str, Any]:
+    """Builds an RTC configuration without contacting an external service.
+
+    This helper is intended for offline deployments. With no arguments and no
+    environment variables set, it returns an empty ICE server list, which lets
+    WebRTC use host candidates only. For machines separated by NATs or firewalls,
+    point it at a self-hosted STUN/TURN server such as coturn.
+
+    Args:
+        ice_servers: Explicit WebRTC ICE server list, or a full RTC configuration
+            dictionary containing ``iceServers``.
+        host: Local STUN/TURN server hostname or IP. Defaults to
+            ``FASTRTC_TURN_HOST``.
+        port: Local STUN/TURN server port. Defaults to ``FASTRTC_TURN_PORT`` or
+            3478.
+        username: TURN username. Defaults to ``FASTRTC_TURN_USERNAME``.
+        credential: TURN password. Defaults to ``FASTRTC_TURN_CREDENTIAL``.
+        scheme: ICE URL scheme. Defaults to ``FASTRTC_TURN_SCHEME`` or ``turn``.
+        transport: Optional ICE URL transport query parameter. Defaults to
+            ``FASTRTC_TURN_TRANSPORT``.
+        ice_transport_policy: Optional WebRTC ICE transport policy. Defaults to
+            ``FASTRTC_ICE_TRANSPORT_POLICY``.
+
+    Returns:
+        dict: A WebRTC RTCConfiguration dictionary.
+    """
+    if ice_servers is None:
+        raw_ice_servers = os.getenv("FASTRTC_ICE_SERVERS")
+        if raw_ice_servers:
+            try:
+                ice_servers = json.loads(raw_ice_servers)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    "FASTRTC_ICE_SERVERS must be valid JSON containing an ICE server list "
+                    "or an RTC configuration object"
+                ) from exc
+
+    config: dict[str, Any]
+    if isinstance(ice_servers, dict):
+        config = dict(ice_servers)
+    elif ice_servers is not None:
+        config = {"iceServers": ice_servers}
+    else:
+        host = host or os.getenv("FASTRTC_TURN_HOST")
+        if host:
+            port = port or os.getenv("FASTRTC_TURN_PORT") or 3478
+            scheme = scheme or os.getenv("FASTRTC_TURN_SCHEME", "turn")
+            transport = transport or os.getenv("FASTRTC_TURN_TRANSPORT")
+            username = username or os.getenv("FASTRTC_TURN_USERNAME")
+            credential = credential or os.getenv("FASTRTC_TURN_CREDENTIAL")
+
+            host_part = f"[{host}]" if ":" in str(host) else host
+            url = f"{scheme}:{host_part}:{port}"
+            if transport:
+                url = f"{url}?transport={transport}"
+
+            ice_server: dict[str, Any] = {"urls": url}
+            if username is not None:
+                ice_server["username"] = username
+            if credential is not None:
+                ice_server["credential"] = credential
+            config = {"iceServers": [ice_server]}
+        else:
+            config = {"iceServers": []}
+
+    ice_transport_policy = ice_transport_policy or os.getenv(
+        "FASTRTC_ICE_TRANSPORT_POLICY"
+    )
+    if ice_transport_policy:
+        config["iceTransportPolicy"] = ice_transport_policy
+
+    return config
+
+
+async def get_local_rtc_configuration_async(**kwargs) -> dict[str, Any]:
+    """Asynchronously builds a local RTC configuration without network calls."""
+    return get_local_rtc_configuration(**kwargs)
+
+
 def get_turn_credentials(
-    method: Literal["hf", "twilio", "cloudflare"] = "cloudflare", **kwargs
+    method: CredentialProvider = "local", **kwargs
 ):
-    """Retrieves TURN credentials from the specified provider.
+    """Retrieves or builds RTC credentials/configuration from the specified provider.
 
     Acts as a dispatcher function to call the appropriate credential retrieval
     function based on the method specified.
 
     Args:
-        method (Literal["hf", "twilio", "cloudflare"], optional): The provider
+        method (Literal["hf", "twilio", "cloudflare", "local"], optional): The provider
             to use. 'hf' uses the deprecated Hugging Face endpoint. 'cloudflare'
             uses either Cloudflare keys or the HF endpoint. 'twilio' uses the
-            Twilio API. Defaults to "cloudflare".
+            Twilio API. 'local' returns a static RTC configuration without making
+            network requests. Defaults to "local".
         **kwargs: Additional keyword arguments passed directly to the underlying
             provider-specific function (e.g., `token`, `ttl` for 'hf';
             `twilio_sid`, `twilio_token` for 'twilio'; `turn_key_id`,
-            `turn_key_api_token`, `hf_token`, `ttl` for 'cloudflare').
+            `turn_key_api_token`, `hf_token`, `ttl` for 'cloudflare'; or
+            local ICE server settings for 'local').
 
     Returns:
         dict: A dictionary containing the TURN credentials from the chosen provider.
@@ -328,23 +440,44 @@ def get_turn_credentials(
             k: v for k, v in kwargs.items() if k in ["twilio_sid", "twilio_token"]
         }
         return get_twilio_turn_credentials(**twilio_kwargs)
+    elif method == "local":
+        local_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k
+            in [
+                "ice_servers",
+                "host",
+                "port",
+                "username",
+                "credential",
+                "scheme",
+                "transport",
+                "ice_transport_policy",
+            ]
+        }
+        return get_local_rtc_configuration(**local_kwargs)
     else:
-        raise ValueError("Invalid method. Must be 'hf', 'twilio', or 'cloudflare'")
+        raise ValueError(
+            "Invalid method. Must be 'hf', 'twilio', 'cloudflare', or 'local'"
+        )
 
 
 async def get_turn_credentials_async(
-    method: Literal["hf", "twilio", "cloudflare"] = "cloudflare", **kwargs
+    method: CredentialProvider = "local", **kwargs
 ):
-    """Asynchronously retrieves TURN credentials from the specified provider.
+    """Asynchronously retrieves or builds RTC credentials/configuration.
 
     Acts as an async dispatcher function to call the appropriate async credential
     retrieval function based on the method specified.
 
     Args:
-        method (Literal["hf", "twilio", "cloudflare"], optional): The provider
+        method (Literal["hf", "twilio", "cloudflare", "local"], optional): The provider
             to use. 'hf' uses the deprecated Hugging Face endpoint. 'cloudflare'
             uses either Cloudflare keys or the HF endpoint. 'twilio' is not
-            supported asynchronously by this function yet. Defaults to "cloudflare".
+            supported asynchronously by this function yet. 'local' returns a
+            static RTC configuration without making network requests. Defaults
+            to "local".
         **kwargs: Additional keyword arguments passed directly to the underlying
             provider-specific async function (e.g., `token`, `ttl`, `client` for 'hf';
             `turn_key_id`, `turn_key_api_token`, `hf_token`, `ttl`, `client` for
@@ -381,5 +514,24 @@ async def get_turn_credentials_async(
         raise NotImplementedError(
             "Async retrieval for Twilio credentials is not implemented."
         )
+    elif method == "local":
+        local_kwargs = {
+            k: v
+            for k, v in kwargs.items()
+            if k
+            in [
+                "ice_servers",
+                "host",
+                "port",
+                "username",
+                "credential",
+                "scheme",
+                "transport",
+                "ice_transport_policy",
+            ]
+        }
+        return await get_local_rtc_configuration_async(**local_kwargs)
     else:
-        raise ValueError("Invalid method. Must be 'hf', 'twilio', or 'cloudflare'")
+        raise ValueError(
+            "Invalid method. Must be 'hf', 'twilio', 'cloudflare', or 'local'"
+        )

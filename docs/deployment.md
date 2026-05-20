@@ -4,6 +4,126 @@ When deploying in cloud environments with firewalls (like Hugging Face Spaces, R
     The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](../userguide/gradio) component directly if you're building a standalone gradio app.
 
 
+## Fully Offline / Local Network
+
+FastRTC does not require Cloudflare, Hugging Face, Twilio, or any other hosted
+credential service when every machine involved is on an offline computer or a
+reachable local network.
+
+This is the default credential-helper behavior. Calling `get_turn_credentials()`
+or `get_turn_credentials_async()` with no arguments returns the same local
+configuration as `get_local_rtc_configuration()`.
+
+For a browser and FastRTC server running on the same machine, or on a LAN where
+host ICE candidates can reach each other directly, use an empty ICE server list:
+
+```python
+from fastrtc import Stream, get_local_rtc_configuration
+
+rtc_configuration = get_local_rtc_configuration()
+
+stream = Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    server_rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive",
+)
+```
+
+This performs no network call to a credential provider. It returns:
+
+```python
+{"iceServers": []}
+```
+
+Equivalently:
+
+```python
+from fastrtc import get_turn_credentials
+
+rtc_configuration = get_turn_credentials()
+```
+
+If the browser and FastRTC server cannot connect directly because of local
+firewalls, subnets, VPN routing, or NAT, run a STUN/TURN server on the offline
+network and point FastRTC at it. For example, with coturn configured for static
+long-term credentials:
+
+```python
+from fastrtc import Stream, get_local_rtc_configuration
+
+rtc_configuration = get_local_rtc_configuration(
+    host="192.168.1.10",
+    port=3478,
+    username="fastrtc",
+    credential="change-me",
+)
+
+stream = Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    server_rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive",
+)
+```
+
+For a relay-only setup, add `ice_transport_policy="relay"`. This is useful when
+you want every media packet to pass through your local TURN server:
+
+```python
+rtc_configuration = get_local_rtc_configuration(
+    host="192.168.1.10",
+    username="fastrtc",
+    credential="change-me",
+    ice_transport_policy="relay",
+)
+```
+
+You can also configure this entirely through environment variables:
+
+```bash
+export FASTRTC_TURN_HOST=192.168.1.10
+export FASTRTC_TURN_PORT=3478
+export FASTRTC_TURN_USERNAME=fastrtc
+export FASTRTC_TURN_CREDENTIAL=change-me
+export FASTRTC_ICE_TRANSPORT_POLICY=relay
+```
+
+Then in Python:
+
+```python
+from fastrtc import Stream, get_local_rtc_configuration
+
+stream = Stream(
+    handler=...,
+    rtc_configuration=get_local_rtc_configuration,
+    server_rtc_configuration=get_local_rtc_configuration(),
+    modality="audio",
+    mode="send-receive",
+)
+```
+
+If you already have a WebRTC RTCConfiguration object, set it as JSON in
+`FASTRTC_ICE_SERVERS` or pass it directly:
+
+```bash
+export FASTRTC_ICE_SERVERS='[{"urls":"stun:192.168.1.10:3478"}]'
+```
+
+```python
+rtc_configuration = get_local_rtc_configuration(
+    ice_servers=[
+        {
+            "urls": "turn:192.168.1.10:3478",
+            "username": "fastrtc",
+            "credential": "change-me",
+        }
+    ]
+)
+```
+
 ## Cloudflare Calls API
 
 Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www.cloudflare.com/en-au/developer-platform/products/cloudflare-calls/).
