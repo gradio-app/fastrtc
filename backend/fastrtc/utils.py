@@ -179,12 +179,20 @@ async def player_worker_decode(
         frame_size=frame_size,
     )
     first_sample_rate = None
+    pending: asyncio.Future | None = None
     while not thread_quit.is_set():
         try:
-            # Get next frame
-            frame, outputs = split_output(
-                await asyncio.wait_for(next_frame(), timeout=60)
-            )
+            # Get next frame. Keep awaiting the same in-flight call across
+            # timeouts: next_frame() usually wraps run_in_executor, which
+            # cannot be cancelled once running, so re-invoking it would run
+            # the handler's emit() concurrently in a second thread (e.g.
+            # ValueError("generator already executing") in ReplyOnPause) and
+            # drop the frame the first call eventually returns.
+            if pending is None:
+                pending = asyncio.ensure_future(next_frame())
+            result = await asyncio.wait_for(asyncio.shield(pending), timeout=60)
+            pending = None
+            frame, outputs = split_output(result)
             if (
                 isinstance(outputs, AdditionalOutputs)
                 and set_additional_outputs
@@ -253,13 +261,21 @@ async def player_worker_decode(
             if isinstance(outputs, CloseStream):
                 await queue.put(outputs)
         except (TimeoutError, asyncio.TimeoutError):
-            logger.warning(
-                "Timeout in frame processing cycle after %s seconds - resetting", 60
-            )
+            if pending is not None and pending.done():
+                # The handler call itself raised a TimeoutError (already
+                # propagated through shield) - discard it and start fresh.
+                pending = None
+            else:
+                logger.warning(
+                    "Timeout in frame processing cycle after %s seconds - "
+                    "still waiting for the handler to produce a frame",
+                    60,
+                )
             continue
         except Exception as e:
             import traceback
 
+            pending = None
             exec = traceback.format_exc()
             logger.error("traceback %s", exec)
             logger.error("Error processing frame: %s", str(e))
@@ -267,6 +283,8 @@ async def player_worker_decode(
                 raise e
             else:
                 continue
+    if pending is not None:
+        pending.cancel()
 
 
 def audio_to_bytes(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> bytes:
