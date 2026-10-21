@@ -34,6 +34,6 @@ jobs:
       - name: Run tests
         run: |
           python -m pip install -U pip
-          pip install '.[dev, tts]'
+          pip install '.[dev, tts]' -r demo/orukeet/requirements.txt
           python -m pytest --capture=no
         shell: bash
