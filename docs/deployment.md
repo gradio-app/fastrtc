@@ -10,7 +10,7 @@ Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www
 
 ### With a Hugging Face Token
 
-Cloudflare and Hugging Face have partnered to allow you to stream 10gb of WebRTC traffic per month for free with a Hugging Face account!
+Cloudflare and Hugging Face have partnered to allow you to stream 1 GB of WebRTC traffic per month for free with a Hugging Face account!
 
 ```python
 from fastrtc import Stream, get_cloudflare_turn_credentials_async, get_cloudflare_turn_credentials
@@ -61,7 +61,7 @@ stream = Stream(
 
 ## Community Server (Deprecated)
 
-Hugging Face graciously provides 10gb of TURN  traffic through Cloudflare's global network.
+Hugging Face graciously provides 1 GB of TURN traffic per month through Cloudflare's global network.
 In order to use it, you need to first create a Hugging Face account by going to [huggingface.co](https://huggingface.co/).
 Then you can create an [access token](https://huggingface.co/docs/hub/en/security-tokens).
 
