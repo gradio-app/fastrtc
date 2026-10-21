@@ -4,7 +4,7 @@ from typing import Literal
 
 import httpx
 
-CLOUDFLARE_FASTRTC_TURN_URL = "https://turn.fastrtc.org/credentials"
+CLOUDFLARE_FASTRTC_TURN_URL = "https://fastrtc-turn-service.hf.space/credentials"
 
 async_httpx_client = httpx.AsyncClient()
 
@@ -98,7 +98,7 @@ async def get_hf_turn_credentials_async(
             "HF_TOKEN environment variable must be set or token must be provided to use get_hf_turn_credentials"
         )
     response = await client.get(
-        "https://turn.fastrtc.org/credentials",
+        CLOUDFLARE_FASTRTC_TURN_URL,
         headers={"Authorization": f"Bearer {token}"},
         params={"ttl": ttl},
     )
