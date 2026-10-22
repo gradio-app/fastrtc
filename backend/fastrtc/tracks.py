@@ -431,11 +431,14 @@ class StreamHandlerBase(ABC):
             Resampled AudioFrame(s).
         """
         if self._resampler is None:
+            # Preserve the input frame duration at the target sample rate.
             self._resampler = av.AudioResampler(  # type: ignore
                 format="s16",
                 layout=self.expected_layout,
                 rate=self.input_sample_rate,
-                frame_size=frame.samples,
+                frame_size=max(
+                    1, round(frame.samples * self.input_sample_rate / frame.sample_rate)
+                ),
             )
         yield from self._resampler.resample(frame)
 
