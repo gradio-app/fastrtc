@@ -247,8 +247,9 @@ class WebRTCConnectionMixin:
                     candidate_str = body["candidate"].get("candidate", "")
 
                     # Example format: "candidate:2393089663 1 udp 2122260223 192.168.86.60 63692 typ host generation 0 ufrag LkZb network-id 1 network-cost 10"
+                    # Also support shorter format: "candidate:0 1 UDP 2122187007 192.168.1.52 38846 typ host"
                     parts = candidate_str.split()
-                    if len(parts) >= 10 and parts[0].startswith("candidate:"):
+                    if len(parts) >= 8 and parts[0].startswith("candidate:"):
                         foundation = parts[0].split(":", 1)[1]
                         component = int(parts[1])
                         protocol = parts[2]
