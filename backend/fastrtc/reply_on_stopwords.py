@@ -15,6 +15,7 @@ from .reply_on_pause import (
     ReplyOnPause,
 )
 from .speech_to_text import get_stt_model, stt_for_chunks
+from .turn_metrics import TurnEvent
 from .utils import audio_to_float32, create_message
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,7 @@ class ReplyOnStopWords(ReplyOnPause):
         input_sample_rate: int = 48000,
         model: PauseDetectionModel | None = None,
         needs_args: bool = False,
+        on_turn_event: Callable[[TurnEvent], None] | None = None,
     ):
         """
         Initializes the ReplyOnStopWords handler.
@@ -82,6 +84,7 @@ class ReplyOnStopWords(ReplyOnPause):
             input_sample_rate: The expected sample rate of incoming audio.
             model: An optional pre-initialized VAD model instance.
             needs_args: Whether the reply function expects additional arguments.
+            on_turn_event: Optional synchronous lifecycle callback; see ReplyOnPause.
         """
         super().__init__(
             fn,
@@ -95,6 +98,7 @@ class ReplyOnStopWords(ReplyOnPause):
             input_sample_rate=input_sample_rate,
             model=model,
             needs_args=needs_args,
+            on_turn_event=on_turn_event,
         )
         self.stop_words = stop_words
         self.state = ReplyOnStopWordsState()
@@ -240,4 +244,5 @@ class ReplyOnStopWords(ReplyOnPause):
             self.input_sample_rate,
             self.model,
             self.needs_args,
+            self.on_turn_event,
         )

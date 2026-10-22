@@ -12,6 +12,8 @@ ReplyOnPause(
     output_frame_size: int | None = None,  # Deprecated
     input_sample_rate: int = 48000,
     model: PauseDetectionModel | None = None,
+    needs_args: bool = False,
+    on_turn_event: Callable[[TurnEvent], None] | None = None,
 )
 ```
 
@@ -20,6 +22,85 @@ A stream handler that processes incoming audio, detects pauses, and triggers a r
 This handler accumulates audio chunks, uses a Voice Activity Detection (VAD) model to determine speech segments, and identifies pauses based on configurable thresholds. Once a pause is detected after speech has started, it calls the provided generator function `fn` with the accumulated audio.
 
 It can optionally run a `startup_fn` at the beginning and supports interruption of the reply function if new audio arrives.
+
+### Per-turn observability
+
+Pass `on_turn_event` to `ReplyOnPause` or `ReplyOnStopWords` to observe reply
+turns without depending on a telemetry provider:
+
+```python
+from queue import SimpleQueue
+
+from fastrtc import ReplyOnPause, Stream, TurnEvent, get_current_turn_id
+
+events: SimpleQueue[TurnEvent] = SimpleQueue()
+
+
+def reply(audio):
+    turn_id = get_current_turn_id()
+    # Attach turn_id to your application's STT/LLM/TTS logs or traces.
+    yield audio
+
+
+stream = Stream(
+    handler=ReplyOnPause(reply, on_turn_event=events.put),
+    modality="audio",
+    mode="send-receive",
+)
+# Consume events in an application-owned worker to export telemetry.
+```
+
+The callback receives a frozen `TurnEvent` with `type`, `timestamp`, and a frozen
+`TurnMetrics` snapshot in `metrics`. Every event for a turn shares
+`event.metrics.turn_id`. The callback is synchronous and executes on the calling
+thread; it must be fast and thread-safe. Queue work for asynchronous export.
+Callback exceptions are logged and do not stop the reply. Async callbacks are
+not supported. Handler copies preserve the callback, but have independent turn
+state and IDs. No recorders or IDs are allocated when the callback is omitted.
+
+| Event | Observation |
+| :--- | :--- |
+| `speech_started` | The VAD first classifies a buffered chunk as speech. |
+| `turn_detected` | A pause/maximum speech limit triggers a reply, or `trigger_response()` is called. |
+| `handler_started` | Immediately before invoking the reply function, after waiting for additional inputs. |
+| `first_output_generated` | The first non-`None` yield, including `AdditionalOutputs` or a stream-close signal. |
+| `first_audio_generated` | The first yield containing nonempty audio. |
+| `handler_completed` | The reply generator is exhausted. |
+| `interrupted` | FastRTC interrupts a reply because another turn was detected. |
+| `failed` | Reply invocation, iteration, or output processing raises an exception. |
+| `cancelled` | A reset or connection shutdown ends an outstanding observation. |
+
+There is at most one terminal event per turn. Its `metrics.outcome` is
+`completed`, `interrupted`, `failed`, or `cancelled`; earlier snapshots have
+`outcome=None`. A terminal event does not guarantee that a currently executing
+user function has stopped; late yields cannot reopen its metrics. Events from
+overlapping input/output turns can interleave; group them by turn ID.
+
+Timestamps use `time.monotonic()` in seconds, not wall-clock time. The following
+properties compute milliseconds from observed timestamps:
+
+| Property | Interval |
+| :--- | :--- |
+| `handler_scheduling_ms` | Turn detection to handler invocation, including waits for additional inputs. |
+| `handler_ttfo_ms` | Handler invocation to first non-`None` output. |
+| `handler_duration_ms` | Handler invocation to the terminal event. |
+| `time_to_first_audio_ms` | Turn detection to first nonempty audio generated. |
+| `total_turn_ms` | Turn detection to the terminal event. |
+
+Unobserved timestamps and durations are `None`, including audio timing for
+text-only replies. Manual turns may omit `speech_started`. The optional startup
+function is not a conversational turn and is not instrumented.
+`get_current_turn_id()` works during synchronous and asynchronous reply execution
+and is restored afterward. It returns `None` outside instrumented execution;
+application-created threads must propagate context explicitly.
+
+These are handler-level observations shared by WebRTC and WebSocket use of these
+reply handlers. They do not measure network delivery, queue draining, or browser
+playback. The first audio event deliberately describes **generation**, not
+"frame sent". The current VAD interface does not provide a uniform physical
+speech-stop timestamp, so speech-stop and turn-detection latency are not
+reported. Provider-specific STT/LLM/TTS spans and arbitrary `StreamHandler`
+implementations remain application-owned.
 
 ### Methods
 
@@ -37,6 +118,8 @@ __init__(
     output_frame_size: int | None = None,  # Deprecated
     input_sample_rate: int = 48000,
     model: PauseDetectionModel | None = None,
+    needs_args: bool = False,
+    on_turn_event: Callable[[TurnEvent], None] | None = None,
 )
 ```
 
@@ -204,6 +287,8 @@ ReplyOnStopWords(
     output_frame_size: int | None = None,  # Deprecated
     input_sample_rate: int = 48000,
     model: PauseDetectionModel | None = None,
+    needs_args: bool = False,
+    on_turn_event: Callable[[TurnEvent], None] | None = None,
 )
 ```
 
@@ -228,6 +313,8 @@ __init__(
     output_frame_size: int | None = None,  # Deprecated
     input_sample_rate: int = 48000,
     model: PauseDetectionModel | None = None,
+    needs_args: bool = False,
+    on_turn_event: Callable[[TurnEvent], None] | None = None,
 )
 ```
 

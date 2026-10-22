@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 
 from .pause_detection import ModelOptions, PauseDetectionModel, get_silero_model
 from .tracks import EmitType, StreamHandler
+from .turn_metrics import TurnEvent, _current_turn_id, _TurnRecorder
 from .utils import AdditionalOutputs, WebRTCData, create_message, split_output
 
 logger = getLogger(__name__)
@@ -45,6 +46,7 @@ class AppState:
     buffer: np.ndarray | None = None
     responded_audio: bool = False
     interrupted: asyncio.Event = field(default_factory=asyncio.Event)
+    turn: _TurnRecorder | None = None
 
     def new(self):
         return AppState()
@@ -124,6 +126,7 @@ class ReplyOnPause(StreamHandler):
         input_sample_rate: int = 48000,
         model: PauseDetectionModel | None = None,
         needs_args: bool = False,
+        on_turn_event: Callable[[TurnEvent], None] | None = None,
     ):
         """
         Initializes the ReplyOnPause handler.
@@ -142,6 +145,8 @@ class ReplyOnPause(StreamHandler):
             input_sample_rate: The expected sample rate of incoming audio.
             model: An optional pre-initialized VAD model instance.
             needs_args: Whether the reply function expects additional arguments.
+            on_turn_event: Optional synchronous lifecycle callback. Exceptions are
+                logged and ignored. Keep callbacks fast and thread-safe.
         """
         super().__init__(
             expected_layout,
@@ -149,6 +154,10 @@ class ReplyOnPause(StreamHandler):
             output_frame_size,
             input_sample_rate=input_sample_rate,
         )
+        if inspect.iscoroutinefunction(on_turn_event) or inspect.iscoroutinefunction(
+            getattr(on_turn_event, "__call__", None)
+        ):
+            raise TypeError("on_turn_event must be a synchronous callback")
         self.can_interrupt = can_interrupt
         self.expected_layout: Literal["mono", "stereo"] = expected_layout
         self.model = model or get_silero_model()
@@ -163,6 +172,11 @@ class ReplyOnPause(StreamHandler):
         self.algo_options = algo_options or AlgoOptions()
         self.startup_fn = startup_fn
         self.needs_args = needs_args
+        self.on_turn_event = on_turn_event
+        self._active_turn: _TurnRecorder | None = None
+
+    def _new_turn(self) -> _TurnRecorder | None:
+        return _TurnRecorder(self.on_turn_event) if self.on_turn_event else None
 
     @property
     def _needs_additional_inputs(self) -> bool:
@@ -199,6 +213,7 @@ class ReplyOnPause(StreamHandler):
             self.input_sample_rate,
             self.model,
             self.needs_args,
+            self.on_turn_event,
         )
 
     def determine_pause(
@@ -269,9 +284,14 @@ class ReplyOnPause(StreamHandler):
         else:
             state.buffer = np.concatenate((state.buffer, array))
 
+        was_talking = state.started_talking
         pause_detected = self.determine_pause(
             state.buffer, state.sampling_rate, self.state
         )
+        if state.started_talking and not was_talking:
+            state.turn = self._new_turn()
+            if state.turn:
+                state.turn.record("speech_started")
         state.pause_detected = pause_detected
 
     def receive(self, frame: tuple[int, np.ndarray]) -> None:
@@ -289,8 +309,13 @@ class ReplyOnPause(StreamHandler):
             return
         self.process_audio(frame, self.state)
         if self.state.pause_detected:
+            if self.state.turn:
+                self.state.turn.record("turn_detected")
             self.event.set()
             if self.can_interrupt and self.state.responding:
+                if self._active_turn:
+                    self._active_turn.record("interrupted")
+                    self._active_turn = None
                 self._close_generator()
                 self.generator = None
             if self.can_interrupt:
@@ -329,12 +354,26 @@ class ReplyOnPause(StreamHandler):
         Clears accumulated audio, resets state flags, closes any active generator,
         and clears the event flag. Also handles resetting argument state for phone mode.
         """
+        if self._active_turn:
+            self._active_turn.record("cancelled")
+            self._active_turn = None
+        if self.state.turn:
+            self.state.turn.record("cancelled")
         super().reset()
         if self.phone_mode:
             self.args_set.set()
         self.generator = None
         self.event.clear()
         self.state = AppState()
+
+    def shutdown(self):
+        """Finish outstanding observations when the connection closes."""
+        if self._active_turn:
+            self._active_turn.record("cancelled")
+            self._active_turn = None
+        if self.state.turn:
+            self.state.turn.record("cancelled")
+        super().shutdown()
 
     def trigger_response(self):
         """
@@ -343,6 +382,11 @@ class ReplyOnPause(StreamHandler):
         Sets the event flag, effectively simulating a pause detection.
         Initializes the stream buffer if it's empty.
         """
+        if not self.event.is_set():
+            if self.state.turn is None:
+                self.state.turn = self._new_turn()
+            if self.state.turn:
+                self.state.turn.record("turn_detected")
         self.event.set()
         if self.state.stream is None:
             self.state.stream = np.array([], dtype=np.int16)
@@ -370,6 +414,26 @@ class ReplyOnPause(StreamHandler):
         """
         if not self.event.is_set():
             return None
+        if not self.generator:
+            self._active_turn = self.state.turn or self._new_turn()
+            self.state.turn = None
+            if self._active_turn:
+                self._active_turn.record("turn_detected")
+        turn = self._active_turn
+        token = _current_turn_id.set(turn.metrics.turn_id if turn else None)
+        try:
+            return self._emit_turn(turn)
+        except Exception:
+            if turn:
+                turn.record("failed")
+            self.reset()
+            raise
+        finally:
+            _current_turn_id.reset(token)
+
+    def _emit_turn(self, turn: _TurnRecorder | None):
+        if not self.event.is_set():
+            return None
         else:
             if not self.generator:
                 self.send_message_sync(create_message("log", "pause_detected"))
@@ -387,6 +451,8 @@ class ReplyOnPause(StreamHandler):
                     self.latest_args[0].audio = (self.state.sampling_rate, audio)
                 else:
                     self.latest_args[0] = (self.state.sampling_rate, audio)
+                if turn:
+                    turn.record("handler_started")
                 self.generator = self.fn(*self.latest_args)  # type: ignore
                 logger.debug("Latest args: %s", self.latest_args)
                 self.state = self.state.new()
@@ -399,6 +465,16 @@ class ReplyOnPause(StreamHandler):
                 else:
                     output = next(self.generator)  # type: ignore
                 audio, additional_outputs = split_output(output)
+                if turn and output is not None:
+                    turn.record("first_output_generated")
+                if (
+                    turn
+                    and isinstance(audio, tuple)
+                    and len(audio) >= 2
+                    and isinstance(audio[1], np.ndarray)
+                    and audio[1].size
+                ):
+                    turn.record("first_audio_generated")
                 if audio is not None:
                     self.send_message_sync(create_message("log", "response_starting"))
                     self.state.responded_audio = True
@@ -407,6 +483,8 @@ class ReplyOnPause(StreamHandler):
                         self.latest_args = [None] + list(additional_outputs.args)
                 return output
             except (StopIteration, StopAsyncIteration):
+                if turn:
+                    turn.record("handler_completed")
                 if not self.state.responded_audio:
                     self.send_message_sync(create_message("log", "response_starting"))
                 self.reset()
@@ -415,5 +493,4 @@ class ReplyOnPause(StreamHandler):
 
                 traceback.print_exc()
                 logger.debug("Error in ReplyOnPause: %s", e)
-                self.reset()
                 raise e
