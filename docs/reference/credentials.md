@@ -1,15 +1,83 @@
 # TURN Credential Utils
 
+## `get_local_rtc_configuration`
+
+```python
+def get_local_rtc_configuration(
+    ice_servers: list[dict[str, Any]] | dict[str, Any] | None = None,
+    host: str | None = None,
+    port: int | str | None = None,
+    username: str | None = None,
+    credential: str | None = None,
+    scheme: str | None = None,
+    transport: str | None = None,
+    ice_transport_policy: str | None = None,
+) -> dict[str, Any]:
+```
+
+Builds an RTC configuration without contacting an external service. This is the
+recommended helper for fully offline or local-network deployments.
+
+With no arguments and no `FASTRTC_*` environment variables set, it returns:
+
+```python
+{"iceServers": []}
+```
+
+That lets WebRTC use host candidates only, which is enough when the browser and
+FastRTC server can reach each other directly.
+
+For a self-hosted local STUN/TURN server:
+
+```python
+>>> from fastrtc import get_local_rtc_configuration, Stream
+>>> rtc_configuration = get_local_rtc_configuration(
+...     host="192.168.1.10",
+...     username="fastrtc",
+...     credential="change-me",
+... )
+>>> stream = Stream(
+...     ...,
+...     rtc_configuration=rtc_configuration,
+...     server_rtc_configuration=rtc_configuration,
+... )
+```
+
+Environment variables:
+
+```
+FASTRTC_ICE_SERVERS
+FASTRTC_TURN_HOST
+FASTRTC_TURN_PORT
+FASTRTC_TURN_USERNAME
+FASTRTC_TURN_CREDENTIAL
+FASTRTC_TURN_SCHEME
+FASTRTC_TURN_TRANSPORT
+FASTRTC_ICE_TRANSPORT_POLICY
+```
+
+`FASTRTC_ICE_SERVERS` must be JSON containing either an ICE server list or a full
+RTC configuration object.
+
+## `get_local_rtc_configuration_async`
+
+```python
+async def get_local_rtc_configuration_async(**kwargs) -> dict[str, Any]:
+```
+
+Asynchronously builds the same local RTC configuration as
+`get_local_rtc_configuration`. It does not perform network requests.
+
 ## `get_turn_credentials_async`
 
 ```python
 async def get_turn_credentials_async(
-    method: Literal["hf", "twilio", "cloudflare"] = "cloudflare",
+    method: Literal["hf", "twilio", "cloudflare", "local"] = "local",
     **kwargs
 ):
 ```
 
-Retrieves TURN credentials from the specified provider.
+Retrieves TURN credentials or builds a local RTC configuration from the specified provider.
 This can be passed directly to the Stream class and it will be called for each
 unique WebRTC connection via the Gradio UI. When mounting to FastAPI, call this function
 yourself to return the credentials to the frontend client, for example, in the
@@ -21,15 +89,17 @@ function based on the method specified.
 
 Args:
 ```
-method: Literal["hf", "twilio", "cloudflare"] | None
+method: Literal["hf", "twilio", "cloudflare", "local"] | None
     The provider to use. 'hf' uses the deprecated Hugging Face endpoint.
     'cloudflare' uses either Cloudflare keys or the HF endpoint.
-    'twilio' uses the Twilio API. Defaults to "cloudflare".
+    'twilio' uses the Twilio API. 'local' builds an offline/static RTC
+    configuration without a credential provider. Defaults to "local".
 **kwargs: 
     Additional keyword arguments passed directly to the underlying
     provider-specific function (e.g., `token`, `ttl` for 'hf';
     `twilio_sid`, `twilio_token` for 'twilio'; `turn_key_id`,
-    `turn_key_api_token`, `hf_token`, `ttl` for 'cloudflare').
+    `turn_key_api_token`, `hf_token`, `ttl` for 'cloudflare'; local ICE server
+    settings for 'local').
 ```
 
 Returns:
@@ -59,12 +129,12 @@ Example
 
 ```python
 def get_turn_credentials(
-    method: Literal["hf", "twilio", "cloudflare"] = "cloudflare",
+    method: Literal["hf", "twilio", "cloudflare", "local"] = "local",
     **kwargs
 ):
 ```
 
-Retrieves TURN credentials from the specified provider.
+Retrieves TURN credentials or builds a local RTC configuration from the specified provider.
 This can be passed directly to the Stream class and it will be called for each
 unique WebRTC connection via the Gradio UI. When mounting to FastAPI, call this function
 yourself to return the credentials to the frontend client, for example, in the
@@ -76,15 +146,17 @@ function based on the method specified.
 
 Args:
 ```
-method: Literal["hf", "twilio", "cloudflare"] | None
+method: Literal["hf", "twilio", "cloudflare", "local"] | None
     The provider to use. 'hf' uses the deprecated Hugging Face endpoint.
     'cloudflare' uses either Cloudflare keys or the HF endpoint.
-    'twilio' uses the Twilio API. Defaults to "cloudflare".
+    'twilio' uses the Twilio API. 'local' builds an offline/static RTC
+    configuration without a credential provider. Defaults to "local".
 **kwargs: 
     Additional keyword arguments passed directly to the underlying
     provider-specific function (e.g., `token`, `ttl` for 'hf';
     `twilio_sid`, `twilio_token` for 'twilio'; `turn_key_id`,
-    `turn_key_api_token`, `hf_token`, `ttl` for 'cloudflare').
+    `turn_key_api_token`, `hf_token`, `ttl` for 'cloudflare'; local ICE server
+    settings for 'local').
 ```
 
 Returns:
