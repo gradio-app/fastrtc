@@ -158,7 +158,7 @@ class CartesiaTTSOptions(TTSOptions):
     language: str = "en"
     emotion: list[str] = field(default_factory=list)
     cartesia_version: str = "2024-06-10"
-    model: str = "sonic-2"
+    model: str = "sonic-3.6"
     sample_rate: int = 22_050
 
 
@@ -182,19 +182,18 @@ class CartesiaTTSModel(TTSModel):
         for sentence in sentences:
             if not sentence.strip():
                 continue
-            async for output in async_aggregate_bytes_to_16bit(
-                self.client.tts.bytes(
-                    model_id="sonic-2",
-                    transcript=sentence,
-                    voice={"id": options.voice},  # type: ignore
-                    language="en",
-                    output_format={
-                        "container": "raw",
-                        "sample_rate": options.sample_rate,
-                        "encoding": "pcm_s16le",
-                    },
-                )
-            ):
+            response = await self.client.tts.generate(
+                model_id=options.model,
+                transcript=sentence,
+                voice={"id": options.voice},  # type: ignore
+                language=options.language,
+                output_format={
+                    "container": "raw",
+                    "sample_rate": options.sample_rate,
+                    "encoding": "pcm_s16le",
+                },
+            )
+            async for output in async_aggregate_bytes_to_16bit(response.iter_bytes()):
                 yield options.sample_rate, np.frombuffer(output, dtype=np.int16)
 
     def stream_tts_sync(
