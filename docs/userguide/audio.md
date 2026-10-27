@@ -239,7 +239,7 @@ Here is a simple example of using `AsyncStreamHandler`:
 
 You can use an on-device text to speech model if you have the `tts` extra installed.
 Import the `get_tts_model` function and call it with the model name you want to use.
-At the moment, the only model supported is `kokoro`.
+The on-device model supported is `kokoro`.
 
 The `get_tts_model` function returns an object with three methods:
 
@@ -277,6 +277,26 @@ audio = model.tts("Hello, world!")
 
     audio = model.tts("Hello, world!", options=options)
     ```
+
+FastRTC also supports Cartesia's hosted text-to-speech service. Install the `cartesia`
+extra and provide a Cartesia API key:
+
+```bash
+pip install "fastrtc[cartesia]"
+```
+
+```python
+import os
+
+from fastrtc import CartesiaTTSOptions, get_tts_model
+
+model = get_tts_model(model="cartesia", cartesia_api_key=os.environ["CARTESIA_API_KEY"])
+
+async for audio in model.stream_tts(
+    "Hello, world!", options=CartesiaTTSOptions(model="sonic-3.6")
+):
+    yield audio
+```
 
 ## Speech To Text
 

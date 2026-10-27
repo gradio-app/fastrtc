@@ -73,6 +73,7 @@ Documentation = "https://fastrtc.org/"
 dev = ["build", "twine", "httpx", "pytest", "pytest-asyncio"]
 vad = ["onnxruntime>=1.20.1"]
 tts = ["kokoro-onnx"]
+cartesia = ["cartesia>=4.2.0"]
 stopword = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
 stt = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
 
