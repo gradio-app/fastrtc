@@ -186,19 +186,24 @@ class ReplyOnPause(StreamHandler):
             self.event.set()
 
     def copy(self):
-        """Creates a new instance of ReplyOnPause with the same configuration."""
-        return ReplyOnPause(
-            self.fn,
-            self.startup_fn,
-            self.algo_options,
-            self.model_options,
-            self.can_interrupt,
-            self.expected_layout,
-            self.output_sample_rate,
-            self.output_frame_size,
-            self.input_sample_rate,
-            self.model,
-            self.needs_args,
+        """Creates a new instance of this handler's class with the same configuration.
+
+        Uses `type(self)` so a subclass that only overrides methods (for example
+        `determine_pause`) keeps them on every new connection. A subclass that adds
+        its own `__init__` arguments must override `copy()` to pass them on.
+        """
+        return type(self)(
+            fn=self.fn,
+            startup_fn=self.startup_fn,
+            algo_options=self.algo_options,
+            model_options=self.model_options,
+            can_interrupt=self.can_interrupt,
+            expected_layout=self.expected_layout,
+            output_sample_rate=self.output_sample_rate,
+            output_frame_size=self.output_frame_size,
+            input_sample_rate=self.input_sample_rate,
+            model=self.model,
+            needs_args=self.needs_args,
         )
 
     def determine_pause(
