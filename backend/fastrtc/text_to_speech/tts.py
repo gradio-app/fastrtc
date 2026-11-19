@@ -43,7 +43,7 @@ class KokoroTTSOptions(TTSOptions):
 
 @lru_cache
 def get_tts_model(
-    model: Literal["kokoro", "cartesia"] = "kokoro", **kwargs
+    model: Literal["kokoro", "cartesia", "camb"] = "kokoro", **kwargs
 ) -> TTSModel:
     if model == "kokoro":
         m = KokoroTTSModel()
@@ -51,6 +51,9 @@ def get_tts_model(
         return m
     elif model == "cartesia":
         m = CartesiaTTSModel(api_key=kwargs.get("cartesia_api_key", ""))
+        return m
+    elif model == "camb":
+        m = CambTTSModel(api_key=kwargs.get("camb_api_key", ""))
         return m
     else:
         raise ValueError(f"Invalid model: {model}")
@@ -160,6 +163,85 @@ class CartesiaTTSOptions(TTSOptions):
     cartesia_version: str = "2024-06-10"
     model: str = "sonic-2"
     sample_rate: int = 22_050
+
+
+@dataclass
+class CambTTSOptions(TTSOptions):
+    voice_id: int = 2681
+    language: str = "en-us"
+    model: str = "mars-flash"
+    speed: float = 1.0
+    output_format: str = "pcm_s16le"
+    user_instructions: str | None = None
+
+
+class CambTTSModel(TTSModel):
+    def __init__(self, api_key: str):
+        if importlib.util.find_spec("camb") is None:
+            raise RuntimeError(
+                "camb is not installed. Please install it using 'pip install camb'."
+            )
+        self._api_key = api_key
+
+    def _build_tts_kwargs(self, text: str, options: CambTTSOptions):
+        kwargs = {
+            "text": text,
+            "language": options.language,
+            "voice_id": options.voice_id,
+            "speech_model": options.model,
+            "output_configuration": {"format": options.output_format},
+            "voice_settings": {"speed": options.speed},
+        }
+        if options.model == "mars-instruct" and options.user_instructions:
+            kwargs["user_instructions"] = options.user_instructions
+        return kwargs
+
+    async def stream_tts(
+        self, text: str, options: CambTTSOptions | None = None
+    ) -> AsyncGenerator[tuple[int, NDArray[np.int16]], None]:
+        from camb.client import AsyncCambAI
+
+        options = options or CambTTSOptions()
+        client = AsyncCambAI(api_key=self._api_key)
+
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+
+        for sentence in sentences:
+            if not sentence.strip():
+                continue
+            async for output in async_aggregate_bytes_to_16bit(
+                client.text_to_speech.tts(**self._build_tts_kwargs(sentence, options))
+            ):
+                yield 24000, output.flatten()
+
+    def stream_tts_sync(
+        self, text: str, options: CambTTSOptions | None = None
+    ) -> Generator[tuple[int, NDArray[np.int16]], None, None]:
+        loop = asyncio.new_event_loop()
+
+        iterator = self.stream_tts(text, options).__aiter__()
+        while True:
+            try:
+                yield loop.run_until_complete(iterator.__anext__())
+            except StopAsyncIteration:
+                break
+
+    def tts(
+        self, text: str, options: CambTTSOptions | None = None
+    ) -> tuple[int, NDArray[np.int16]]:
+        loop = asyncio.new_event_loop()
+        buffer = np.array([], dtype=np.int16)
+
+        options = options or CambTTSOptions()
+
+        iterator = self.stream_tts(text, options).__aiter__()
+        while True:
+            try:
+                _, chunk = loop.run_until_complete(iterator.__anext__())
+                buffer = np.concatenate([buffer, chunk])
+            except StopAsyncIteration:
+                break
+        return 24000, buffer
 
 
 class CartesiaTTSModel(TTSModel):
