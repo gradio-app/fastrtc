@@ -207,6 +207,11 @@ class WebSocketHandler:
                     output = await self.stream_handler.emit()
                 else:
                     output = await run_sync(self.emit_with_context)
+                if output is None:
+                    # Idle: nothing to send. Back off so the consumer _emit_loop gets
+                    # scheduled, instead of spinning put_nowait(None) and flooding the queue.
+                    await asyncio.sleep(0.02)
+                    continue
                 self.queue.put_nowait(output)
         except asyncio.CancelledError:
             logger.debug("Emit loop cancelled")
