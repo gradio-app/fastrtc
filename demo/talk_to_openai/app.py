@@ -45,15 +45,23 @@ class OpenAIHandler(AsyncStreamHandler):
     ):
         """Connect to realtime API. Run forever in separate thread to keep connection open."""
         self.client = openai.AsyncOpenAI()
-        async with self.client.beta.realtime.connect(
-            model="gpt-4o-mini-realtime-preview-2024-12-17"
-        ) as conn:
+        async with self.client.realtime.connect(model="gpt-realtime-2.1-mini") as conn:
             await conn.session.update(
                 session={
-                    "turn_detection": {"type": "server_vad"},
-                    "input_audio_transcription": {
-                        "model": "whisper-1",
-                        "language": "en",
+                    "type": "realtime",
+                    "output_modalities": ["audio"],
+                    "audio": {
+                        "input": {
+                            "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
+                            "transcription": {
+                                "model": "gpt-transcribe",
+                                "language": "en",
+                            },
+                            "turn_detection": {"type": "server_vad"},
+                        },
+                        "output": {
+                            "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
+                        },
                     },
                 }
             )
@@ -69,13 +77,13 @@ class OpenAIHandler(AsyncStreamHandler):
                     await self.output_queue.put(
                         AdditionalOutputs({"role": "user", "content": event.transcript})
                     )
-                if event.type == "response.audio_transcript.done":
+                if event.type == "response.output_audio_transcript.done":
                     await self.output_queue.put(
                         AdditionalOutputs(
                             {"role": "assistant", "content": event.transcript}
                         )
                     )
-                if event.type == "response.audio.delta":
+                if event.type == "response.output_audio.delta":
                     await self.output_queue.put(
                         (
                             self.output_sample_rate,
