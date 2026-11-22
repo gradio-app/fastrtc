@@ -98,6 +98,35 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-code-16: Repository](https://github.com/mahimairaja/fastrtc-whisper-cpp)
 
+-   :speaking_head:{ .lg .middle } Orukeet (local CPU)
+{: data-tags="onnx"}
+
+    ---
+
+    A local, multilingual final-text adapter using Orukeet's pinned INT8 ONNX
+    export. Audio stays on the machine running FastRTC; initial model downloads
+    come from Hugging Face. Includes microphone and file-upload examples.
+
+    From a FastRTC checkout:
+    ```sh
+    pip install -e '.[vad]' -r demo/orukeet/requirements.txt
+    python -m demo.orukeet.app
+    ```
+
+    [:octicons-code-16: Example and model license](https://github.com/gradio-app/fastrtc/tree/main/demo/orukeet)
+
+-   :speaking_head:{ .lg .middle } Fourier 2B (English, local CPU)
+{: data-tags="gguf"}
+
+    ---
+
+    Fourier returns one transcript per completed English utterance. A FastRTC
+    adapter and a microphone demo load the 2.19 GB GGUF directly from Oruk.
+    The weights are CC BY-NC 4.0. Hosted or API serving requires separate
+    permission from Oruk.
+
+    [:octicons-code-16: Adapter, installation and browser demo](https://huggingface.co/oruk/oruk-fourier-2b/blob/main/examples/fastrtc/README.md)
+
 -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Your STT Model__
 {: data-tags="pytorch"}
 
