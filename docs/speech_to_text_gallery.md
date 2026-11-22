@@ -115,6 +115,18 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-code-16: Example and model license](https://github.com/gradio-app/fastrtc/tree/main/demo/orukeet)
 
+-   :speaking_head:{ .lg .middle } Fourier 2B (English, local CPU)
+{: data-tags="gguf"}
+
+    ---
+
+    Fourier returns one transcript per completed English utterance. A FastRTC
+    adapter and a microphone demo load the 2.19 GB GGUF directly from Oruk.
+    The weights are CC BY-NC 4.0. Hosted or API serving requires separate
+    permission from Oruk.
+
+    [:octicons-code-16: Adapter, installation and browser demo](https://huggingface.co/oruk/oruk-fourier-2b/blob/main/examples/fastrtc/README.md)
+
 -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Your STT Model__
 {: data-tags="pytorch"}
 
