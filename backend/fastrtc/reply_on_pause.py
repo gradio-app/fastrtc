@@ -355,6 +355,8 @@ class ReplyOnPause(StreamHandler):
         """
         Produces the next output chunk from the reply generator (`fn`).
 
+        When no pause is pending, may block for up to one output frame.
+
         This method is called repeatedly after a pause is detected (event is set).
         If the generator is not already running, it initializes it by calling `fn`
         with the accumulated audio and any required additional arguments.
@@ -368,6 +370,9 @@ class ReplyOnPause(StreamHandler):
         Raises:
             Exception: Re-raises exceptions occurring within the `fn` generator.
         """
+        if not self.event.is_set():
+            # Avoid busy-polling while idle; receive() sets this event.
+            self.event.wait(timeout=self.output_frame_size / self.output_sample_rate)
         if not self.event.is_set():
             return None
         else:
